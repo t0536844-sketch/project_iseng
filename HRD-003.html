@@ -1,0 +1,266 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Informasi Manajemen Pegawai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background: #374151; }
+        .active-link { background: #2563eb; border-left: 4px solid #fff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        input[type="file"]::file-selector-button {
+            background-color: #efefef; border: 1px solid #ddd; padding: 4px 8px; border-radius: 4px; cursor: pointer;
+        }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen overflow-hidden">
+
+<div class="flex h-full">
+    <aside class="w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col">
+        <div class="p-6 text-2xl font-bold tracking-tighter border-b border-slate-800">
+            <i class="fas fa-hospital-user mr-2 text-blue-400"></i>SIM-PEGAWAI
+        </div>
+        <nav class="mt-4 flex-1">
+            <a href="#" onclick="showSection('dashboard')" id="link-dashboard" class="sidebar-link active-link flex items-center py-3 px-6 transition">
+                <i class="fas fa-chart-line mr-3 w-5"></i> Dashboard
+            </a>
+            <a href="#" onclick="showSection('input')" id="link-input" class="sidebar-link flex items-center py-3 px-6 transition">
+                <i class="fas fa-user-plus mr-3 w-5"></i> Input Data Baru
+            </a>
+            <a href="#" onclick="showSection('tabel')" id="link-tabel" class="sidebar-link flex items-center py-3 px-6 transition">
+                <i class="fas fa-users mr-3 w-5"></i> Database Pegawai
+            </a>
+        </nav>
+        <div class="p-4 border-t border-slate-800 text-xs text-slate-500 text-center">
+            Versi 1.0 &copy; 2026
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white shadow-sm border-b py-4 px-8 flex justify-between items-center">
+            <h2 id="section-title" class="text-xl font-bold text-slate-800 uppercase tracking-wide">Dashboard Utama</h2>
+            <div class="flex items-center space-x-4 text-sm">
+                <span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-full font-semibold">Admin Mode</span>
+                <span id="current-date" class="text-slate-500 font-medium"></span>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
+            
+            <div id="dashboard" class="tab-content active">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-center">
+                            <div><p class="text-slate-500 text-xs font-bold uppercase">Total Pegawai</p><h4 class="text-3xl font-black mt-1">142</h4></div>
+                            <div class="bg-blue-50 p-3 rounded-lg"><i class="fas fa-users text-blue-500"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-center">
+                            <div><p class="text-slate-500 text-xs font-bold uppercase">STR Aktif</p><h4 class="text-3xl font-black mt-1">118</h4></div>
+                            <div class="bg-green-50 p-3 rounded-lg"><i class="fas fa-id-badge text-green-500"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-center">
+                            <div><p class="text-slate-500 text-xs font-bold uppercase">Proses Pensiun</p><h4 class="text-3xl font-black mt-1">4</h4></div>
+                            <div class="bg-red-50 p-3 rounded-lg"><i class="fas fa-user-clock text-red-500"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+                        <div class="flex justify-between items-center">
+                            <div><p class="text-slate-500 text-xs font-bold uppercase">Kenaikan Pangkat</p><h4 class="text-3xl font-black mt-1">12</h4></div>
+                            <div class="bg-orange-50 p-3 rounded-lg"><i class="fas fa-arrow-up text-orange-500"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="input" class="tab-content">
+                <form id="employeeForm" class="bg-white shadow-lg rounded-2xl p-8 max-w-6xl mx-auto mb-10 border border-slate-200">
+                    <div class="mb-12">
+                        <div class="flex items-center mb-6">
+                            <span class="w-8 h-8 bg-blue-600 text-white rounded-full flex items-center justify-center font-bold mr-3">1</span>
+                            <h3 class="text-lg font-bold text-slate-800 uppercase tracking-tight">Identitas & Status Kepegawaian</h3>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-4 gap-4">
+                            <div class="md:col-span-2">
+                                <label class="text-xs font-bold text-slate-600 uppercase">Nama Lengkap</label>
+                                <input type="text" id="form-nama" class="w-full border-2 border-slate-100 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:border-blue-500 outline-none transition">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-600 uppercase">NIP</label>
+                                <input type="text" id="form-nip" class="w-full border-2 border-slate-100 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:border-blue-500 outline-none transition">
+                            </div>
+                            <div>
+                                <label class="text-xs font-bold text-slate-600 uppercase">Pangkat/Gol</label>
+                                <select id="form-gol" class="w-full border-2 border-slate-100 bg-slate-50 p-2.5 rounded-lg focus:bg-white focus:border-blue-500 outline-none transition">
+                                    <option value="">Pilih Golongan</option>
+                                    <option value="I/d">I/d</option><option value="II/a">II/a</option><option value="II/b">II/b</option><option value="II/c">II/c</option><option value="II/d">II/d</option>
+                                    <option value="III/a">III/a</option><option value="III/b">III/b</option><option value="III/c">III/c</option><option value="III/d">III/d</option>
+                                    <option value="IV/a">IV/a</option><option value="IV/b">IV/b</option><option value="IV/c">IV/c</option><option value="IV/d">IV/d</option><option value="IV/e">IV/e</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-6 border-t">
+                        <button type="reset" class="px-6 py-2.5 rounded-lg border-2 border-slate-200 text-slate-600 font-bold text-sm hover:bg-slate-50">BATAL</button>
+                        <button type="button" onclick="saveData()" class="px-10 py-2.5 rounded-lg bg-blue-600 text-white font-bold text-sm hover:bg-blue-700 shadow-lg shadow-blue-200 uppercase tracking-widest transition">SIMPAN DATA</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="tabel" class="tab-content">
+                <div class="bg-white rounded-2xl shadow-sm border p-4">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="relative w-1/3">
+                            <i class="fas fa-search absolute left-3 top-3 text-slate-400"></i>
+                            <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari Nama atau NIP..." class="pl-10 pr-4 py-2 border rounded-full w-full outline-none focus:ring-2 focus:ring-blue-100">
+                        </div>
+                        <button class="bg-slate-100 text-slate-700 px-4 py-2 rounded-lg font-bold text-sm hover:bg-slate-200 transition"><i class="fas fa-file-export mr-2"></i>Export Excel</button>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-slate-500 text-[10px] uppercase font-black tracking-widest border-b">
+                                <tr>
+                                    <th class="px-6 py-4">Pegawai</th>
+                                    <th class="px-6 py-4">Pangkat/Jabatan</th>
+                                    <th class="px-6 py-4">Status</th>
+                                    <th class="px-6 py-4">STR Berlaku</th>
+                                    <th class="px-6 py-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employeeTableBody" class="text-sm divide-y divide-slate-100">
+                                <tr class="hover:bg-blue-50/50 transition" data-nip="19850101XXXXXXXX">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center">
+                                            <div class="h-10 w-10 bg-blue-500 text-white rounded-full flex items-center justify-center font-bold mr-3 shadow-inner">BS</div>
+                                            <div><p class="font-bold text-slate-800 name-target">Budi Santoso, S.Kep</p><p class="text-[10px] text-slate-500">NIP. 19850101XXXXXXXX</p></div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4"><span class="block font-medium rank-target">III/b - Perawat Mahir</span><span class="text-[10px] text-slate-400">Jabatan Fungsional</span></td>
+                                    <td class="px-6 py-4"><span class="bg-green-100 text-green-700 px-2 py-1 rounded text-[10px] font-black uppercase">PNS</span></td>
+                                    <td class="px-6 py-4"><span class="text-red-600 font-bold">12 Mei 2026</span></td>
+                                    <td class="px-6 py-4 text-center space-x-2">
+                                        <button onclick="viewData('19850101XXXXXXXX')" class="text-slate-400 hover:text-blue-600 transition"><i class="fas fa-eye"></i></button>
+                                        <button onclick="editData('19850101XXXXXXXX')" class="text-slate-400 hover:text-green-600 transition"><i class="fas fa-edit"></i></button>
+                                        <button onclick="deleteData('19850101XXXXXXXX')" class="text-slate-400 hover:text-red-600 transition"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                                <tr class="hover:bg-blue-50/50 transition" data-nip="19901212XXXXXXXX">
+                                    <td class="px-6 py-4">
+                                        <div class="flex items-center">
+                                            <div class="h-10 w-10 bg-orange-500 text-white rounded-full flex items-center justify-center font-bold mr-3 shadow-inner">AL</div>
+                                            <div><p class="font-bold text-slate-800 name-target">Ani Larasati, M.Kes</p><p class="text-[10px] text-slate-500">NIP. 19901212XXXXXXXX</p></div>
+                                        </div>
+                                    </td>
+                                    <td class="px-6 py-4"><span class="block font-medium rank-target">III/a - Admin</span><span class="text-[10px] text-slate-400">Manajemen</span></td>
+                                    <td class="px-6 py-4"><span class="bg-blue-100 text-blue-700 px-2 py-1 rounded text-[10px] font-black uppercase">PPPK</span></td>
+                                    <td class="px-6 py-4"><span class="text-slate-500 font-medium">N/A</span></td>
+                                    <td class="px-6 py-4 text-center space-x-2">
+                                        <button onclick="viewData('19901212XXXXXXXX')" class="text-slate-400 hover:text-blue-600 transition"><i class="fas fa-eye"></i></button>
+                                        <button onclick="editData('19901212XXXXXXXX')" class="text-slate-400 hover:text-green-600 transition"><i class="fas fa-edit"></i></button>
+                                        <button onclick="deleteData('19901212XXXXXXXX')" class="text-slate-400 hover:text-red-600 transition"><i class="fas fa-trash"></i></button>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script>
+    // --- NAVIGASI ---
+    function showSection(sectionId) {
+        document.querySelectorAll('.tab-content').forEach(section => section.classList.remove('active'));
+        document.getElementById(sectionId).classList.add('active');
+        
+        document.querySelectorAll('.sidebar-link').forEach(link => link.classList.remove('active-link'));
+        document.getElementById('link-' + sectionId).classList.add('active-link');
+
+        const titles = { 
+            'dashboard': 'Dashboard Utama', 
+            'input': 'Pengisian Data Personel Baru', 
+            'tabel': 'Database Pegawai Keseluruhan' 
+        };
+        document.getElementById('section-title').innerText = titles[sectionId];
+    }
+
+    // --- FITUR HAPUS ---
+    function deleteData(nip) {
+        if (confirm(`Apakah Anda yakin ingin menghapus data dengan NIP: ${nip}?`)) {
+            const row = document.querySelector(`tr[data-nip="${nip}"]`);
+            if (row) {
+                row.classList.add('opacity-0', 'transition-opacity', 'duration-300');
+                setTimeout(() => {
+                    row.remove();
+                    alert('Data berhasil dihapus.');
+                }, 300);
+            }
+        }
+    }
+
+    // --- FITUR LIHAT ---
+    function viewData(nip) {
+        const row = document.querySelector(`tr[data-nip="${nip}"]`);
+        const nama = row.querySelector('.name-target').innerText;
+        const pangkat = row.querySelector('.rank-target').innerText;
+        
+        alert(`DETAIL PEGAWAI\n----------------------\nNama: ${nama}\nNIP: ${nip}\nPangkat: ${pangkat}\nStatus: Aktif`);
+    }
+
+    // --- FITUR EDIT ---
+    function editData(nip) {
+        const row = document.querySelector(`tr[data-nip="${nip}"]`);
+        const nama = row.querySelector('.name-target').innerText;
+        const pangkatFull = row.querySelector('.rank-target').innerText;
+        const gol = pangkatFull.split(' - ')[0]; // Mengambil "III/b" dari "III/b - Perawat Mahir"
+
+        // Isi form dengan data yang ada
+        document.getElementById('form-nama').value = nama;
+        document.getElementById('form-nip').value = nip;
+        document.getElementById('form-gol').value = gol;
+
+        // Pindah ke tab Input
+        showSection('input');
+        alert(`Data ${nama} telah dimuat. Silakan lakukan perubahan.`);
+    }
+
+    // --- FITUR CARI ---
+    function searchTable() {
+        const input = document.getElementById("searchInput").value.toLowerCase();
+        const rows = document.getElementById("employeeTableBody").getElementsByTagName("tr");
+
+        for (let i = 0; i < rows.length; i++) {
+            const text = rows[i].innerText.toLowerCase();
+            rows[i].style.display = text.includes(input) ? "" : "none";
+        }
+    }
+
+    // --- SIMULASI SIMPAN ---
+    function saveData() {
+        const nama = document.getElementById('form-nama').value;
+        if(!nama) return alert("Mohon isi nama lengkap!");
+        
+        alert(`Data ${nama} berhasil disimpan ke database (Simulasi).`);
+        document.getElementById('employeeForm').reset();
+        showSection('tabel');
+    }
+
+    // Set Tanggal Hari Ini
+    const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+    document.getElementById('current-date').innerText = new Date().toLocaleDateString('id-ID', options);
+</script>
+
+</body>
+</html>

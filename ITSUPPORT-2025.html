@@ -1,0 +1,1843 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Maintenance Support Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        :root {
+            --primary: #2c3e50;
+            --secondary: #3498db;
+            --accent: #e74c3c;
+            --success: #27ae60;
+            --warning: #f39c12;
+            --light: #ecf0f1;
+            --dark: #2c3e50;
+            --gray: #7f8c8d;
+            --light-gray: #bdc3c7;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+        
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+        
+        header {
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            color: white;
+            padding: 25px 0;
+            border-radius: 10px;
+            margin-bottom: 30px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 20px;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo i {
+            font-size: 2.5rem;
+            color: #fff;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+            font-weight: 700;
+        }
+        
+        .logo p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .upload-section {
+            background-color: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            text-align: center;
+        }
+        
+        .upload-area {
+            border: 3px dashed var(--light-gray);
+            border-radius: 10px;
+            padding: 40px 20px;
+            margin: 20px 0;
+            transition: all 0.3s;
+            cursor: pointer;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--secondary);
+            background-color: rgba(52, 152, 219, 0.05);
+        }
+        
+        .upload-area i {
+            font-size: 3rem;
+            color: var(--secondary);
+            margin-bottom: 15px;
+        }
+        
+        .upload-btn {
+            background-color: var(--secondary);
+            color: white;
+            border: none;
+            padding: 12px 30px;
+            border-radius: 50px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            gap: 10px;
+            margin-top: 10px;
+        }
+        
+        .upload-btn:hover {
+            background-color: var(--primary);
+            transform: translateY(-3px);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(300px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            transition: transform 0.3s;
+        }
+        
+        .card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+        }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+        
+        .card-header h3 {
+            font-size: 1.2rem;
+            color: var(--primary);
+        }
+        
+        .card-header i {
+            font-size: 1.8rem;
+            color: var(--secondary);
+        }
+        
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+            color: var(--primary);
+            margin-bottom: 10px;
+        }
+        
+        .stat-desc {
+            color: var(--gray);
+            font-size: 0.95rem;
+        }
+        
+        .technician-stats {
+            margin-top: 20px;
+        }
+        
+        .technician-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 10px 0;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .technician-item:last-child {
+            border-bottom: none;
+        }
+        
+        .technician-name {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-weight: 600;
+        }
+        
+        .technician-name i {
+            color: var(--secondary);
+        }
+        
+        .technician-count {
+            background-color: var(--secondary);
+            color: white;
+            padding: 5px 10px;
+            border-radius: 20px;
+            font-weight: 600;
+            font-size: 0.9rem;
+        }
+        
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 25px;
+            height: 25px;
+            border-radius: 50%;
+            background-color: var(--primary);
+            color: white;
+            font-weight: bold;
+            font-size: 0.8rem;
+            margin-right: 10px;
+        }
+        
+        .rank-1 {
+            background-color: gold;
+            color: #333;
+        }
+        
+        .rank-2 {
+            background-color: silver;
+            color: #333;
+        }
+        
+        .rank-3 {
+            background-color: #cd7f32;
+            color: white;
+        }
+        
+        .filters {
+            background-color: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 200px;
+            flex: 1;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 8px;
+            color: var(--primary);
+        }
+        
+        select, input {
+            padding: 12px 15px;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            font-size: 1rem;
+            background-color: white;
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--secondary);
+        }
+        
+        .data-table-container {
+            background-color: white;
+            border-radius: 10px;
+            overflow: hidden;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+        }
+        
+        .table-header {
+            padding: 20px;
+            background-color: var(--primary);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-header h3 {
+            font-size: 1.3rem;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            padding: 15px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--primary);
+            border-bottom: 2px solid var(--light-gray);
+        }
+        
+        td {
+            padding: 15px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        tr:hover {
+            background-color: #f9f9f9;
+        }
+        
+        .status {
+            padding: 5px 12px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+        }
+        
+        .status-completed {
+            background-color: rgba(39, 174, 96, 0.1);
+            color: var(--success);
+        }
+        
+        .status-inprocess {
+            background-color: rgba(243, 156, 18, 0.1);
+            color: var(--warning);
+        }
+        
+        .status-outprocess {
+            background-color: rgba(52, 152, 219, 0.1);
+            color: var(--secondary);
+        }
+        
+        .status-rusak {
+            background-color: rgba(231, 76, 60, 0.1);
+            color: var(--accent);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            padding: 20px;
+            gap: 10px;
+        }
+        
+        .page-btn {
+            padding: 8px 15px;
+            background-color: white;
+            border: 1px solid var(--light-gray);
+            border-radius: 5px;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .page-btn:hover {
+            background-color: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
+        }
+        
+        .page-btn.active {
+            background-color: var(--secondary);
+            color: white;
+            border-color: var(--secondary);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: var(--gray);
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            margin-top: 30px;
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(450px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background-color: white;
+            border-radius: 10px;
+            padding: 25px;
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chart-card h3 {
+            color: var(--primary);
+            margin-bottom: 20px;
+            font-size: 1.2rem;
+        }
+        
+        .chart-container {
+            height: 300px;
+            position: relative;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 50px 20px;
+            color: var(--gray);
+        }
+        
+        .no-data i {
+            font-size: 3rem;
+            margin-bottom: 20px;
+            color: var(--light-gray);
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 20px;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+            
+            table {
+                display: block;
+                overflow-x: auto;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-tools"></i>
+                    <div>
+                        <h1>IT Maintenance Support Dashboard</h1>
+                        <p>Laporan Bulanan dan Tahunan • Dashboard Monitoring</p>
+                    </div>
+                </div>
+                <div>
+                    <p><i class="fas fa-calendar-alt"></i> Laporan per: <span id="current-date">Desember 2025</span></p>
+                </div>
+            </div>
+        </header>
+        
+        <section class="upload-section">
+            <h2><i class="fas fa-file-upload"></i> Unggah Data Laporan</h2>
+            <p>Unggah file CSV atau Excel untuk memuat data laporan maintenance IT</p>
+            
+            <div class="upload-area" id="upload-area">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p>Seret dan lepas file CSV atau Excel di sini</p>
+                <p>atau</p>
+                <input type="file" id="file-input" accept=".csv,.xlsx,.xls" hidden>
+                <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                    <i class="fas fa-folder-open"></i> Pilih File
+                </button>
+                <p style="margin-top: 15px; font-size: 0.9rem; color: var(--gray);">
+                    Format yang didukung: .csv, .xlsx, .xls
+                </p>
+            </div>
+            
+            <div id="file-info" style="display: none; margin-top: 20px; padding: 15px; background-color: #e8f4fc; border-radius: 5px;">
+                <p><i class="fas fa-file"></i> <span id="file-name"></span> (<span id="file-size"></span>)</p>
+                <p style="margin-top: 5px;"><i class="fas fa-check-circle" style="color: var(--success);"></i> File berhasil diunggah. <span id="row-count"></span> baris data dimuat.</p>
+            </div>
+        </section>
+        
+        <section class="dashboard" id="dashboard-stats" style="display: none;">
+            <div class="card">
+                <div class="card-header">
+                    <h3>Total Laporan</h3>
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div class="stat-number" id="total-reports">0</div>
+                <p class="stat-desc">Jumlah seluruh laporan maintenance</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>Selesai</h3>
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-number" id="completed-reports">0</div>
+                <p class="stat-desc">Laporan dengan status COMPLETED</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>Dalam Proses</h3>
+                    <i class="fas fa-spinner"></i>
+                </div>
+                <div class="stat-number" id="inprocess-reports">0</div>
+                <p class="stat-desc">Laporan dengan status IN PROCESS</p>
+            </div>
+            
+            <div class="card">
+                <div class="card-header">
+                    <h3>Perangkat Terbanyak</h3>
+                    <i class="fas fa-print"></i>
+                </div>
+                <div class="stat-number" id="top-device">-</div>
+                <p class="stat-desc">Jenis perangkat dengan laporan terbanyak</p>
+            </div>
+            
+            <!-- Kartu Teknisi Teraktif -->
+            <div class="card">
+                <div class="card-header">
+                    <h3>Teknisi Teraktif</h3>
+                    <i class="fas fa-user-cog"></i>
+                </div>
+                <div class="stat-number" id="top-technician">-</div>
+                <p class="stat-desc">Teknisi dengan penanganan terbanyak</p>
+                
+                <div class="technician-stats" id="technician-stats">
+                    <div class="no-data">
+                        <i class="fas fa-users"></i>
+                        <p style="margin-top: 10px;">Tidak ada data teknisi</p>
+                    </div>
+                </div>
+            </div>
+        </section>
+        
+        <section class="charts-container" id="charts-section" style="display: none;">
+            <div class="chart-card">
+                <h3><i class="fas fa-chart-pie"></i> Distribusi Status Laporan</h3>
+                <div class="chart-container">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3><i class="fas fa-chart-bar"></i> Laporan per Lokasi</h3>
+                <div class="chart-container">
+                    <canvas id="locationChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3><i class="fas fa-chart-line"></i> Tren Bulanan</h3>
+                <div class="chart-container">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <h3><i class="fas fa-user-cog"></i> Performa Teknisi</h3>
+                <div class="chart-container">
+                    <canvas id="technicianChart"></canvas>
+                </div>
+            </div>
+        </section>
+        
+        <section class="filters" id="filters-section" style="display: none;">
+            <div class="filter-group">
+                <label for="month-filter"><i class="fas fa-calendar"></i> Bulan</label>
+                <select id="month-filter">
+                    <option value="all">Semua Bulan</option>
+                    <option value="1">Januari</option>
+                    <option value="2">Februari</option>
+                    <option value="3">Maret</option>
+                    <option value="4">April</option>
+                    <option value="5">Mei</option>
+                    <option value="6">Juni</option>
+                    <option value="7">Juli</option>
+                    <option value="8">Agustus</option>
+                    <option value="9">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Desember</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="year-filter"><i class="fas fa-calendar-alt"></i> Tahun</label>
+                <select id="year-filter">
+                    <option value="all">Semua Tahun</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="status-filter"><i class="fas fa-tasks"></i> Status</label>
+                <select id="status-filter">
+                    <option value="all">Semua Status</option>
+                    <option value="COMPLETED">COMPLETED</option>
+                    <option value="IN PROCESS">IN PROCESS</option>
+                    <option value="OUT PROCESS">OUT PROCESS</option>
+                    <option value="RUSAK">RUSAK</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="location-filter"><i class="fas fa-map-marker-alt"></i> Lokasi</label>
+                <select id="location-filter">
+                    <option value="all">Semua Lokasi</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="technician-filter"><i class="fas fa-user-cog"></i> Teknisi</label>
+                <select id="technician-filter">
+                    <option value="all">Semua Teknisi</option>
+                </select>
+            </div>
+            
+            <div class="filter-group">
+                <label for="search-input"><i class="fas fa-search"></i> Cari</label>
+                <input type="text" id="search-input" placeholder="Cari berdasarkan perangkat, pelapor, masalah...">
+            </div>
+        </section>
+        
+        <section class="data-table-container" id="table-section" style="display: none;">
+            <div class="table-header">
+                <h3><i class="fas fa-table"></i> Data Laporan IT Maintenance</h3>
+                <div>
+                    <button class="upload-btn" onclick="exportToCSV()" style="padding: 8px 15px; font-size: 0.9rem;">
+                        <i class="fas fa-download"></i> Ekspor CSV
+                    </button>
+                </div>
+            </div>
+            
+            <div class="no-data" id="no-data-table">
+                <i class="fas fa-database"></i>
+                <h3>Tidak ada data untuk ditampilkan</h3>
+                <p>Unggah file CSV atau Excel untuk melihat data laporan</p>
+            </div>
+            
+            <div id="table-content" style="display: none;">
+                <table id="data-table">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Perangkat</th>
+                            <th>Lokasi</th>
+                            <th>Pelapor</th>
+                            <th>Teknisi</th>
+                            <th>Tanggal Lapor</th>
+                            <th>Masalah</th>
+                            <th>Tindakan</th>
+                            <th>Status</th>
+                        </tr>
+                    </thead>
+                    <tbody id="table-body">
+                        <!-- Data akan diisi oleh JavaScript -->
+                    </tbody>
+                </table>
+                
+                <div class="pagination" id="pagination">
+                    <!-- Pagination akan diisi oleh JavaScript -->
+                </div>
+            </div>
+        </section>
+        
+        <footer>
+            <p>IT Maintenance Support Dashboard &copy; 2025 | Dibuat dengan <i class="fas fa-heart" style="color: var(--accent);"></i> untuk monitoring laporan IT</p>
+            <p style="margin-top: 5px; font-size: 0.8rem;">Dashboard ini dapat memproses data dari file CSV/Excel dan menampilkan statistik interaktif</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Data variabel global
+        let allData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        const rowsPerPage = 15;
+        
+        // Chart instances
+        let statusChart = null;
+        let locationChart = null;
+        let monthlyChart = null;
+        let technicianChart = null;
+        
+        // Fungsi untuk menyembunyikan dashboard
+        function hideDashboard() {
+            document.getElementById('dashboard-stats').style.display = 'none';
+            document.getElementById('charts-section').style.display = 'none';
+            document.getElementById('filters-section').style.display = 'none';
+            document.getElementById('table-section').style.display = 'none';
+            document.getElementById('file-info').style.display = 'none';
+            document.getElementById('table-content').style.display = 'none';
+            document.getElementById('no-data-table').style.display = 'block';
+        }
+        
+        // Fungsi untuk menampilkan dashboard
+        function showDashboard() {
+            document.getElementById('dashboard-stats').style.display = 'grid';
+            document.getElementById('charts-section').style.display = 'grid';
+            document.getElementById('filters-section').style.display = 'flex';
+            document.getElementById('table-section').style.display = 'block';
+            document.getElementById('no-data-table').style.display = 'none';
+            document.getElementById('table-content').style.display = 'block';
+        }
+        
+        // Inisialisasi aplikasi
+        document.addEventListener('DOMContentLoaded', function() {
+            // Atur tanggal saat ini
+            const now = new Date();
+            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            document.getElementById('current-date').textContent = `${months[now.getMonth()]} ${now.getFullYear()}`;
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Sembunyikan dashboard di awal
+            hideDashboard();
+            
+            // Coba load contoh data dari file yang di-hardcode
+            // loadExampleData(); // Komentari ini jika ingin dashboard benar-benar kosong di awal
+        });
+        
+        function setupEventListeners() {
+            // File upload event
+            document.getElementById('file-input').addEventListener('change', handleFileUpload);
+            
+            // Drag and drop events
+            const uploadArea = document.getElementById('upload-area');
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--secondary)';
+                uploadArea.style.backgroundColor = 'rgba(52, 152, 219, 0.1)';
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = 'var(--light-gray)';
+                uploadArea.style.backgroundColor = 'white';
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--light-gray)';
+                uploadArea.style.backgroundColor = 'white';
+                
+                if (e.dataTransfer.files.length) {
+                    document.getElementById('file-input').files = e.dataTransfer.files;
+                    handleFileUpload();
+                }
+            });
+            
+            // Filter events
+            document.getElementById('month-filter').addEventListener('change', applyFilters);
+            document.getElementById('year-filter').addEventListener('change', applyFilters);
+            document.getElementById('status-filter').addEventListener('change', applyFilters);
+            document.getElementById('location-filter').addEventListener('change', applyFilters);
+            document.getElementById('technician-filter').addEventListener('change', applyFilters);
+            document.getElementById('search-input').addEventListener('input', applyFilters);
+        }
+        
+        function handleFileUpload() {
+            const fileInput = document.getElementById('file-input');
+            if (!fileInput.files.length) return;
+            
+            const file = fileInput.files[0];
+            const fileSize = (file.size / 1024).toFixed(2);
+            
+            // Update file info display
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-size').textContent = `${fileSize} KB`;
+            document.getElementById('file-info').style.display = 'block';
+            
+            // Parse file based on extension
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            
+            if (fileExtension === 'csv') {
+                parseCSVFile(file);
+            } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+                parseExcelFile(file);
+            } else {
+                alert('Format file tidak didukung. Harap unggah file CSV atau Excel.');
+            }
+        }
+        
+        function parseCSVFile(file) {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.data && results.data.length > 0) {
+                        processData(results.data);
+                    } else {
+                        alert('File CSV tidak berisi data yang valid.');
+                    }
+                },
+                error: function(error) {
+                    alert('Terjadi kesalahan saat memproses file CSV: ' + error.message);
+                }
+            });
+        }
+        
+        function parseExcelFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                // Ambil sheet pertama
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Konversi ke JSON
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                if (jsonData && jsonData.length > 0) {
+                    processData(jsonData);
+                } else {
+                    alert('File Excel tidak berisi data yang valid.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function processData(data) {
+            // Simpan data asli
+            allData = data;
+            
+            // Format data jika diperlukan
+            allData.forEach((item, index) => {
+                // Tambahkan ID jika tidak ada
+                if (!item.id) {
+                    item.id = index + 1;
+                }
+                
+                // Format tanggal jika dalam format Excel serial number
+                if (item['Tanggal Lapor'] && typeof item['Tanggal Lapor'] === 'number') {
+                    item['Tanggal Lapor'] = excelDateToJSDate(item['Tanggal Lapor']);
+                }
+                
+                // Gabungkan teknisi I dan II untuk analisis
+                if (item['Pelaksana I'] && item['Pelaksana II']) {
+                    item['Teknisi'] = `${item['Pelaksana I']}, ${item['Pelaksana II']}`;
+                } else if (item['Pelaksana I']) {
+                    item['Teknisi'] = item['Pelaksana I'];
+                } else if (item['Pelaksana II']) {
+                    item['Teknisi'] = item['Pelaksana II'];
+                } else {
+                    item['Teknisi'] = 'Tidak diketahui';
+                }
+            });
+            
+            // Update jumlah baris
+            document.getElementById('row-count').textContent = allData.length;
+            
+            // Tampilkan dashboard
+            showDashboard();
+            
+            // Update filter options
+            updateFilterOptions();
+            
+            // Terapkan filter awal
+            applyFilters();
+            
+            // Update dashboard stats
+            updateDashboardStats();
+            
+            // Update charts
+            updateCharts();
+        }
+        
+        function excelDateToJSDate(serial) {
+            // Konversi tanggal Excel ke format JavaScript Date
+            const utc_days = Math.floor(serial - 25569);
+            const utc_value = utc_days * 86400;
+            const date_info = new Date(utc_value * 1000);
+            
+            const day = date_info.getDate().toString().padStart(2, '0');
+            const month = (date_info.getMonth() + 1).toString().padStart(2, '0');
+            const year = date_info.getFullYear();
+            
+            return `${day}/${month}/${year}`;
+        }
+        
+        function updateFilterOptions() {
+            // Update tahun filter
+            const yearFilter = document.getElementById('year-filter');
+            yearFilter.innerHTML = '<option value="all">Semua Tahun</option>';
+            
+            const years = new Set();
+            allData.forEach(item => {
+                if (item['Tanggal Lapor']) {
+                    // Ekstrak tahun dari tanggal
+                    const dateParts = item['Tanggal Lapor'].toString().split('/');
+                    if (dateParts.length === 3) {
+                        years.add(dateParts[2]);
+                    }
+                }
+            });
+            
+            // Urutkan tahun dari yang terbaru
+            const sortedYears = Array.from(years).sort((a, b) => b - a);
+            sortedYears.forEach(year => {
+                const option = document.createElement('option');
+                option.value = year;
+                option.textContent = year;
+                yearFilter.appendChild(option);
+            });
+            
+            // Update lokasi filter
+            const locationFilter = document.getElementById('location-filter');
+            locationFilter.innerHTML = '<option value="all">Semua Lokasi</option>';
+            
+            const locations = new Set();
+            allData.forEach(item => {
+                if (item.LokasiRuangan) {
+                    locations.add(item.LokasiRuangan);
+                }
+            });
+            
+            // Urutkan lokasi
+            const sortedLocations = Array.from(locations).sort();
+            sortedLocations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location;
+                locationFilter.appendChild(option);
+            });
+            
+            // Update teknisi filter
+            const technicianFilter = document.getElementById('technician-filter');
+            technicianFilter.innerHTML = '<option value="all">Semua Teknisi</option>';
+            
+            const technicians = new Set();
+            allData.forEach(item => {
+                if (item['Pelaksana I']) {
+                    technicians.add(item['Pelaksana I']);
+                }
+                if (item['Pelaksana II']) {
+                    technicians.add(item['Pelaksana II']);
+                }
+            });
+            
+            // Urutkan teknisi
+            const sortedTechnicians = Array.from(technicians).sort();
+            sortedTechnicians.forEach(technician => {
+                const option = document.createElement('option');
+                option.value = technician;
+                option.textContent = technician;
+                technicianFilter.appendChild(option);
+            });
+        }
+        
+        function applyFilters() {
+            const monthFilter = document.getElementById('month-filter').value;
+            const yearFilter = document.getElementById('year-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+            const locationFilter = document.getElementById('location-filter').value;
+            const technicianFilter = document.getElementById('technician-filter').value;
+            const searchInput = document.getElementById('search-input').value.toLowerCase();
+            
+            // Filter data
+            filteredData = allData.filter(item => {
+                // Filter berdasarkan bulan
+                if (monthFilter !== 'all' && item['Tanggal Lapor']) {
+                    const dateParts = item['Tanggal Lapor'].toString().split('/');
+                    if (dateParts.length === 3) {
+                        const month = dateParts[1];
+                        if (parseInt(month) !== parseInt(monthFilter)) {
+                            return false;
+                        }
+                    }
+                }
+                
+                // Filter berdasarkan tahun
+                if (yearFilter !== 'all' && item['Tanggal Lapor']) {
+                    const dateParts = item['Tanggal Lapor'].toString().split('/');
+                    if (dateParts.length === 3) {
+                        const year = dateParts[2];
+                        if (year !== yearFilter) {
+                            return false;
+                        }
+                    }
+                }
+                
+                // Filter berdasarkan status
+                if (statusFilter !== 'all' && item['Status Akhir']) {
+                    if (item['Status Akhir'] !== statusFilter) {
+                        return false;
+                    }
+                }
+                
+                // Filter berdasarkan lokasi
+                if (locationFilter !== 'all' && item.LokasiRuangan) {
+                    if (item.LokasiRuangan !== locationFilter) {
+                        return false;
+                    }
+                }
+                
+                // Filter berdasarkan teknisi
+                if (technicianFilter !== 'all') {
+                    const hasTechnician = 
+                        (item['Pelaksana I'] && item['Pelaksana I'].includes(technicianFilter)) ||
+                        (item['Pelaksana II'] && item['Pelaksana II'].includes(technicianFilter));
+                    
+                    if (!hasTechnician) {
+                        return false;
+                    }
+                }
+                
+                // Filter berdasarkan pencarian
+                if (searchInput) {
+                    const searchableFields = [
+                        item['Nama AlatBarangPerangkat'] || '',
+                        item.LokasiRuangan || '',
+                        item.Pelapor || '',
+                        item['Pelaksana I'] || '',
+                        item['Pelaksana II'] || '',
+                        item.Permasalahan || '',
+                        item.Tindakan || ''
+                    ].join(' ').toLowerCase();
+                    
+                    if (!searchableFields.includes(searchInput)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            // Reset ke halaman pertama
+            currentPage = 1;
+            
+            // Update tampilan
+            updateDashboardStats();
+            updateTable();
+            updateCharts();
+            updatePagination();
+        }
+        
+        function updateDashboardStats() {
+            // Hitung total laporan
+            document.getElementById('total-reports').textContent = filteredData.length;
+            
+            // Hitung laporan selesai
+            const completed = filteredData.filter(item => item['Status Akhir'] === 'COMPLETED').length;
+            document.getElementById('completed-reports').textContent = completed;
+            
+            // Hitung laporan dalam proses
+            const inProcess = filteredData.filter(item => 
+                item['Status Akhir'] === 'IN PROCESS' || 
+                item['Status Awal'] === 'IN PROCESS'
+            ).length;
+            document.getElementById('inprocess-reports').textContent = inProcess;
+            
+            // Cari perangkat dengan laporan terbanyak
+            const deviceCounts = {};
+            filteredData.forEach(item => {
+                const device = item['Nama AlatBarangPerangkat'] || 'Tidak diketahui';
+                deviceCounts[device] = (deviceCounts[device] || 0) + 1;
+            });
+            
+            let topDevice = '-';
+            let maxCount = 0;
+            
+            for (const [device, count] of Object.entries(deviceCounts)) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    topDevice = device;
+                }
+            }
+            
+            // Potong teks jika terlalu panjang
+            if (topDevice.length > 15) {
+                topDevice = topDevice.substring(0, 15) + '...';
+            }
+            
+            document.getElementById('top-device').textContent = topDevice;
+            
+            // Update statistik teknisi
+            updateTechnicianStats();
+        }
+        
+        function updateTechnicianStats() {
+            // Hitung jumlah laporan per teknisi
+            const technicianCounts = {};
+            
+            filteredData.forEach(item => {
+                // Hitung teknisi I
+                if (item['Pelaksana I']) {
+                    technicianCounts[item['Pelaksana I']] = (technicianCounts[item['Pelaksana I']] || 0) + 1;
+                }
+                
+                // Hitung teknisi II (jika ada)
+                if (item['Pelaksana II']) {
+                    technicianCounts[item['Pelaksana II']] = (technicianCounts[item['Pelaksana II']] || 0) + 1;
+                }
+            });
+            
+            // Urutkan teknisi berdasarkan jumlah laporan
+            const sortedTechnicians = Object.entries(technicianCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5); // Ambil 5 teratas
+            
+            // Update kartu teknisi teraktif
+            const technicianStatsContainer = document.getElementById('technician-stats');
+            
+            if (sortedTechnicians.length === 0) {
+                technicianStatsContainer.innerHTML = `
+                    <div class="no-data">
+                        <i class="fas fa-users"></i>
+                        <p style="margin-top: 10px;">Tidak ada data teknisi</p>
+                    </div>
+                `;
+                document.getElementById('top-technician').textContent = '-';
+            } else {
+                // Tampilkan teknisi teratas di statistik utama
+                const topTech = sortedTechnicians[0];
+                document.getElementById('top-technician').textContent = topTech[0].length > 15 ? 
+                    topTech[0].substring(0, 15) + '...' : topTech[0];
+                
+                // Tampilkan daftar 5 teknisi teratas
+                let technicianHTML = '';
+                
+                sortedTechnicians.forEach(([technician, count], index) => {
+                    const rankClass = `rank-${index + 1}`;
+                    const rankBadge = index < 3 ? `<span class="rank-badge ${rankClass}">${index + 1}</span>` : `<span class="rank-badge">${index + 1}</span>`;
+                    
+                    technicianHTML += `
+                        <div class="technician-item">
+                            <div class="technician-name">
+                                ${rankBadge}
+                                <i class="fas fa-user-cog"></i>
+                                <span title="${technician}">${technician.length > 20 ? technician.substring(0, 20) + '...' : technician}</span>
+                            </div>
+                            <div class="technician-count">${count}</div>
+                        </div>
+                    `;
+                });
+                
+                technicianStatsContainer.innerHTML = technicianHTML;
+            }
+        }
+        
+        function updateTable() {
+            const tableBody = document.getElementById('table-body');
+            tableBody.innerHTML = '';
+            
+            // Hitung indeks untuk pagination
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, filteredData.length);
+            
+            // Tampilkan data untuk halaman saat ini
+            for (let i = startIndex; i < endIndex; i++) {
+                const item = filteredData[i];
+                const row = document.createElement('tr');
+                
+                // Tentukan kelas status
+                let statusClass = '';
+                let statusText = item['Status Akhir'] || item['Status Awal'] || 'Tidak diketahui';
+                
+                if (statusText.includes('COMPLETED')) {
+                    statusClass = 'status-completed';
+                } else if (statusText.includes('IN PROCESS')) {
+                    statusClass = 'status-inprocess';
+                } else if (statusText.includes('OUT PROCESS')) {
+                    statusClass = 'status-outprocess';
+                } else if (statusText.includes('RUSAK')) {
+                    statusClass = 'status-rusak';
+                }
+                
+                // Gabungkan teknisi I dan II untuk ditampilkan
+                let technicians = '';
+                if (item['Pelaksana I'] && item['Pelaksana II']) {
+                    technicians = `${item['Pelaksana I']}, ${item['Pelaksana II']}`;
+                } else if (item['Pelaksana I']) {
+                    technicians = item['Pelaksana I'];
+                } else if (item['Pelaksana II']) {
+                    technicians = item['Pelaksana II'];
+                } else {
+                    technicians = '-';
+                }
+                
+                row.innerHTML = `
+                    <td>${item.Nomor || item.id || i + 1}</td>
+                    <td>${item['Nama AlatBarangPerangkat'] || '-'}</td>
+                    <td>${item.LokasiRuangan || '-'}</td>
+                    <td>${item.Pelapor || '-'}</td>
+                    <td>${technicians}</td>
+                    <td>${item['Tanggal Lapor'] || '-'}</td>
+                    <td>${item.Permasalahan ? (item.Permasalahan.length > 50 ? item.Permasalahan.substring(0, 50) + '...' : item.Permasalahan) : '-'}</td>
+                    <td>${item.Tindakan ? (item.Tindakan.length > 50 ? item.Tindakan.substring(0, 50) + '...' : item.Tindakan) : '-'}</td>
+                    <td><span class="status ${statusClass}">${statusText}</span></td>
+                `;
+                
+                tableBody.appendChild(row);
+            }
+        }
+        
+        function updatePagination() {
+            const pagination = document.getElementById('pagination');
+            pagination.innerHTML = '';
+            
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            
+            if (totalPages <= 1) return;
+            
+            // Tombol sebelumnya
+            const prevButton = document.createElement('button');
+            prevButton.className = 'page-btn';
+            prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevButton.disabled = currentPage === 1;
+            prevButton.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateTable();
+                    updatePagination();
+                }
+            };
+            pagination.appendChild(prevButton);
+            
+            // Tampilkan halaman
+            for (let i = 1; i <= totalPages; i++) {
+                // Tampilkan hanya beberapa halaman di sekitar halaman saat ini
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    const pageButton = document.createElement('button');
+                    pageButton.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                    pageButton.textContent = i;
+                    pageButton.onclick = () => {
+                        currentPage = i;
+                        updateTable();
+                        updatePagination();
+                    };
+                    pagination.appendChild(pageButton);
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    // Tambahkan ellipsis
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.style.padding = '8px 5px';
+                    pagination.appendChild(ellipsis);
+                }
+            }
+            
+            // Tombol berikutnya
+            const nextButton = document.createElement('button');
+            nextButton.className = 'page-btn';
+            nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updateTable();
+                    updatePagination();
+                }
+            };
+            pagination.appendChild(nextButton);
+        }
+        
+        function updateCharts() {
+            // Siapkan data untuk chart
+            const statusData = getStatusData();
+            const locationData = getLocationData();
+            const monthlyData = getMonthlyData();
+            const technicianData = getTechnicianData();
+            
+            // Update atau buat chart status
+            updateStatusChart(statusData);
+            
+            // Update atau buat chart lokasi
+            updateLocationChart(locationData);
+            
+            // Update atau buat chart bulanan
+            updateMonthlyChart(monthlyData);
+            
+            // Update atau buat chart teknisi
+            updateTechnicianChart(technicianData);
+        }
+        
+        function getStatusData() {
+            const statusCounts = {
+                'COMPLETED': 0,
+                'IN PROCESS': 0,
+                'OUT PROCESS': 0,
+                'RUSAK': 0,
+                'LAINNYA': 0
+            };
+            
+            filteredData.forEach(item => {
+                const status = item['Status Akhir'] || item['Status Awal'] || '';
+                
+                if (status.includes('COMPLETED')) {
+                    statusCounts['COMPLETED']++;
+                } else if (status.includes('IN PROCESS')) {
+                    statusCounts['IN PROCESS']++;
+                } else if (status.includes('OUT PROCESS')) {
+                    statusCounts['OUT PROCESS']++;
+                } else if (status.includes('RUSAK')) {
+                    statusCounts['RUSAK']++;
+                } else if (status) {
+                    statusCounts['LAINNYA']++;
+                }
+            });
+            
+            return {
+                labels: Object.keys(statusCounts),
+                data: Object.values(statusCounts),
+                colors: ['#27ae60', '#f39c12', '#3498db', '#e74c3c', '#95a5a6']
+            };
+        }
+        
+        function getLocationData() {
+            const locationCounts = {};
+            
+            filteredData.forEach(item => {
+                const location = item.LokasiRuangan || 'Tidak diketahui';
+                locationCounts[location] = (locationCounts[location] || 0) + 1;
+            });
+            
+            // Urutkan berdasarkan jumlah, ambil 10 teratas
+            const sortedLocations = Object.entries(locationCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            return {
+                labels: sortedLocations.map(item => item[0]),
+                data: sortedLocations.map(item => item[1]),
+                colors: generateColors(sortedLocations.length)
+            };
+        }
+        
+        function getMonthlyData() {
+            const monthlyCounts = {};
+            
+            // Inisialisasi semua bulan dengan 0
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            monthNames.forEach(month => {
+                monthlyCounts[month] = 0;
+            });
+            
+            // Hitung berdasarkan data
+            filteredData.forEach(item => {
+                if (item['Tanggal Lapor']) {
+                    const dateParts = item['Tanggal Lapor'].toString().split('/');
+                    if (dateParts.length === 3) {
+                        const monthIndex = parseInt(dateParts[1]) - 1;
+                        if (monthIndex >= 0 && monthIndex < 12) {
+                            monthlyCounts[monthNames[monthIndex]]++;
+                        }
+                    }
+                }
+            });
+            
+            return {
+                labels: monthNames,
+                data: monthNames.map(month => monthlyCounts[month]),
+                colors: ['#3498db']
+            };
+        }
+        
+        function getTechnicianData() {
+            const technicianCounts = {};
+            
+            // Hitung jumlah laporan per teknisi
+            filteredData.forEach(item => {
+                // Hitung teknisi I
+                if (item['Pelaksana I']) {
+                    technicianCounts[item['Pelaksana I']] = (technicianCounts[item['Pelaksana I']] || 0) + 1;
+                }
+                
+                // Hitung teknisi II (jika ada)
+                if (item['Pelaksana II']) {
+                    technicianCounts[item['Pelaksana II']] = (technicianCounts[item['Pelaksana II']] || 0) + 1;
+                }
+            });
+            
+            // Urutkan berdasarkan jumlah, ambil 8 teratas
+            const sortedTechnicians = Object.entries(technicianCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+            
+            return {
+                labels: sortedTechnicians.map(item => item[0]),
+                data: sortedTechnicians.map(item => item[1]),
+                colors: generateColors(sortedTechnicians.length, true)
+            };
+        }
+        
+        function updateStatusChart(data) {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            
+            // Hancurkan chart sebelumnya jika ada
+            if (statusChart) {
+                statusChart.destroy();
+            }
+            
+            statusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: data.colors,
+                        borderWidth: 1,
+                        borderColor: '#fff'
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateLocationChart(data) {
+            const ctx = document.getElementById('locationChart').getContext('2d');
+            
+            // Hancurkan chart sebelumnya jika ada
+            if (locationChart) {
+                locationChart.destroy();
+            }
+            
+            locationChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Jumlah Laporan',
+                        data: data.data,
+                        backgroundColor: data.colors,
+                        borderColor: data.colors.map(color => color.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    indexAxis: 'y'
+                }
+            });
+        }
+        
+        function updateMonthlyChart(data) {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            
+            // Hancurkan chart sebelumnya jika ada
+            if (monthlyChart) {
+                monthlyChart.destroy();
+            }
+            
+            monthlyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Jumlah Laporan',
+                        data: data.data,
+                        backgroundColor: 'rgba(52, 152, 219, 0.1)',
+                        borderColor: data.colors[0],
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.3
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateTechnicianChart(data) {
+            const ctx = document.getElementById('technicianChart').getContext('2d');
+            
+            // Hancurkan chart sebelumnya jika ada
+            if (technicianChart) {
+                technicianChart.destroy();
+            }
+            
+            technicianChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Jumlah Laporan',
+                        data: data.data,
+                        backgroundColor: data.colors,
+                        borderColor: data.colors.map(color => color.replace('0.8', '1')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    return `${label}: ${value} laporan`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function generateColors(count, vibrant = false) {
+            const colors = [];
+            
+            if (vibrant) {
+                // Warna vibrant untuk teknisi
+                const vibrantPalette = [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                    '#9966FF', '#FF9F40', '#8AC926', '#1982C4'
+                ];
+                
+                for (let i = 0; i < count; i++) {
+                    colors.push(vibrantPalette[i % vibrantPalette.length]);
+                }
+            } else {
+                // Warna pastel untuk lokasi
+                const pastelPalette = [
+                    'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 
+                    'rgba(255, 206, 86, 0.8)', 'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)',
+                    'rgba(201, 203, 207, 0.8)', 'rgba(102, 204, 153, 0.8)',
+                    'rgba(204, 102, 153, 0.8)', 'rgba(102, 153, 204, 0.8)'
+                ];
+                
+                for (let i = 0; i < count; i++) {
+                    colors.push(pastelPalette[i % pastelPalette.length]);
+                }
+            }
+            
+            return colors;
+        }
+        
+        function exportToCSV() {
+            if (filteredData.length === 0) {
+                alert('Tidak ada data untuk diekspor.');
+                return;
+            }
+            
+            // Buat header CSV
+            const headers = Object.keys(filteredData[0]).filter(key => 
+                key !== 'Paraf Pelapor' && 
+                key !== 'Documentasi' && 
+                key !== 'UPDATE PDF' && 
+                key !== 'PRINT' && 
+                key !== 'MAP' && 
+                key !== 'Column1'
+            );
+            
+            // Buat baris CSV
+            const csvRows = [];
+            csvRows.push(headers.join(','));
+            
+            // Tambahkan data
+            filteredData.forEach(item => {
+                const row = headers.map(header => {
+                    const value = item[header] || '';
+                    // Escape nilai yang mengandung koma atau tanda kutip
+                    const escapedValue = String(value).replace(/"/g, '""');
+                    return `"${escapedValue}"`;
+                });
+                csvRows.push(row.join(','));
+            });
+            
+            // Buat file CSV
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            // Buat link download
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `laporan-it-maintenance-${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        function loadExampleData() {
+            // Contoh data untuk demonstrasi
+            const exampleData = [
+                {
+                    "Nomor": "213",
+                    "Nama AlatBarangPerangkat": "PESAWAT TELEPHONE",
+                    "LokasiRuangan": "POLI INTERNA",
+                    "Pelapor": "IBU AMARANTJE",
+                    "Pelaksana I": "JOSHUA REINER WALANDA",
+                    "Pelaksana II": "MUDIN , FILLO PRANOWO",
+                    "Tanggal Lapor": "12/12/2025",
+                    "Waktu Lapor": "00:00:00",
+                    "Status Awal": "OUT PROCESS",
+                    "Tanggal Respon": "12/13/2025",
+                    "Waktu Respon": "07:32:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "12/13/2025 8:27:00 AM",
+                    "Permasalahan": "SUARA KELUAR TIDAK TERDENGAR",
+                    "Tindakan": "GANTI PESAWAT TELEPHONE",
+                    "Keterangan Pelaksana": "Atas permintaan petugas, perbaikan setelah pelayanan"
+                },
+                {
+                    "Nomor": "161",
+                    "Nama AlatBarangPerangkat": "PRINTER EPSON L3210",
+                    "LokasiRuangan": "IBS-OK",
+                    "Pelapor": "IBU RANI",
+                    "Pelaksana I": "WANDER",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "9/12/2025",
+                    "Waktu Lapor": "09:54:31",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "9/12/2025",
+                    "Waktu Respon": "09:56:50",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "9/12/2025 10:10:40 AM",
+                    "Permasalahan": "Kertas tersangkut",
+                    "Tindakan": "Melakukan penarikan kertas",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "160",
+                    "Nama AlatBarangPerangkat": "TELPON PANASONIC",
+                    "LokasiRuangan": "LOKET PENDAFTARAN",
+                    "Pelapor": "IBU IDA",
+                    "Pelaksana I": "WANDER",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "9/10/2025",
+                    "Waktu Lapor": "09:41:32",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "9/10/2025",
+                    "Waktu Respon": "09:43:20",
+                    "Status Akhir": "IN PROCESS",
+                    "Time Progess": "9/10/2025 9:56:00 AM",
+                    "Permasalahan": "Kabel telpon",
+                    "Tindakan": "Melakukan pergantian kabel telpon",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "95",
+                    "Nama AlatBarangPerangkat": "KOMPUTER LENOVO",
+                    "LokasiRuangan": "KASIR IRD",
+                    "Pelapor": "PAK BENI",
+                    "Pelaksana I": "JOSHUA REINER WALANDA , FILLO PRANOWO",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "5/10/2025",
+                    "Waktu Lapor": "09:27:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/10/2025",
+                    "Waktu Respon": "09:30:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/10/2025 9:52:00 AM",
+                    "Permasalahan": "Komputer tidak bisa konek wifi",
+                    "Tindakan": "Setting komputer",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "94",
+                    "Nama AlatBarangPerangkat": "TELEPON PANASONIC",
+                    "LokasiRuangan": "LOBBY",
+                    "Pelapor": "FANY",
+                    "Pelaksana I": "WANDER",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "5/10/2025",
+                    "Waktu Lapor": "00:00:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/10/2025",
+                    "Waktu Respon": "00:00:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/10/2025 12:18:40 PM",
+                    "Permasalahan": "Tombol 8 dan 9 tidak berfungsi",
+                    "Tindakan": "Mengganti karet telepon",
+                    "Keterangan Pelaksana": "Baik"
+                },
+                {
+                    "Nomor": "93",
+                    "Nama AlatBarangPerangkat": "MONITOR DELL",
+                    "LokasiRuangan": "LABORATORIUM",
+                    "Pelapor": "IBU SARI",
+                    "Pelaksana I": "JOSHUA REINER WALANDA",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "5/9/2025",
+                    "Waktu Lapor": "14:30:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/9/2025",
+                    "Waktu Respon": "14:45:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/9/2025 15:30:00 PM",
+                    "Permasalahan": "Monitor tidak menyala",
+                    "Tindakan": "Ganti kabel power monitor",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "92",
+                    "Nama AlatBarangPerangkat": "KOMPUTER HP",
+                    "LokasiRuangan": "ADMINISTRASI",
+                    "Pelapor": "PAK ADI",
+                    "Pelaksana I": "MUDIN",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "5/8/2025",
+                    "Waktu Lapor": "10:15:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/8/2025",
+                    "Waktu Respon": "10:30:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/8/2025 11:45:00 AM",
+                    "Permasalahan": "Komputer lambat",
+                    "Tindakan": "Cleanup disk dan defragment",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "91",
+                    "Nama AlatBarangPerangkat": "PRINTER CANON",
+                    "LokasiRuangan": "KEUANGAN",
+                    "Pelapor": "IBU DEWI",
+                    "Pelaksana I": "FILLO PRANOWO",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "5/7/2025",
+                    "Waktu Lapor": "13:20:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/7/2025",
+                    "Waktu Respon": "13:45:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/7/2025 14:30:00 PM",
+                    "Permasalahan": "Printer macet",
+                    "Tindakan": "Bersihkan roller dan ganti cartridge",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "90",
+                    "Nama AlatBarangPerangkat": "SCANNER",
+                    "LokasiRuangan": "ARSIP",
+                    "Pelapor": "IBU LINA",
+                    "Pelaksana I": "JOSHUA REINER WALANDA",
+                    "Pelaksana II": "MUDIN",
+                    "Tanggal Lapor": "5/6/2025",
+                    "Waktu Lapor": "09:00:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/6/2025",
+                    "Waktu Respon": "09:15:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/6/2025 10:00:00 AM",
+                    "Permasalahan": "Scanner tidak terdeteksi",
+                    "Tindakan": "Install ulang driver scanner",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "89",
+                    "Nama AlatBarangPerangkat": "ROUTER CISCO",
+                    "LokasiRuangan": "IT ROOM",
+                    "Pelapor": "PAK BUDI",
+                    "Pelaksana I": "WANDER",
+                    "Pelaksana II": "FILLO PRANOWO",
+                    "Tanggal Lapor": "5/5/2025",
+                    "Waktu Lapor": "11:30:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/5/2025",
+                    "Waktu Respon": "11:45:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/5/2025 12:30:00 PM",
+                    "Permasalahan": "Koneksi wifi lemah",
+                    "Tindakan": "Reset dan konfigurasi ulang router",
+                    "Keterangan Pelaksana": "Selesai"
+                }
+            ];
+            
+            // Tampilkan contoh data
+            processData(exampleData);
+            
+            // Update file info display
+            document.getElementById('file-name').textContent = 'contoh-data-laporan.csv';
+            document.getElementById('file-size').textContent = '3.5 KB';
+            document.getElementById('file-info').style.display = 'block';
+            document.getElementById('row-count').textContent = exampleData.length;
+        }
+    </script>
+</body>
+</html>

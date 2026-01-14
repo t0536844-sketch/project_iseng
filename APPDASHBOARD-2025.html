@@ -1,0 +1,131 @@
+<!DOCTYPE html><html lang="id">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Dashboard Laporan Bulanan & Tahunan</title>
+<script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+<script src="https://cdn.jsdelivr.net/npm/chart.js@4.4.1/dist/chart.umd.min.js"></script>
+<style>
+body{font-family:Segoe UI,Arial;background:#f4f6f9;margin:0}
+header{background:linear-gradient(135deg,#1e3c72,#2a5298);color:#fff;padding:20px;text-align:center}
+.container{padding:20px}
+.card{background:#fff;border-radius:12px;box-shadow:0 4px 10px rgba(0,0,0,.08);padding:20px;margin-bottom:20px}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(200px,1fr));gap:16px}
+.stat{background:linear-gradient(135deg,#43cea2,#185a9d);color:#fff;border-radius:12px;padding:16px;text-align:center}
+.stat p{font-size:22px;font-weight:bold;margin:8px 0 0}
+table{width:100%;border-collapse:collapse}
+th,td{border:1px solid #ddd;padding:8px;text-align:center}
+th{background:#2a5298;color:#fff}
+select,button,input{padding:8px;border-radius:8px;margin:4px}
+</style>
+</head>
+<body>
+<header>
+<h1>Dashboard Laporan Bulanan & Tahunan</h1>
+<p>Upload CSV / Excel → otomatis dikonversi</p>
+</header><div class="container">
+<div class="card">
+<input type="file" id="fileInput" accept=".xlsx,.xls,.csv">
+</div><div class="grid">
+<div class="stat"><div>Total Data</div><p id="totalData">0</p></div>
+<div class="stat"><div>Total Nilai</div><p id="totalNilai">0</p></div>
+<div class="stat"><div>Rata-rata</div><p id="rataRata">0</p></div>
+<div class="stat"><div>Periode</div><p id="periode">-</p></div>
+</div><div class="card">
+<select id="bulanFilter"></select>
+<select id="tahunFilter"></select>
+<button onclick="exportExcel()">Export Excel</button>
+<button onclick="previewData()">Preview</button>
+</div><div class="card">
+<div style="max-height:350px;overflow:auto">
+<table id="dataTable"></table>
+</div>
+</div><div class="card">
+<canvas id="chart"></canvas>
+</div>
+</div><script>
+let rawData=[], chart;
+
+fileInput.onchange=e=>loadFile(e.target.files[0]);
+
+function loadFile(file){
+ const r=new FileReader();
+ r.onload=ev=>{
+  const wb=XLSX.read(ev.target.result,{type:'array'});
+  let data=XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]],{defval:''});
+  rawData=normalize(data);
+  initFilter();
+  applyFilter();
+ };
+ r.readAsArrayBuffer(file);
+}
+
+function normalize(data){
+ return data.map(r=>{
+  let Tahun='',Bulan='',Nilai=0;
+  Object.entries(r).forEach(([k,v])=>{
+   const key=k.toLowerCase();
+   if(key.includes('tahun')||key==='year') Tahun=v;
+   if(key.includes('bulan')||key==='month') Bulan=v;
+   if(!isNaN(v)&&Number(v)>Nilai) Nilai=Number(v);
+   if(!Tahun||!Bulan){
+    const d=new Date(v);
+    if(!isNaN(d)){
+     Tahun=Tahun||d.getFullYear();
+     Bulan=Bulan||d.toLocaleString('id-ID',{month:'long'});
+    }
+   }
+  });
+  return {Tahun,Bulan,Nilai};
+ });
+}
+
+function initFilter(){
+ bulanFilter.innerHTML='<option value="all">Semua Bulan</option>';
+ tahunFilter.innerHTML='<option value="all">Semua Tahun</option>';
+ [...new Set(rawData.map(d=>d.Bulan))].forEach(b=>bulanFilter.add(new Option(b,b)));
+ [...new Set(rawData.map(d=>d.Tahun))].forEach(t=>tahunFilter.add(new Option(t,t)));
+}
+
+function applyFilter(){
+ const b=bulanFilter.value,t=tahunFilter.value;
+ const f=rawData.filter(d=>(b==='all'||d.Bulan==b)&&(t==='all'||d.Tahun==t));
+ renderTable(f);renderStat(f);renderChart(f);
+ periode.innerText=(b==='all'?'Semua Bulan':b)+' '+(t==='all'?'':t);
+}
+
+bulanFilter.onchange=applyFilter; tahunFilter.onchange=applyFilter;
+
+function renderTable(d){
+ dataTable.innerHTML='<tr><th>Tahun</th><th>Bulan</th><th>Nilai</th></tr>'+
+ d.map(r=>`<tr><td>${r.Tahun}</td><td>${r.Bulan}</td><td>${r.Nilai}</td></tr>`).join('');
+}
+
+function renderStat(d){
+ const total=d.length,sum=d.reduce((a,b)=>a+b.Nilai,0);
+ totalData.innerText=total;
+ totalNilai.innerText=sum.toLocaleString();
+ rataRata.innerText=total?(sum/total).toFixed(2):0;
+}
+
+function renderChart(d){
+ if(chart) chart.destroy();
+ chart=new Chart(document.getElementById('chart'),{
+  type:'bar',
+  data:{labels:d.map(x=>x.Bulan+' '+x.Tahun),datasets:[{data:d.map(x=>x.Nilai)}]},
+  options:{plugins:{legend:{display:false}}}
+ });
+}
+
+function exportExcel(){
+ const ws=XLSX.utils.json_to_sheet(rawData);
+ const wb=XLSX.utils.book_new();
+ XLSX.utils.book_append_sheet(wb,ws,'Laporan');
+ XLSX.writeFile(wb,'laporan.xlsx');
+}
+
+function previewData(){
+ alert(JSON.stringify(rawData.slice(0,5),null,2));
+}
+</script></body>
+</html>

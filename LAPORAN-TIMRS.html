@@ -1,0 +1,2830 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Laporan IT Maintenance</title>
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Arial, sans-serif;
+        }
+
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            line-height: 1.6;
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1a237e 0%, #283593 100%);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 12px;
+            margin-bottom: 25px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .header h1 {
+            font-size: 28px;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .header h1 i {
+            font-size: 32px;
+        }
+
+        .year-display {
+            font-size: 18px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 8px 20px;
+            border-radius: 30px;
+            font-weight: 500;
+        }
+
+        /* Filter Section */
+        .filter-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+            gap: 20px;
+            align-items: end;
+        }
+
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+        }
+
+        .filter-group label {
+            margin-bottom: 8px;
+            font-weight: 600;
+            color: #444;
+            font-size: 14px;
+        }
+
+        select, input {
+            padding: 12px 15px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            font-size: 15px;
+            background: white;
+            transition: all 0.3s;
+        }
+
+        select:focus, input:focus {
+            outline: none;
+            border-color: #3949ab;
+            box-shadow: 0 0 0 3px rgba(57, 73, 171, 0.1);
+        }
+
+        .btn {
+            padding: 12px 24px;
+            border: none;
+            border-radius: 8px;
+            font-size: 15px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: linear-gradient(135deg, #3949ab 0%, #283593 100%);
+            color: white;
+        }
+
+        .btn-primary:hover {
+            background: linear-gradient(135deg, #283593 0%, #1a237e 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(57, 73, 171, 0.2);
+        }
+
+        .btn-success {
+            background: linear-gradient(135deg, #2e7d32 0%, #1b5e20 100%);
+            color: white;
+        }
+
+        .btn-success:hover {
+            background: linear-gradient(135deg, #1b5e20 0%, #0d4012 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(46, 125, 50, 0.2);
+        }
+
+        .btn-danger {
+            background: linear-gradient(135deg, #c62828 0%, #b71c1c 100%);
+            color: white;
+        }
+
+        .btn-danger:hover {
+            background: linear-gradient(135deg, #b71c1c 0%, #8e0000 100%);
+            transform: translateY(-2px);
+            box-shadow: 0 6px 12px rgba(198, 40, 40, 0.2);
+        }
+
+        /* Stats Cards */
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+            gap: 20px;
+            margin-bottom: 25px;
+        }
+
+        .stat-card {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            transition: transform 0.3s;
+        }
+
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+
+        .stat-icon {
+            width: 60px;
+            height: 60px;
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            color: white;
+        }
+
+        .stat-content h3 {
+            font-size: 32px;
+            font-weight: 700;
+            color: #1a237e;
+            margin-bottom: 5px;
+        }
+
+        .stat-content p {
+            color: #666;
+            font-size: 14px;
+            font-weight: 500;
+        }
+
+        /* Charts Section */
+        .charts-section {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 25px;
+        }
+
+        .chart-container {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .chart-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+
+        .chart-header h3 {
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+            width: 100%;
+        }
+
+        /* Data Table - MODIFIED FOR VERTICAL SCROLL */
+        .table-container {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+            margin-bottom: 25px;
+            display: flex;
+            flex-direction: column;
+            height: 600px;
+        }
+
+        .table-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 15px;
+            flex-shrink: 0;
+        }
+
+        .table-header h3 {
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+        }
+
+        .table-wrapper {
+            overflow-y: auto;
+            flex-grow: 1;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            min-width: 1000px;
+        }
+
+        th {
+            background: #f8f9fa;
+            padding: 16px 20px;
+            text-align: left;
+            font-weight: 600;
+            color: #444;
+            border-bottom: 2px solid #eee;
+            font-size: 14px;
+            position: sticky;
+            top: 0;
+            z-index: 10;
+        }
+
+        td {
+            padding: 14px 20px;
+            border-bottom: 1px solid #eee;
+            font-size: 14px;
+        }
+
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+
+        .status-badge {
+            padding: 6px 12px;
+            border-radius: 20px;
+            font-size: 12px;
+            font-weight: 600;
+            display: inline-block;
+        }
+
+        .status-completed {
+            background: #e8f5e9;
+            color: #2e7d32;
+        }
+
+        .status-inprocess {
+            background: #fff3e0;
+            color: #ef6c00;
+        }
+
+        .status-outprocess {
+            background: #fce4ec;
+            color: #c2185b;
+        }
+
+        .status-rusak {
+            background: #ffebee;
+            color: #c62828;
+        }
+
+        .action-buttons-cell {
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+        }
+
+        .btn-sm {
+            padding: 6px 12px;
+            font-size: 12px;
+            border-radius: 6px;
+            display: inline-flex;
+            align-items: center;
+            gap: 4px;
+        }
+
+        .btn-export {
+            background: linear-gradient(135deg, #1565c0 0%, #0d47a1 100%);
+            color: white;
+        }
+
+        .btn-export:hover {
+            background: linear-gradient(135deg, #0d47a1 0%, #08306b 100%);
+        }
+
+        .btn-pdf {
+            background: linear-gradient(135deg, #d32f2f 0%, #b71c1c 100%);
+            color: white;
+        }
+
+        .btn-pdf:hover {
+            background: linear-gradient(135deg, #b71c1c 0%, #8e0000 100%);
+        }
+
+        /* Upload Section */
+        .upload-section {
+            background: white;
+            border-radius: 12px;
+            padding: 25px;
+            margin-bottom: 25px;
+            box-shadow: 0 4px 12px rgba(0, 0, 0, 0.05);
+        }
+
+        .upload-header {
+            margin-bottom: 20px;
+        }
+
+        .upload-header h3 {
+            font-size: 18px;
+            color: #333;
+            font-weight: 600;
+            margin-bottom: 10px;
+        }
+
+        .upload-area {
+            border: 2px dashed #ddd;
+            border-radius: 8px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s;
+            margin-bottom: 20px;
+        }
+
+        .upload-area.dragover {
+            border-color: #3949ab;
+            background: rgba(57, 73, 171, 0.05);
+        }
+
+        .upload-icon {
+            font-size: 48px;
+            color: #3949ab;
+            margin-bottom: 15px;
+        }
+
+        .upload-text {
+            color: #666;
+            margin-bottom: 10px;
+        }
+
+        .file-input {
+            display: none;
+        }
+
+        .file-list {
+            display: none;
+            margin-top: 15px;
+        }
+
+        .file-item {
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            padding: 12px;
+            background: #f8f9fa;
+            border-radius: 6px;
+            margin-bottom: 8px;
+        }
+
+        /* Modal */
+        .modal {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0, 0, 0, 0.5);
+            z-index: 1000;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 12px;
+            width: 90%;
+            max-width: 500px;
+            max-height: 80vh;
+            overflow: auto;
+        }
+
+        .modal-header {
+            padding: 20px 25px;
+            border-bottom: 1px solid #eee;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+
+        .modal-body {
+            padding: 25px;
+        }
+
+        .close {
+            font-size: 24px;
+            cursor: pointer;
+            color: #666;
+        }
+
+        .action-buttons {
+            display: flex;
+            gap: 10px;
+            flex-wrap: wrap;
+            margin-top: 20px;
+        }
+
+        .pagination {
+            display: flex;
+            justify-content: center;
+            gap: 10px;
+            padding: 20px;
+            border-top: 1px solid #eee;
+            flex-shrink: 0;
+            background: white;
+        }
+
+        .page-btn {
+            padding: 8px 15px;
+            border: 1px solid #ddd;
+            border-radius: 6px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+
+        .page-btn.active {
+            background: #3949ab;
+            color: white;
+            border-color: #3949ab;
+        }
+
+        .page-btn:hover:not(.active) {
+            background: #f8f9fa;
+        }
+        
+        .page-btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+        
+        .notification {
+            position: fixed;
+            top: 20px;
+            right: 20px;
+            padding: 15px 25px;
+            border-radius: 8px;
+            background: white;
+            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            z-index: 1001;
+            transform: translateX(150%);
+            transition: transform 0.3s;
+        }
+        
+        .notification.show {
+            transform: translateX(0);
+        }
+        
+        .notification.success {
+            border-left: 4px solid #2e7d32;
+        }
+        
+        .notification.error {
+            border-left: 4px solid #c62828;
+        }
+        
+        .notification.info {
+            border-left: 4px solid #1565c0;
+        }
+        
+        .loading {
+            display: none;
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            background: rgba(0,0,0,0.7);
+            z-index: 1002;
+            align-items: center;
+            justify-content: center;
+        }
+        
+        .loading.show {
+            display: flex;
+        }
+        
+        .spinner {
+            width: 50px;
+            height: 50px;
+            border: 5px solid #f3f3f3;
+            border-top: 5px solid #3949ab;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        
+        .empty-state {
+            text-align: center;
+            padding: 40px 20px;
+            color: #666;
+        }
+        
+        .empty-state-icon {
+            font-size: 48px;
+            margin-bottom: 15px;
+            opacity: 0.5;
+        }
+        
+        /* Detail Modal */
+        .detail-modal {
+            max-width: 800px;
+        }
+        
+        .detail-section {
+            margin-bottom: 20px;
+            padding-bottom: 20px;
+            border-bottom: 1px solid #eee;
+        }
+        
+        .detail-section:last-child {
+            border-bottom: none;
+        }
+        
+        .detail-section h4 {
+            color: #3949ab;
+            margin-bottom: 10px;
+            font-size: 16px;
+        }
+        
+        .detail-row {
+            display: flex;
+            margin-bottom: 8px;
+        }
+        
+        .detail-label {
+            flex: 0 0 150px;
+            font-weight: 600;
+            color: #555;
+        }
+        
+        .detail-value {
+            flex: 1;
+            color: #333;
+        }
+        
+        .export-options {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            flex-wrap: wrap;
+        }
+        
+        .export-option-btn {
+            flex: 1;
+            min-width: 150px;
+            padding: 12px;
+            border: 1px solid #ddd;
+            border-radius: 8px;
+            background: white;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .export-option-btn:hover {
+            border-color: #3949ab;
+            background: #f8f9fa;
+        }
+        
+        .export-option-btn i {
+            font-size: 24px;
+        }
+
+        /* Responsive */
+        @media (max-width: 768px) {
+            .charts-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .header {
+                flex-direction: column;
+                gap: 15px;
+                text-align: center;
+            }
+            
+            .table-container {
+                height: 500px;
+            }
+            
+            .table-wrapper {
+                overflow-x: auto;
+            }
+            
+            table {
+                min-width: 700px;
+            }
+            
+            .filter-section {
+                grid-template-columns: 1fr;
+            }
+            
+            .action-buttons-cell {
+                flex-direction: column;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Loading Overlay -->
+    <div class="loading" id="loading">
+        <div class="spinner"></div>
+    </div>
+    
+    <!-- Notification -->
+    <div class="notification" id="notification"></div>
+    
+    <!-- Detail Modal -->
+    <div class="modal" id="detailModal">
+        <div class="modal-content detail-modal">
+            <div class="modal-header">
+                <h3>Detail Laporan IT Maintenance</h3>
+                <span class="close" onclick="closeDetailModal()">×</span>
+            </div>
+            <div class="modal-body">
+                <div id="detailContent"></div>
+                <div class="export-options">
+                    <button class="export-option-btn" onclick="exportSingleToPDF()">
+                        <span style="font-size: 24px;">📄</span>
+                        <span>Export PDF</span>
+                    </button>
+                    <button class="export-option-btn" onclick="exportSingleToExcel()">
+                        <span style="font-size: 24px;">📊</span>
+                        <span>Export Excel</span>
+                    </button>
+                    <button class="export-option-btn" onclick="exportSingleToWord()">
+                        <span style="font-size: 24px;">📝</span>
+                        <span>Export Word</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <!-- Export All Modal -->
+    <div class="modal" id="exportAllModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Export Semua Data</h3>
+                <span class="close" onclick="closeExportAllModal()">×</span>
+            </div>
+            <div class="modal-body">
+                <div class="export-options">
+                    <button class="export-option-btn" onclick="exportAllToExcel()">
+                        <span style="font-size: 24px;">📊</span>
+                        <span>Excel (All Data)</span>
+                    </button>
+                    <button class="export-option-btn" onclick="exportAllToPDF()">
+                        <span style="font-size: 24px;">📄</span>
+                        <span>PDF (All Data)</span>
+                    </button>
+                    <button class="export-option-btn" onclick="exportCurrentPageToExcel()">
+                        <span style="font-size: 24px;">📋</span>
+                        <span>Excel (Current Page)</span>
+                    </button>
+                    <button class="export-option-btn" onclick="exportCurrentPageToPDF()">
+                        <span style="font-size: 24px;">📃</span>
+                        <span>PDF (Current Page)</span>
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="container">
+        <!-- Header -->
+        <div class="header">
+            <h1>
+                <span>📊</span>
+                DASHBOARD LAPORAN IT MAINTENANCE
+            </h1>
+            <div class="year-display">
+                Tahun: <span id="currentYear">2025</span>
+            </div>
+        </div>
+
+        <!-- Filter Section -->
+        <div class="filter-section">
+            <div class="filter-group">
+                <label for="yearFilter">Tahun</label>
+                <select id="yearFilter">
+                    <option value="all">Semua Tahun</option>
+                    <option value="2025" selected>2025</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="monthFilter">Bulan</label>
+                <select id="monthFilter">
+                    <option value="all">Semua Bulan</option>
+                    <option value="1">Januari</option>
+                    <option value="2">Februari</option>
+                    <option value="3">Maret</option>
+                    <option value="4">April</option>
+                    <option value="5">Mei</option>
+                    <option value="6">Juni</option>
+                    <option value="7">Juli</option>
+                    <option value="8">Agustus</option>
+                    <option value="9">September</option>
+                    <option value="10">Oktober</option>
+                    <option value="11">November</option>
+                    <option value="12">Desember</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="locationFilter">Lokasi</label>
+                <select id="locationFilter">
+                    <option value="all">Semua Lokasi</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="statusFilter">Status</label>
+                <select id="statusFilter">
+                    <option value="all">Semua Status</option>
+                    <option value="COMPLETED">COMPLETED</option>
+                    <option value="IN PROCESS">IN PROCESS</option>
+                    <option value="OUT PROCESS">OUT PROCESS</option>
+                    <option value="RUSAK">RUSAK</option>
+                </select>
+            </div>
+            <div class="filter-group">
+                <label for="searchFilter">Cari (Nama Alat/Pelapor)</label>
+                <input type="text" id="searchFilter" placeholder="Masukkan kata kunci...">
+            </div>
+            <button class="btn btn-primary" onclick="applyFilters()">
+                🔍 Terapkan Filter
+            </button>
+            <button class="btn btn-danger" onclick="resetFilters()">
+                ↻ Reset Filter
+            </button>
+        </div>
+
+        <!-- Stats Cards -->
+        <div class="stats-container" id="statsContainer">
+            <!-- Stats will be populated by JavaScript -->
+        </div>
+
+        <!-- Charts Section -->
+        <div class="charts-section">
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Laporan per Bulan</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Status Laporan</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Lokasi dengan Laporan Terbanyak</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="locationChart"></canvas>
+                </div>
+            </div>
+            <div class="chart-container">
+                <div class="chart-header">
+                    <h3>Pelaksana Teraktif</h3>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="technicianChart"></canvas>
+                </div>
+            </div>
+        </div>
+
+        <!-- Data Table -->
+        <div class="table-container">
+            <div class="table-header">
+                <h3>Data Laporan IT Maintenance</h3>
+                <div class="action-buttons">
+                    <button class="btn btn-export" onclick="showExportAllModal()">
+                        📊 Export Semua Data
+                    </button>
+                    <button class="btn btn-primary" onclick="showUploadModal()">
+                        📁 Upload Data Baru
+                    </button>
+                    <button class="btn btn-success" onclick="refreshData()">
+                        🔄 Refresh Data
+                    </button>
+                </div>
+            </div>
+            
+            <!-- Tambahkan wrapper untuk scroll -->
+            <div class="table-wrapper">
+                <table id="dataTable">
+                    <thead>
+                        <tr>
+                            <th>No</th>
+                            <th>Tanggal Lapor</th>
+                            <th>Nama Alat</th>
+                            <th>Lokasi</th>
+                            <th>Pelapor</th>
+                            <th>Status</th>
+                            <th>Aksi</th>
+                        </tr>
+                    </thead>
+                    <tbody id="tableBody">
+                        <!-- Data will be populated by JavaScript -->
+                    </tbody>
+                </table>
+            </div>
+            
+            <!-- Pagination di bawah scroll -->
+            <div class="pagination" id="pagination">
+                <!-- Pagination will be generated by JavaScript -->
+            </div>
+        </div>
+
+        <!-- Upload Section -->
+        <div class="upload-section" id="uploadSection">
+            <div class="upload-header">
+                <h3>Upload Master Data</h3>
+                <p>Upload file CSV atau Excel dengan format yang sesuai untuk memperbarui data</p>
+            </div>
+            <div class="upload-area" id="uploadArea" 
+                 ondragover="handleDragOver(event)" 
+                 ondragleave="handleDragLeave(event)" 
+                 ondrop="handleDrop(event)">
+                <div class="upload-icon">📁</div>
+                <div class="upload-text">Drag & drop file di sini atau klik untuk memilih</div>
+                <input type="file" id="fileInput" class="file-input" accept=".csv,.xlsx,.xls" onchange="handleFileSelect(event)">
+                <button class="btn btn-primary" onclick="document.getElementById('fileInput').click()">
+                    Pilih File
+                </button>
+                <p style="margin-top: 15px; font-size: 12px; color: #888;">
+                    Format yang didukung: CSV, XLSX, XLS
+                </p>
+            </div>
+            <div class="file-list" id="fileList"></div>
+            <div class="action-buttons">
+                <button class="btn btn-success" onclick="uploadData()" id="uploadBtn" disabled>
+                    ⬆️ Upload Data
+                </button>
+                <button class="btn" onclick="downloadTemplate()">
+                    📋 Download Template
+                </button>
+                <button class="btn btn-danger" onclick="clearAllData()">
+                    🗑️ Hapus Semua Data
+                </button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Upload Modal -->
+    <div class="modal" id="uploadModal">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h3>Upload Data Baru</h3>
+                <span class="close" onclick="closeUploadModal()">×</span>
+            </div>
+            <div class="modal-body">
+                <p>Pilih file CSV atau Excel untuk diupload:</p>
+                <div class="upload-area" style="margin: 20px 0;" 
+                     ondragover="handleDragOver(event)" 
+                     ondragleave="handleDragLeave(event)" 
+                     ondrop="handleDrop(event, true)">
+                    <div class="upload-icon">📁</div>
+                    <div class="upload-text">Drag & drop file di sini</div>
+                    <input type="file" id="modalFileInput" class="file-input" accept=".csv,.xlsx,.xls" onchange="handleFileSelect(event, true)">
+                    <button class="btn btn-primary" onclick="document.getElementById('modalFileInput').click()">
+                        Pilih File
+                    </button>
+                </div>
+                <div id="modalFileList"></div>
+                <div class="action-buttons" style="margin-top: 20px;">
+                    <button class="btn btn-success" onclick="processUpload()" id="modalUploadBtn" disabled>
+                        Proses Upload
+                    </button>
+                    <button class="btn" onclick="closeUploadModal()">
+                        Batal
+                    </button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        // Data storage
+        let allData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        const itemsPerPage = 20;
+        let currentFile = null;
+        let charts = {};
+        let currentDetailItem = null;
+
+        // Initialize application
+        document.addEventListener('DOMContentLoaded', function() {
+            loadDataFromStorage();
+            initializeFilters();
+            renderDashboard();
+            updateCurrentYear();
+        });
+
+        function updateCurrentYear() {
+            document.getElementById('currentYear').textContent = new Date().getFullYear();
+        }
+
+        function loadDataFromStorage() {
+            // Try to load from localStorage first
+            const savedData = localStorage.getItem('itMaintenanceData');
+            if (savedData) {
+                try {
+                    allData = JSON.parse(savedData);
+                    console.log('Data loaded from storage:', allData.length, 'records');
+                } catch (e) {
+                    console.error('Error loading data from storage:', e);
+                    allData = [];
+                }
+            }
+            
+            // If no data in storage, parse from CSV
+            if (allData.length === 0) {
+                parseCSVData();
+            }
+            
+            filteredData = [...allData];
+        }
+
+        function saveDataToStorage() {
+            try {
+                localStorage.setItem('itMaintenanceData', JSON.stringify(allData));
+                console.log('Data saved to storage:', allData.length, 'records');
+            } catch (e) {
+                console.error('Error saving data to storage:', e);
+            }
+        }
+
+        function parseCSVData() {
+            // Sample data
+            const sampleData = [
+                {
+                    id: 1,
+                    nomor: "52",
+                    namaAlat: "SCANNER EPSON",
+                    lokasi: "BPJS",
+                    pelapor: "KAK MOI",
+                    pelaksana1: "MUDIN",
+                    pelaksana2: "JOSHUA REINER WALANDA , WANDER",
+                    tanggalLapor: "3/12/2025",
+                    waktuLapor: "12:40:00 PM",
+                    statusAwal: "IN PROCESS",
+                    tanggalRespon: "3/12/2025",
+                    waktuRespon: "12:47:00 PM",
+                    statusAkhir: "COMPLETED",
+                    timeProgress: "3/12/2025 1:11:00 PM",
+                    permasalahan: "Scanner tidak bisa digunakan",
+                    tindakan: "Instal driver scanner epson ds360w",
+                    keterangan: "Selesai",
+                    bulan: 3,
+                    tahun: 2025,
+                    bulanTahun: "3/2025",
+                    pelaksanaGabungan: "MUDIN JOSHUA REINER WALANDA , WANDER",
+                    parafPelapor: "https://www.appsheet.com/image/getimageurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=Salinan%20IT%20MAINTENACE%20SUPPORT_Images%2F52.Paraf%20Pelapor.232112.png",
+                    dokumentasi: "https://www.appsheet.com/image/getimageurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=Salinan%20IT%20MAINTENACE%20SUPPORT_Images%2F52.Documentasi.232112.jpg",
+                    updatePDF: "5d94f5f8",
+                    print: "https://www.appsheet.com/template/gettablefileurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=%2Fappsheet%2Fdata%2FT1MRSSMARTSUPPORT-2025-312609867%2FCETAK%20LAPHAR%2FSCANNER%20EPSON-f9e91f01.pdf",
+                    map: "50.000000, 50.000000"
+                },
+                {
+                    id: 2,
+                    nomor: "171",
+                    namaAlat: "Iphone",
+                    lokasi: "POLI UMUM",
+                    pelapor: "dr Heri",
+                    pelaksana1: "MUDIN , WANDER , FILLO PRANOWO",
+                    pelaksana2: "MUDIN , WANDER , FILLO PRANOWO",
+                    tanggalLapor: "10/13/2025",
+                    waktuLapor: "12:00:00 AM",
+                    statusAwal: "IN PROCESS",
+                    tanggalRespon: "10/13/2025",
+                    waktuRespon: "9:20:00 AM",
+                    statusAkhir: "COMPLETED",
+                    timeProgress: "10/13/2025 9:50:05 AM",
+                    permasalahan: "Gangguan kabel dan penggantian roset",
+                    tindakan: "Sudah di lakukan penggantian kabel dan perbaikan jalur",
+                    keterangan: "Sudah terkendali",
+                    bulan: 10,
+                    tahun: 2025,
+                    bulanTahun: "10/2025",
+                    pelaksanaGabungan: "MUDIN , WANDER , FILLO PRANOWO MUDIN , WANDER , FILLO PRANOWO",
+                    parafPelapor: "https://www.appsheet.com/image/getimageurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=Salinan%20IT%20MAINTENACE%20SUPPORT_Images%2F171.Paraf%20Pelapor.005141.png",
+                    dokumentasi: "https://www.appsheet.com/image/getimageurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=Salinan%20IT%20MAINTENACE%20SUPPORT_Images%2F171.Documentasi.005514.jpg",
+                    updatePDF: "c1a0ec03",
+                    print: "https://www.appsheet.com/template/gettablefileurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=%2Fappsheet%2Fdata%2FT1MRSSMARTSUPPORT-2025-312609867%2FCETAK%20LAPHAR%2FIphone-ceaeb0a0.pdf",
+                    map: "50.000000, 50.000000"
+                },
+                {
+                    id: 3,
+                    nomor: "149",
+                    namaAlat: "TELPON PANASONIC",
+                    lokasi: "RECEPTIONIST",
+                    pelapor: "IBU LISBETH",
+                    pelaksana1: "JOSHUA REINER WALANDA",
+                    pelaksana2: "",
+                    tanggalLapor: "8/11/2025",
+                    waktuLapor: "8:24:00 AM",
+                    statusAwal: "IN PROCESS",
+                    tanggalRespon: "8/11/2025",
+                    waktuRespon: "8:24:00 AM",
+                    statusAkhir: "COMPLETED",
+                    timeProgress: "8/11/2025 8:50:00 AM",
+                    permasalahan: "Tidak ada suara telpon masuk",
+                    tindakan: "Service telpon",
+                    keterangan: "Selesai",
+                    bulan: 8,
+                    tahun: 2025,
+                    bulanTahun: "8/2025",
+                    pelaksanaGabungan: "JOSHUA REINER WALANDA",
+                    parafPelapor: "https://www.appsheet.com/image/getimageurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=Salinan%20IT%20MAINTENACE%20SUPPORT_Images%2F149.Paraf%20Pelapor.044019.png",
+                    dokumentasi: "https://www.appsheet.com/image/getimageurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=Salinan%20IT%20MAINTENACE%20SUPPORT_Images%2F149.Documentasi.044019.jpg",
+                    updatePDF: "48e8e7de",
+                    print: "https://www.appsheet.com/template/gettablefileurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=%2Fappsheet%2Fdata%2FT1MRSSMARTSUPPORT-2025-312609867%2FCETAK%20LAPHAR%2FTELPON%20PANASONIC-3a0424d6.pdf",
+                    map: "50.000000, 50.000000"
+                },
+                {
+                    id: 4,
+                    nomor: "150",
+                    namaAlat: "PRINTER EPSON L3110",
+                    lokasi: "KEPEGAWAIAN",
+                    pelapor: "IBU EVI",
+                    pelaksana1: "JOSHUA REINER WALANDA , WANDER",
+                    pelaksana2: "",
+                    tanggalLapor: "8/11/2025",
+                    waktuLapor: "8:44:00 AM",
+                    statusAwal: "IN PROCESS",
+                    tanggalRespon: "8/11/2025",
+                    waktuRespon: "8:50:00 AM",
+                    statusAkhir: "COMPLETED",
+                    timeProgress: "8/11/2025 9:26:00 AM",
+                    permasalahan: "Hasil print bergaris",
+                    tindakan: "Maintenance printer",
+                    keterangan: "Selesai",
+                    bulan: 8,
+                    tahun: 2025,
+                    bulanTahun: "8/2025",
+                    pelaksanaGabungan: "JOSHUA REINER WALANDA , WANDER",
+                    parafPelapor: "https://www.appsheet.com/image/getimageurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=Salinan%20IT%20MAINTENACE%20SUPPORT_Images%2F150.Paraf%20Pelapor.044306.png",
+                    dokumentasi: "https://www.appsheet.com/image/getimageurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=Salinan%20IT%20MAINTENACE%20SUPPORT_Images%2F150.Documentasi.044306.jpg",
+                    updatePDF: "befc53d0",
+                    print: "https://www.appsheet.com/template/gettablefileurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=%2Fappsheet%2Fdata%2FT1MRSSMARTSUPPORT-2025-312609867%2FCETAK%20LAPHAR%2FPRINTER%20EPSON%20L3110-9c7fb7e5.pdf",
+                    map: "50.000000, 50.000000"
+                },
+                {
+                    id: 5,
+                    nomor: "152",
+                    namaAlat: "PRINTER EPSON L3110",
+                    lokasi: "BPJS",
+                    pelapor: "IBU LINDA",
+                    pelaksana1: "JOSHUA REINER WALANDA , MUDIN",
+                    pelaksana2: "",
+                    tanggalLapor: "8/11/2025",
+                    waktuLapor: "10:58:00 AM",
+                    statusAwal: "IN PROCESS",
+                    tanggalRespon: "8/11/2025",
+                    waktuRespon: "12:00:00 AM",
+                    statusAkhir: "COMPLETED",
+                    timeProgress: "8/11/2025 12:18:00 PM",
+                    permasalahan: "Hasil print bergaris",
+                    tindakan: "Service printer",
+                    keterangan: "Selesai",
+                    bulan: 8,
+                    tahun: 2025,
+                    bulanTahun: "8/2025",
+                    pelaksanaGabungan: "JOSHUA REINER WALANDA , MUDIN",
+                    parafPelapor: "https://www.appsheet.com/image/getimageurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=Salinan%20IT%20MAINTENACE%20SUPPORT_Images%2F152.Paraf%20Pelapor.044838.png",
+                    dokumentasi: "https://www.appsheet.com/image/getimageurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=Salinan%20IT%20MAINTENACE%20SUPPORT_Images%2F152.Documentasi.044838.jpg",
+                    updatePDF: "b6f2a439",
+                    print: "https://www.appsheet.com/template/gettablefileurl?appName=T1MRSSMARTSUPPORT-2025-312609867&tableName=Salinan%20IT%20MAINTENACE%20SUPPORT&fileName=%2Fappsheet%2Fdata%2FT1MRSSMARTSUPPORT-2025-312609867%2FCETAK%20LAPHAR%2FPRINTER%20EPSON%20L3110-bbd77f24.pdf",
+                    map: "50.000000, 50.000000"
+                }
+            ];
+
+            allData = sampleData;
+            filteredData = [...allData];
+            saveDataToStorage();
+        }
+
+        function initializeFilters() {
+            // Populate location filter
+            const locations = [...new Set(allData.map(item => item.lokasi).filter(Boolean))];
+            const locationFilter = document.getElementById('locationFilter');
+            locationFilter.innerHTML = '<option value="all">Semua Lokasi</option>';
+            locations.forEach(location => {
+                const option = document.createElement('option');
+                option.value = location;
+                option.textContent = location;
+                locationFilter.appendChild(option);
+            });
+
+            // Populate year filter
+            const years = [...new Set(allData.map(item => item.tahun).filter(Boolean))];
+            const yearFilter = document.getElementById('yearFilter');
+            years.sort().reverse().forEach(year => {
+                if (![...yearFilter.options].some(opt => opt.value === year.toString())) {
+                    const option = document.createElement('option');
+                    option.value = year;
+                    option.textContent = year;
+                    yearFilter.appendChild(option);
+                }
+            });
+        }
+
+        function renderDashboard() {
+            showLoading();
+            setTimeout(() => {
+                updateStats();
+                updateCharts();
+                renderTable();
+                hideLoading();
+            }, 100);
+        }
+
+        function applyFilters() {
+            const yearFilter = document.getElementById('yearFilter').value;
+            const monthFilter = document.getElementById('monthFilter').value;
+            const locationFilter = document.getElementById('locationFilter').value;
+            const statusFilter = document.getElementById('statusFilter').value;
+            const searchFilter = document.getElementById('searchFilter').value.toLowerCase();
+
+            filteredData = allData.filter(item => {
+                // Year filter
+                if (yearFilter !== 'all' && item.tahun !== parseInt(yearFilter)) {
+                    return false;
+                }
+
+                // Month filter
+                if (monthFilter !== 'all' && item.bulan !== parseInt(monthFilter)) {
+                    return false;
+                }
+
+                // Location filter
+                if (locationFilter !== 'all' && item.lokasi !== locationFilter) {
+                    return false;
+                }
+
+                // Status filter
+                if (statusFilter !== 'all' && item.statusAkhir !== statusFilter) {
+                    return false;
+                }
+
+                // Search filter
+                if (searchFilter && 
+                    !item.namaAlat.toLowerCase().includes(searchFilter) && 
+                    !item.pelapor.toLowerCase().includes(searchFilter) &&
+                    !item.lokasi.toLowerCase().includes(searchFilter) &&
+                    !item.permasalahan.toLowerCase().includes(searchFilter) &&
+                    !item.tindakan.toLowerCase().includes(searchFilter)) {
+                    return false;
+                }
+
+                return true;
+            });
+
+            currentPage = 1;
+            renderDashboard();
+        }
+
+        function resetFilters() {
+            document.getElementById('yearFilter').value = 'all';
+            document.getElementById('monthFilter').value = 'all';
+            document.getElementById('locationFilter').value = 'all';
+            document.getElementById('statusFilter').value = 'all';
+            document.getElementById('searchFilter').value = '';
+            
+            filteredData = [...allData];
+            currentPage = 1;
+            renderDashboard();
+        }
+
+        function updateStats() {
+            const statsContainer = document.getElementById('statsContainer');
+            
+            const totalLaporan = filteredData.length;
+            const completed = filteredData.filter(item => item.statusAkhir === 'COMPLETED').length;
+            const inProcess = filteredData.filter(item => item.statusAkhir === 'IN PROCESS').length;
+            const outProcess = filteredData.filter(item => item.statusAkhir === 'OUT PROCESS').length;
+            const rusak = filteredData.filter(item => item.statusAkhir === 'RUSAK').length;
+            
+            // Calculate completion rate
+            const completionRate = totalLaporan > 0 ? Math.round((completed / totalLaporan) * 100) : 0;
+
+            const stats = [
+                {
+                    icon: '📋',
+                    color: '#3949ab',
+                    value: totalLaporan.toLocaleString(),
+                    label: 'Total Laporan'
+                },
+                {
+                    icon: '✅',
+                    color: '#2e7d32',
+                    value: completed.toLocaleString(),
+                    label: 'Selesai'
+                },
+                {
+                    icon: '⏳',
+                    color: '#ef6c00',
+                    value: inProcess.toLocaleString(),
+                    label: 'Dalam Proses'
+                },
+                {
+                    icon: '📊',
+                    color: '#1565c0',
+                    value: completionRate + '%',
+                    label: 'Tingkat Penyelesaian'
+                }
+            ];
+
+            statsContainer.innerHTML = stats.map(stat => `
+                <div class="stat-card">
+                    <div class="stat-icon" style="background: ${stat.color}">
+                        ${stat.icon}
+                    </div>
+                    <div class="stat-content">
+                        <h3>${stat.value}</h3>
+                        <p>${stat.label}</p>
+                    </div>
+                </div>
+            `).join('');
+        }
+
+        function updateCharts() {
+            // Destroy existing charts
+            Object.values(charts).forEach(chart => {
+                if (chart) chart.destroy();
+            });
+            charts = {};
+
+            // Monthly Chart
+            const monthlyData = {};
+            const months = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            
+            // Initialize all months
+            months.forEach((month, index) => {
+                monthlyData[index + 1] = 0;
+            });
+            
+            // Count reports per month
+            filteredData.forEach(item => {
+                if (item.bulan) {
+                    monthlyData[item.bulan] = (monthlyData[item.bulan] || 0) + 1;
+                }
+            });
+
+            const monthlyCtx = document.getElementById('monthlyChart').getContext('2d');
+            charts.monthly = new Chart(monthlyCtx, {
+                type: 'line',
+                data: {
+                    labels: months,
+                    datasets: [{
+                        label: 'Jumlah Laporan',
+                        data: Object.values(monthlyData),
+                        backgroundColor: 'rgba(57, 73, 171, 0.1)',
+                        borderColor: 'rgba(57, 73, 171, 1)',
+                        borderWidth: 2,
+                        fill: true,
+                        tension: 0.4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Jumlah Laporan'
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Bulan'
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: true,
+                            position: 'top'
+                        }
+                    }
+                }
+            });
+
+            // Status Chart
+            const statusCounts = {};
+            filteredData.forEach(item => {
+                const status = item.statusAkhir || 'Unknown';
+                statusCounts[status] = (statusCounts[status] || 0) + 1;
+            });
+
+            const statusCtx = document.getElementById('statusChart').getContext('2d');
+            charts.status = new Chart(statusCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: Object.keys(statusCounts),
+                    datasets: [{
+                        data: Object.values(statusCounts),
+                        backgroundColor: [
+                            'rgba(46, 125, 50, 0.7)',   // COMPLETED - green
+                            'rgba(239, 108, 0, 0.7)',   // IN PROCESS - orange
+                            'rgba(194, 24, 91, 0.7)',   // OUT PROCESS - pink
+                            'rgba(198, 40, 40, 0.7)',   // RUSAK - red
+                            'rgba(97, 97, 97, 0.7)'     // Unknown - gray
+                        ],
+                        borderColor: [
+                            'rgba(46, 125, 50, 1)',
+                            'rgba(239, 108, 0, 1)',
+                            'rgba(194, 24, 91, 1)',
+                            'rgba(198, 40, 40, 1)',
+                            'rgba(97, 97, 97, 1)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'bottom'
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Location Chart (Top 10)
+            const locationCounts = {};
+            filteredData.forEach(item => {
+                const location = item.lokasi || 'Unknown';
+                locationCounts[location] = (locationCounts[location] || 0) + 1;
+            });
+
+            const sortedLocations = Object.entries(locationCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+
+            const locationCtx = document.getElementById('locationChart').getContext('2d');
+            charts.location = new Chart(locationCtx, {
+                type: 'bar',
+                data: {
+                    labels: sortedLocations.map(item => item[0]),
+                    datasets: [{
+                        label: 'Jumlah Laporan',
+                        data: sortedLocations.map(item => item[1]),
+                        backgroundColor: 'rgba(21, 101, 192, 0.7)',
+                        borderColor: 'rgba(21, 101, 192, 1)',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Jumlah Laporan'
+                            },
+                            ticks: {
+                                stepSize: 1
+                            }
+                        }
+                    }
+                }
+            });
+
+            // Technician Chart
+            const technicianCounts = {};
+            filteredData.forEach(item => {
+                const tech1 = item.pelaksana1 || '';
+                const tech2 = item.pelaksana2 || '';
+                
+                const techs = [...tech1.split(','), ...tech2.split(',')]
+                    .map(t => t.trim())
+                    .filter(t => t && t !== '');
+                
+                techs.forEach(tech => {
+                    technicianCounts[tech] = (technicianCounts[tech] || 0) + 1;
+                });
+            });
+
+            const sortedTechnicians = Object.entries(technicianCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+
+            const technicianCtx = document.getElementById('technicianChart').getContext('2d');
+            charts.technician = new Chart(technicianCtx, {
+                type: 'polarArea',
+                data: {
+                    labels: sortedTechnicians.map(item => item[0]),
+                    datasets: [{
+                        data: sortedTechnicians.map(item => item[1]),
+                        backgroundColor: [
+                            'rgba(57, 73, 171, 0.7)',
+                            'rgba(103, 58, 183, 0.7)',
+                            'rgba(156, 39, 176, 0.7)',
+                            'rgba(233, 30, 99, 0.7)',
+                            'rgba(244, 67, 54, 0.7)',
+                            'rgba(255, 152, 0, 0.7)',
+                            'rgba(255, 193, 7, 0.7)',
+                            'rgba(76, 175, 80, 0.7)'
+                        ],
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right'
+                        }
+                    }
+                }
+            });
+        }
+
+        function renderTable() {
+            const tableBody = document.getElementById('tableBody');
+            const pagination = document.getElementById('pagination');
+            
+            if (filteredData.length === 0) {
+                tableBody.innerHTML = `
+                    <tr>
+                        <td colspan="7">
+                            <div class="empty-state">
+                                <div class="empty-state-icon">📭</div>
+                                <h3>Tidak ada data ditemukan</h3>
+                                <p>Ubah filter Anda atau upload data baru</p>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+                pagination.style.display = 'none';
+                return;
+            }
+            
+            // Calculate pagination
+            const totalPages = Math.ceil(filteredData.length / itemsPerPage);
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+            
+            // Render table rows
+            tableBody.innerHTML = pageData.map((item, index) => {
+                const rowNumber = startIndex + index + 1;
+                let statusClass = 'status-completed';
+                if (item.statusAkhir === 'IN PROCESS') statusClass = 'status-inprocess';
+                if (item.statusAkhir === 'OUT PROCESS') statusClass = 'status-outprocess';
+                if (item.statusAkhir === 'RUSAK') statusClass = 'status-rusak';
+                
+                // Truncate long text
+                const truncateText = (text, maxLength = 30) => {
+                    if (!text) return '';
+                    if (text.length > maxLength) {
+                        return text.substring(0, maxLength) + '...';
+                    }
+                    return text;
+                };
+                
+                return `
+                    <tr>
+                        <td>${rowNumber}</td>
+                        <td>${item.tanggalLapor || ''}</td>
+                        <td>${truncateText(item.namaAlat, 25)}</td>
+                        <td>${item.lokasi || ''}</td>
+                        <td>${truncateText(item.pelapor, 20)}</td>
+                        <td>
+                            <span class="status-badge ${statusClass}">
+                                ${item.statusAkhir || 'Unknown'}
+                            </span>
+                        </td>
+                        <td>
+                            <div class="action-buttons-cell">
+                                <button class="btn btn-sm btn-primary" onclick="showDetail(${item.id})" title="Lihat Detail">
+                                    👁️ Detail
+                                </button>
+                                <button class="btn btn-sm btn-export" onclick="exportSingleToPDF(${item.id})" title="Export PDF">
+                                    📄 PDF
+                                </button>
+                                <button class="btn btn-sm btn-success" onclick="exportSingleToExcel(${item.id})" title="Export Excel">
+                                    📊 Excel
+                                </button>
+                            </div>
+                        </td>
+                    </tr>
+                `;
+            }).join('');
+            
+            // Render pagination
+            if (totalPages > 1) {
+                let paginationHTML = '';
+                
+                // Previous button
+                paginationHTML += `
+                    <button class="page-btn" ${currentPage === 1 ? 'disabled' : ''} 
+                            onclick="changePage(${currentPage - 1})">
+                        ←
+                    </button>
+                `;
+                
+                // Page numbers
+                for (let i = 1; i <= totalPages; i++) {
+                    if (i === 1 || i === totalPages || (i >= currentPage - 2 && i <= currentPage + 2)) {
+                        paginationHTML += `
+                            <button class="page-btn ${i === currentPage ? 'active' : ''}" 
+                                    onclick="changePage(${i})">
+                                ${i}
+                            </button>
+                        `;
+                    } else if (i === currentPage - 3 || i === currentPage + 3) {
+                        paginationHTML += `<span class="page-btn">...</span>`;
+                    }
+                }
+                
+                // Next button
+                paginationHTML += `
+                    <button class="page-btn" ${currentPage === totalPages ? 'disabled' : ''} 
+                            onclick="changePage(${currentPage + 1})">
+                        →
+                    </button>
+                `;
+                
+                pagination.innerHTML = paginationHTML;
+                pagination.style.display = 'flex';
+            } else {
+                pagination.style.display = 'none';
+            }
+        }
+
+        function changePage(page) {
+            currentPage = page;
+            renderTable();
+            
+            // Scroll to top of table wrapper
+            document.querySelector('.table-wrapper').scrollTop = 0;
+        }
+
+        function showDetail(itemId) {
+            const item = allData.find(d => d.id === itemId);
+            if (!item) {
+                showNotification('Data tidak ditemukan', 'error');
+                return;
+            }
+            
+            currentDetailItem = item;
+            
+            const detailContent = document.getElementById('detailContent');
+            detailContent.innerHTML = `
+                <div class="detail-section">
+                    <h4>Informasi Laporan</h4>
+                    <div class="detail-row">
+                        <div class="detail-label">Nomor Laporan:</div>
+                        <div class="detail-value">${item.nomor || '-'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Nama Alat:</div>
+                        <div class="detail-value">${item.namaAlat || '-'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Lokasi:</div>
+                        <div class="detail-value">${item.lokasi || '-'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Pelapor:</div>
+                        <div class="detail-value">${item.pelapor || '-'}</div>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h4>Timeline</h4>
+                    <div class="detail-row">
+                        <div class="detail-label">Tanggal Lapor:</div>
+                        <div class="detail-value">${item.tanggalLapor || '-'} ${item.waktuLapor || ''}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Tanggal Respon:</div>
+                        <div class="detail-value">${item.tanggalRespon || '-'} ${item.waktuRespon || ''}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Status Awal:</div>
+                        <div class="detail-value">${item.statusAwal || '-'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Status Akhir:</div>
+                        <div class="detail-value">${item.statusAkhir || '-'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Time Progress:</div>
+                        <div class="detail-value">${item.timeProgress || '-'}</div>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h4>Tim Teknis</h4>
+                    <div class="detail-row">
+                        <div class="detail-label">Pelaksana I:</div>
+                        <div class="detail-value">${item.pelaksana1 || '-'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Pelaksana II:</div>
+                        <div class="detail-value">${item.pelaksana2 || '-'}</div>
+                    </div>
+                </div>
+                
+                <div class="detail-section">
+                    <h4>Detail Permasalahan & Tindakan</h4>
+                    <div class="detail-row">
+                        <div class="detail-label">Permasalahan:</div>
+                        <div class="detail-value">${item.permasalahan || '-'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Tindakan:</div>
+                        <div class="detail-value">${item.tindakan || '-'}</div>
+                    </div>
+                    <div class="detail-row">
+                        <div class="detail-label">Keterangan:</div>
+                        <div class="detail-value">${item.keterangan || '-'}</div>
+                    </div>
+                </div>
+                
+                ${item.print ? `
+                <div class="detail-section">
+                    <h4>Dokumen</h4>
+                    <div class="detail-row">
+                        <div class="detail-label">Laporan PDF:</div>
+                        <div class="detail-value">
+                            <a href="${item.print}" target="_blank" class="btn btn-sm btn-export">
+                                📄 Lihat Laporan PDF
+                            </a>
+                        </div>
+                    </div>
+                    ${item.parafPelapor ? `
+                    <div class="detail-row">
+                        <div class="detail-label">Paraf Pelapor:</div>
+                        <div class="detail-value">
+                            <a href="${item.parafPelapor}" target="_blank" class="btn btn-sm btn-primary">
+                                📋 Lihat Paraf
+                            </a>
+                        </div>
+                    </div>
+                    ` : ''}
+                    ${item.dokumentasi ? `
+                    <div class="detail-row">
+                        <div class="detail-label">Dokumentasi:</div>
+                        <div class="detail-value">
+                            <a href="${item.dokumentasi}" target="_blank" class="btn btn-sm btn-success">
+                                📷 Lihat Dokumentasi
+                            </a>
+                        </div>
+                    </div>
+                    ` : ''}
+                </div>
+                ` : ''}
+            `;
+            
+            document.getElementById('detailModal').style.display = 'flex';
+        }
+
+        function closeDetailModal() {
+            document.getElementById('detailModal').style.display = 'none';
+            currentDetailItem = null;
+        }
+
+        function showExportAllModal() {
+            document.getElementById('exportAllModal').style.display = 'flex';
+        }
+
+        function closeExportAllModal() {
+            document.getElementById('exportAllModal').style.display = 'none';
+        }
+
+        // EXPORT FUNCTIONS
+        function exportSingleToPDF(itemId = null) {
+            const item = itemId ? allData.find(d => d.id === itemId) : currentDetailItem;
+            if (!item) {
+                showNotification('Data tidak ditemukan', 'error');
+                return;
+            }
+            
+            try {
+                showLoading();
+                
+                // Create PDF document
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF();
+                
+                // Add header
+                doc.setFontSize(20);
+                doc.text('LAPORAN IT MAINTENANCE', 105, 20, { align: 'center' });
+                
+                doc.setFontSize(12);
+                doc.text(`Nomor Laporan: ${item.nomor || '-'}`, 20, 35);
+                doc.text(`Tanggal: ${new Date().toLocaleDateString('id-ID')}`, 20, 42);
+                
+                // Add content
+                let yPos = 60;
+                
+                // Information Section
+                doc.setFontSize(14);
+                doc.text('INFORMASI LAPORAN', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(11);
+                doc.text(`Nama Alat: ${item.namaAlat || '-'}`, 20, yPos);
+                yPos += 7;
+                doc.text(`Lokasi: ${item.lokasi || '-'}`, 20, yPos);
+                yPos += 7;
+                doc.text(`Pelapor: ${item.pelapor || '-'}`, 20, yPos);
+                yPos += 10;
+                
+                // Timeline Section
+                doc.setFontSize(14);
+                doc.text('TIMELINE', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(11);
+                doc.text(`Tanggal Lapor: ${item.tanggalLapor || '-'} ${item.waktuLapor || ''}`, 20, yPos);
+                yPos += 7;
+                doc.text(`Tanggal Respon: ${item.tanggalRespon || '-'} ${item.waktuRespon || ''}`, 20, yPos);
+                yPos += 7;
+                doc.text(`Status Awal: ${item.statusAwal || '-'}`, 20, yPos);
+                yPos += 7;
+                doc.text(`Status Akhir: ${item.statusAkhir || '-'}`, 20, yPos);
+                yPos += 7;
+                doc.text(`Time Progress: ${item.timeProgress || '-'}`, 20, yPos);
+                yPos += 10;
+                
+                // Technical Team
+                doc.setFontSize(14);
+                doc.text('TIM TEKNIS', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(11);
+                doc.text(`Pelaksana I: ${item.pelaksana1 || '-'}`, 20, yPos);
+                yPos += 7;
+                doc.text(`Pelaksana II: ${item.pelaksana2 || '-'}`, 20, yPos);
+                yPos += 10;
+                
+                // Problem & Solution
+                doc.setFontSize(14);
+                doc.text('DETAIL PERMASALAHAN & TINDAKAN', 20, yPos);
+                yPos += 10;
+                
+                doc.setFontSize(11);
+                const problem = doc.splitTextToSize(`Permasalahan: ${item.permasalahan || '-'}`, 170);
+                doc.text(problem, 20, yPos);
+                yPos += (problem.length * 7);
+                
+                const action = doc.splitTextToSize(`Tindakan: ${item.tindakan || '-'}`, 170);
+                doc.text(action, 20, yPos);
+                yPos += (action.length * 7);
+                
+                const notes = doc.splitTextToSize(`Keterangan: ${item.keterangan || '-'}`, 170);
+                doc.text(notes, 20, yPos);
+                
+                // Add footer
+                const pageHeight = doc.internal.pageSize.height;
+                doc.setFontSize(10);
+                doc.text(`Dokumen ini dicetak pada: ${new Date().toLocaleString('id-ID')}`, 20, pageHeight - 20);
+                doc.text('Rumah Sakit - IT Maintenance System', 105, pageHeight - 20, { align: 'center' });
+                doc.text(`Halaman 1/1`, 180, pageHeight - 20, { align: 'right' });
+                
+                // Save PDF
+                const filename = `Laporan_IT_${item.nomor || item.id}_${new Date().getTime()}.pdf`;
+                doc.save(filename);
+                
+                showNotification(`Laporan ${item.nomor || item.id} berhasil diexport ke PDF`, 'success');
+                
+            } catch (error) {
+                console.error('PDF Export Error:', error);
+                showNotification('Gagal membuat PDF', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function exportSingleToExcel(itemId = null) {
+            const item = itemId ? allData.find(d => d.id === itemId) : currentDetailItem;
+            if (!item) {
+                showNotification('Data tidak ditemukan', 'error');
+                return;
+            }
+            
+            try {
+                // Prepare data for export
+                const exportData = [{
+                    'Nomor Laporan': item.nomor || '',
+                    'Nama Alat': item.namaAlat || '',
+                    'Lokasi': item.lokasi || '',
+                    'Pelapor': item.pelapor || '',
+                    'Pelaksana I': item.pelaksana1 || '',
+                    'Pelaksana II': item.pelaksana2 || '',
+                    'Tanggal Lapor': item.tanggalLapor || '',
+                    'Waktu Lapor': item.waktuLapor || '',
+                    'Status Awal': item.statusAwal || '',
+                    'Tanggal Respon': item.tanggalRespon || '',
+                    'Waktu Respon': item.waktuRespon || '',
+                    'Status Akhir': item.statusAkhir || '',
+                    'Time Progress': item.timeProgress || '',
+                    'Permasalahan': item.permasalahan || '',
+                    'Tindakan': item.tindakan || '',
+                    'Keterangan': item.keterangan || '',
+                    'Bulan': item.bulan || '',
+                    'Tahun': item.tahun || ''
+                }];
+                
+                // Create worksheet
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                
+                // Set column widths
+                const wscols = [
+                    {wch: 15},  // Nomor Laporan
+                    {wch: 25},  // Nama Alat
+                    {wch: 20},  // Lokasi
+                    {wch: 20},  // Pelapor
+                    {wch: 25},  // Pelaksana I
+                    {wch: 25},  // Pelaksana II
+                    {wch: 15},  // Tanggal Lapor
+                    {wch: 15},  // Waktu Lapor
+                    {wch: 15},  // Status Awal
+                    {wch: 15},  // Tanggal Respon
+                    {wch: 15},  // Waktu Respon
+                    {wch: 15},  // Status Akhir
+                    {wch: 20},  // Time Progress
+                    {wch: 40},  // Permasalahan
+                    {wch: 40},  // Tindakan
+                    {wch: 30},  // Keterangan
+                    {wch: 8},   // Bulan
+                    {wch: 8}    // Tahun
+                ];
+                ws['!cols'] = wscols;
+                
+                // Create workbook
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Laporan Detail");
+                
+                // Generate filename
+                const filename = `Laporan_IT_${item.nomor || item.id}_${new Date().getTime()}.xlsx`;
+                
+                // Save file
+                XLSX.writeFile(wb, filename);
+                
+                showNotification(`Laporan ${item.nomor || item.id} berhasil diexport ke Excel`, 'success');
+                
+            } catch (error) {
+                console.error('Excel Export Error:', error);
+                showNotification('Gagal membuat Excel', 'error');
+            }
+        }
+
+        function exportSingleToWord() {
+            const item = currentDetailItem;
+            if (!item) {
+                showNotification('Data tidak ditemukan', 'error');
+                return;
+            }
+            
+            try {
+                showLoading();
+                
+                // Create HTML content for Word
+                const htmlContent = `
+                    <!DOCTYPE html>
+                    <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Laporan IT Maintenance</title>
+                        <style>
+                            body { font-family: Arial, sans-serif; margin: 40px; }
+                            h1 { color: #1a237e; text-align: center; }
+                            .header { margin-bottom: 30px; }
+                            .section { margin-bottom: 20px; }
+                            .section h2 { color: #3949ab; border-bottom: 2px solid #3949ab; padding-bottom: 5px; }
+                            .row { display: flex; margin-bottom: 5px; }
+                            .label { font-weight: bold; width: 200px; }
+                            .value { flex: 1; }
+                            .footer { margin-top: 40px; text-align: center; color: #666; font-size: 12px; }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="header">
+                            <h1>LAPORAN IT MAINTENANCE</h1>
+                            <p style="text-align: center;">Nomor Laporan: ${item.nomor || '-'}</p>
+                            <p style="text-align: center;">Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}</p>
+                        </div>
+                        
+                        <div class="section">
+                            <h2>INFORMASI LAPORAN</h2>
+                            <div class="row">
+                                <div class="label">Nama Alat:</div>
+                                <div class="value">${item.namaAlat || '-'}</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">Lokasi:</div>
+                                <div class="value">${item.lokasi || '-'}</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">Pelapor:</div>
+                                <div class="value">${item.pelapor || '-'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="section">
+                            <h2>TIMELINE</h2>
+                            <div class="row">
+                                <div class="label">Tanggal Lapor:</div>
+                                <div class="value">${item.tanggalLapor || '-'} ${item.waktuLapor || ''}</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">Tanggal Respon:</div>
+                                <div class="value">${item.tanggalRespon || '-'} ${item.waktuRespon || ''}</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">Status Awal:</div>
+                                <div class="value">${item.statusAwal || '-'}</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">Status Akhir:</div>
+                                <div class="value">${item.statusAkhir || '-'}</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">Time Progress:</div>
+                                <div class="value">${item.timeProgress || '-'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="section">
+                            <h2>TIM TEKNIS</h2>
+                            <div class="row">
+                                <div class="label">Pelaksana I:</div>
+                                <div class="value">${item.pelaksana1 || '-'}</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">Pelaksana II:</div>
+                                <div class="value">${item.pelaksana2 || '-'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="section">
+                            <h2>DETAIL PERMASALAHAN & TINDAKAN</h2>
+                            <div class="row">
+                                <div class="label">Permasalahan:</div>
+                                <div class="value">${item.permasalahan || '-'}</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">Tindakan:</div>
+                                <div class="value">${item.tindakan || '-'}</div>
+                            </div>
+                            <div class="row">
+                                <div class="label">Keterangan:</div>
+                                <div class="value">${item.keterangan || '-'}</div>
+                            </div>
+                        </div>
+                        
+                        <div class="footer">
+                            <p>Dokumen ini dicetak pada: ${new Date().toLocaleString('id-ID')}</p>
+                            <p>Rumah Sakit - IT Maintenance System</p>
+                        </div>
+                    </body>
+                    </html>
+                `;
+                
+                // Create Blob and download
+                const blob = new Blob([htmlContent], { type: 'application/msword' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.href = url;
+                a.download = `Laporan_IT_${item.nomor || item.id}_${new Date().getTime()}.doc`;
+                document.body.appendChild(a);
+                a.click();
+                document.body.removeChild(a);
+                URL.revokeObjectURL(url);
+                
+                showNotification(`Laporan ${item.nomor || item.id} berhasil diexport ke Word`, 'success');
+                
+            } catch (error) {
+                console.error('Word Export Error:', error);
+                showNotification('Gagal membuat dokumen Word', 'error');
+            } finally {
+                hideLoading();
+            }
+        }
+
+        function exportAllToExcel() {
+            if (filteredData.length === 0) {
+                showNotification('Tidak ada data untuk diekspor', 'error');
+                return;
+            }
+
+            try {
+                showLoading();
+                
+                // Prepare data for export
+                const exportData = filteredData.map(item => ({
+                    'No': item.id,
+                    'Nomor': item.nomor,
+                    'Tanggal Lapor': item.tanggalLapor,
+                    'Waktu Lapor': item.waktuLapor,
+                    'Nama Alat': item.namaAlat,
+                    'Lokasi': item.lokasi,
+                    'Pelapor': item.pelapor,
+                    'Pelaksana 1': item.pelaksana1,
+                    'Pelaksana 2': item.pelaksana2,
+                    'Status Awal': item.statusAwal,
+                    'Tanggal Respon': item.tanggalRespon,
+                    'Waktu Respon': item.waktuRespon,
+                    'Status Akhir': item.statusAkhir,
+                    'Time Progress': item.timeProgress,
+                    'Permasalahan': item.permasalahan,
+                    'Tindakan': item.tindakan,
+                    'Keterangan': item.keterangan,
+                    'Bulan': item.bulan,
+                    'Tahun': item.tahun
+                }));
+                
+                // Create worksheet
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                
+                // Auto-size columns
+                const wscols = [
+                    {wch: 5},   // No
+                    {wch: 8},   // Nomor
+                    {wch: 12},  // Tanggal Lapor
+                    {wch: 12},  // Waktu Lapor
+                    {wch: 25},  // Nama Alat
+                    {wch: 15},  // Lokasi
+                    {wch: 20},  // Pelapor
+                    {wch: 20},  // Pelaksana 1
+                    {wch: 20},  // Pelaksana 2
+                    {wch: 15},  // Status Awal
+                    {wch: 12},  // Tanggal Respon
+                    {wch: 12},  // Waktu Respon
+                    {wch: 15},  // Status Akhir
+                    {wch: 20},  // Time Progress
+                    {wch: 40},  // Permasalahan
+                    {wch: 40},  // Tindakan
+                    {wch: 30},  // Keterangan
+                    {wch: 8},   // Bulan
+                    {wch: 8}    // Tahun
+                ];
+                ws['!cols'] = wscols;
+                
+                // Create workbook
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Laporan IT Maintenance");
+                
+                // Generate filename
+                const date = new Date();
+                const filename = `Laporan_IT_Maintenance_All_${date.getFullYear()}_${String(date.getMonth() + 1).padStart(2, '0')}_${String(date.getDate()).padStart(2, '0')}.xlsx`;
+                
+                // Save file
+                XLSX.writeFile(wb, filename);
+                
+                showNotification(`Semua data (${filteredData.length} records) berhasil diekspor`, 'success');
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                showNotification('Terjadi kesalahan saat mengekspor data', 'error');
+            } finally {
+                hideLoading();
+                closeExportAllModal();
+            }
+        }
+
+        function exportAllToPDF() {
+            if (filteredData.length === 0) {
+                showNotification('Tidak ada data untuk diekspor', 'error');
+                return;
+            }
+
+            try {
+                showLoading();
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('landscape');
+                
+                // Add header
+                doc.setFontSize(20);
+                doc.text('LAPORAN IT MAINTENANCE - SEMUA DATA', 148, 20, { align: 'center' });
+                
+                doc.setFontSize(12);
+                doc.text(`Jumlah Data: ${filteredData.length}`, 20, 35);
+                doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 20, 42);
+                
+                // Prepare table data
+                const tableData = filteredData.map(item => [
+                    item.id,
+                    item.nomor || '',
+                    item.tanggalLapor || '',
+                    item.namaAlat || '',
+                    item.lokasi || '',
+                    item.pelapor || '',
+                    item.statusAkhir || ''
+                ]);
+                
+                // Create table
+                doc.autoTable({
+                    head: [['No', 'Nomor', 'Tanggal', 'Nama Alat', 'Lokasi', 'Pelapor', 'Status']],
+                    body: tableData,
+                    startY: 50,
+                    theme: 'grid',
+                    headStyles: { fillColor: [57, 73, 171] },
+                    styles: { fontSize: 9 },
+                    columnStyles: {
+                        0: { cellWidth: 10 },
+                        1: { cellWidth: 15 },
+                        2: { cellWidth: 20 },
+                        3: { cellWidth: 40 },
+                        4: { cellWidth: 30 },
+                        5: { cellWidth: 30 },
+                        6: { cellWidth: 20 }
+                    }
+                });
+                
+                // Add footer
+                const pageCount = doc.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(10);
+                    doc.text(`Halaman ${i} dari ${pageCount}`, 280, 200, { align: 'right' });
+                    doc.text('Rumah Sakit - IT Maintenance System', 148, 200, { align: 'center' });
+                }
+                
+                // Save PDF
+                const filename = `Laporan_IT_Maintenance_All_${new Date().getTime()}.pdf`;
+                doc.save(filename);
+                
+                showNotification(`Semua data berhasil diekspor ke PDF`, 'success');
+                
+            } catch (error) {
+                console.error('PDF Export Error:', error);
+                showNotification('Gagal membuat PDF', 'error');
+            } finally {
+                hideLoading();
+                closeExportAllModal();
+            }
+        }
+
+        function exportCurrentPageToExcel() {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+            
+            if (pageData.length === 0) {
+                showNotification('Tidak ada data untuk diekspor', 'error');
+                return;
+            }
+
+            try {
+                showLoading();
+                
+                // Prepare data for export
+                const exportData = pageData.map(item => ({
+                    'No': item.id,
+                    'Nomor': item.nomor,
+                    'Tanggal Lapor': item.tanggalLapor,
+                    'Nama Alat': item.namaAlat,
+                    'Lokasi': item.lokasi,
+                    'Pelapor': item.pelapor,
+                    'Status': item.statusAkhir,
+                    'Permasalahan': item.permasalahan,
+                    'Tindakan': item.tindakan
+                }));
+                
+                // Create worksheet
+                const ws = XLSX.utils.json_to_sheet(exportData);
+                
+                // Auto-size columns
+                const wscols = [
+                    {wch: 5},   // No
+                    {wch: 8},   // Nomor
+                    {wch: 12},  // Tanggal Lapor
+                    {wch: 25},  // Nama Alat
+                    {wch: 15},  // Lokasi
+                    {wch: 20},  // Pelapor
+                    {wch: 15},  // Status
+                    {wch: 40},  // Permasalahan
+                    {wch: 40}   // Tindakan
+                ];
+                ws['!cols'] = wscols;
+                
+                // Create workbook
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, `Halaman ${currentPage}`);
+                
+                // Generate filename
+                const filename = `Laporan_IT_Halaman_${currentPage}_${new Date().getTime()}.xlsx`;
+                
+                // Save file
+                XLSX.writeFile(wb, filename);
+                
+                showNotification(`Data halaman ${currentPage} berhasil diekspor`, 'success');
+                
+            } catch (error) {
+                console.error('Export error:', error);
+                showNotification('Terjadi kesalahan saat mengekspor data', 'error');
+            } finally {
+                hideLoading();
+                closeExportAllModal();
+            }
+        }
+
+        function exportCurrentPageToPDF() {
+            const startIndex = (currentPage - 1) * itemsPerPage;
+            const endIndex = Math.min(startIndex + itemsPerPage, filteredData.length);
+            const pageData = filteredData.slice(startIndex, endIndex);
+            
+            if (pageData.length === 0) {
+                showNotification('Tidak ada data untuk diekspor', 'error');
+                return;
+            }
+
+            try {
+                showLoading();
+                
+                const { jsPDF } = window.jspdf;
+                const doc = new jsPDF('landscape');
+                
+                // Add header
+                doc.setFontSize(20);
+                doc.text(`LAPORAN IT MAINTENANCE - HALAMAN ${currentPage}`, 148, 20, { align: 'center' });
+                
+                doc.setFontSize(12);
+                doc.text(`Jumlah Data: ${pageData.length}`, 20, 35);
+                doc.text(`Tanggal Cetak: ${new Date().toLocaleDateString('id-ID')}`, 20, 42);
+                
+                // Prepare table data
+                const tableData = pageData.map((item, index) => [
+                    startIndex + index + 1,
+                    item.nomor || '',
+                    item.tanggalLapor || '',
+                    item.namaAlat || '',
+                    item.lokasi || '',
+                    item.pelapor || '',
+                    item.statusAkhir || ''
+                ]);
+                
+                // Create table
+                doc.autoTable({
+                    head: [['No', 'Nomor', 'Tanggal', 'Nama Alat', 'Lokasi', 'Pelapor', 'Status']],
+                    body: tableData,
+                    startY: 50,
+                    theme: 'grid',
+                    headStyles: { fillColor: [57, 73, 171] },
+                    styles: { fontSize: 9 },
+                    columnStyles: {
+                        0: { cellWidth: 10 },
+                        1: { cellWidth: 15 },
+                        2: { cellWidth: 20 },
+                        3: { cellWidth: 40 },
+                        4: { cellWidth: 30 },
+                        5: { cellWidth: 30 },
+                        6: { cellWidth: 20 }
+                    }
+                });
+                
+                // Add footer
+                const pageCount = doc.getNumberOfPages();
+                for (let i = 1; i <= pageCount; i++) {
+                    doc.setPage(i);
+                    doc.setFontSize(10);
+                    doc.text(`Halaman ${i} dari ${pageCount}`, 280, 200, { align: 'right' });
+                    doc.text(`Rumah Sakit - IT Maintenance System - Halaman ${currentPage}`, 148, 200, { align: 'center' });
+                }
+                
+                // Save PDF
+                const filename = `Laporan_IT_Halaman_${currentPage}_${new Date().getTime()}.pdf`;
+                doc.save(filename);
+                
+                showNotification(`Data halaman ${currentPage} berhasil diekspor ke PDF`, 'success');
+                
+            } catch (error) {
+                console.error('PDF Export Error:', error);
+                showNotification('Gagal membuat PDF', 'error');
+            } finally {
+                hideLoading();
+                closeExportAllModal();
+            }
+        }
+
+        function showUploadModal() {
+            document.getElementById('uploadModal').style.display = 'flex';
+        }
+
+        function closeUploadModal() {
+            document.getElementById('uploadModal').style.display = 'none';
+            document.getElementById('modalFileList').innerHTML = '';
+            document.getElementById('modalUploadBtn').disabled = true;
+            document.getElementById('modalFileInput').value = '';
+            currentFile = null;
+        }
+
+        function handleDragOver(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.add('dragover');
+        }
+
+        function handleDragLeave(e) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.remove('dragover');
+        }
+
+        function handleDrop(e, isModal = false) {
+            e.preventDefault();
+            e.stopPropagation();
+            e.currentTarget.classList.remove('dragover');
+            
+            const files = e.dataTransfer.files;
+            if (files.length > 0) {
+                handleFiles(files, isModal);
+            }
+        }
+
+        function handleFileSelect(e, isModal = false) {
+            const files = e.target.files;
+            if (files.length > 0) {
+                handleFiles(files, isModal);
+            }
+        }
+
+        function handleFiles(files, isModal = false) {
+            const file = files[0];
+            
+            // Validate file type
+            const validExtensions = ['.csv', '.xlsx', '.xls'];
+            const fileExtension = '.' + file.name.split('.').pop().toLowerCase();
+            
+            if (!validExtensions.includes(fileExtension)) {
+                showNotification('Format file tidak didukung. Gunakan CSV atau Excel.', 'error');
+                return;
+            }
+            
+            // Validate file size (max 5MB)
+            if (file.size > 5 * 1024 * 1024) {
+                showNotification('Ukuran file terlalu besar. Maksimal 5MB.', 'error');
+                return;
+            }
+            
+            currentFile = file;
+            
+            const fileListId = isModal ? 'modalFileList' : 'fileList';
+            const uploadBtnId = isModal ? 'modalUploadBtn' : 'uploadBtn';
+            
+            const fileList = document.getElementById(fileListId);
+            fileList.innerHTML = `
+                <div class="file-item">
+                    <div>
+                        <strong>${file.name}</strong>
+                        <div style="font-size: 12px; color: #666;">
+                            ${(file.size / 1024).toFixed(2)} KB • ${fileExtension.toUpperCase()}
+                        </div>
+                    </div>
+                    <button class="btn btn-danger" style="padding: 5px 10px; font-size: 12px;" 
+                            onclick="removeFile(${isModal})">
+                        Hapus
+                    </button>
+                </div>
+            `;
+            fileList.style.display = 'block';
+            
+            document.getElementById(uploadBtnId).disabled = false;
+        }
+
+        function removeFile(isModal = false) {
+            currentFile = null;
+            const fileListId = isModal ? 'modalFileList' : 'fileList';
+            const uploadBtnId = isModal ? 'modalUploadBtn' : 'uploadBtn';
+            
+            document.getElementById(fileListId).innerHTML = '';
+            document.getElementById(fileListId).style.display = 'none';
+            document.getElementById(uploadBtnId).disabled = true;
+            
+            if (isModal) {
+                document.getElementById('modalFileInput').value = '';
+            } else {
+                document.getElementById('fileInput').value = '';
+            }
+        }
+
+        function uploadData() {
+            if (!currentFile) {
+                showNotification('Pilih file terlebih dahulu!', 'error');
+                return;
+            }
+            
+            processFile(currentFile, false);
+        }
+
+        function processUpload() {
+            if (!currentFile) {
+                showNotification('Pilih file terlebih dahulu!', 'error');
+                return;
+            }
+            
+            processFile(currentFile, true);
+        }
+
+        function processFile(file, closeModal = false) {
+            showLoading();
+            
+            const reader = new FileReader();
+            
+            reader.onload = function(e) {
+                try {
+                    const data = e.target.result;
+                    let newData = [];
+                    
+                    // Check file type and parse accordingly
+                    if (file.name.endsWith('.csv')) {
+                        newData = parseCSVDataUpload(data);
+                    } else if (file.name.endsWith('.xlsx') || file.name.endsWith('.xls')) {
+                        newData = parseExcelDataUpload(data);
+                    }
+                    
+                    if (newData.length > 0) {
+                        // Add new data to existing data
+                        const startId = allData.length > 0 ? Math.max(...allData.map(d => d.id)) + 1 : 1;
+                        newData.forEach((item, index) => {
+                            item.id = startId + index;
+                        });
+                        
+                        allData = [...allData, ...newData];
+                        filteredData = [...allData];
+                        
+                        saveDataToStorage();
+                        initializeFilters();
+                        renderDashboard();
+                        
+                        showNotification(`Berhasil menambahkan ${newData.length} data baru`, 'success');
+                    } else {
+                        showNotification('Tidak ada data yang valid ditemukan dalam file', 'warning');
+                    }
+                    
+                } catch (error) {
+                    console.error('Upload error:', error);
+                    showNotification('Terjadi kesalahan saat memproses file: ' + error.message, 'error');
+                } finally {
+                    hideLoading();
+                    if (closeModal) {
+                        closeUploadModal();
+                    } else {
+                        removeFile(false);
+                    }
+                }
+            };
+            
+            reader.onerror = function() {
+                hideLoading();
+                showNotification('Gagal membaca file', 'error');
+            };
+            
+            if (file.name.endsWith('.csv')) {
+                reader.readAsText(file, 'UTF-8');
+            } else {
+                reader.readAsBinaryString(file);
+            }
+        }
+
+        function parseCSVDataUpload(csvData) {
+            const results = Papa.parse(csvData, {
+                header: true,
+                skipEmptyLines: true,
+                transformHeader: (header) => {
+                    // Normalize header names
+                    const headersMap = {
+                        'Nomor': 'nomor',
+                        'Nama Alat/Barang/Perangkat': 'namaAlat',
+                        'Lokasi/Ruangan': 'lokasi',
+                        'Pelapor': 'pelapor',
+                        'Pelaksana I': 'pelaksana1',
+                        'Pelaksana II': 'pelaksana2',
+                        'Tanggal Lapor': 'tanggalLapor',
+                        'Waktu Lapor': 'waktuLapor',
+                        'Status Awal': 'statusAwal',
+                        'Tanggal Respon': 'tanggalRespon',
+                        'Waktu Respon': 'waktuRespon',
+                        'Status Akhir': 'statusAkhir',
+                        'Time Progess': 'timeProgress',
+                        'Permasalahan': 'permasalahan',
+                        'Tindakan': 'tindakan',
+                        'Keterangan Pelaksana': 'keterangan'
+                    };
+                    return headersMap[header] || header;
+                }
+            });
+            
+            return results.data.map((row, index) => {
+                // Parse date to extract month and year
+                let month = 1, year = new Date().getFullYear();
+                if (row.tanggalLapor) {
+                    const dateParts = row.tanggalLapor.split('/');
+                    if (dateParts.length >= 2) {
+                        month = parseInt(dateParts[0]) || 1;
+                        year = parseInt(dateParts[2]) || new Date().getFullYear();
+                    }
+                }
+                
+                return {
+                    nomor: row.nomor || '',
+                    namaAlat: row.namaAlat || '',
+                    lokasi: row.lokasi || '',
+                    pelapor: row.pelapor || '',
+                    pelaksana1: row.pelaksana1 || '',
+                    pelaksana2: row.pelaksana2 || '',
+                    tanggalLapor: row.tanggalLapor || '',
+                    waktuLapor: row.waktuLapor || '',
+                    statusAwal: row.statusAwal || '',
+                    tanggalRespon: row.tanggalRespon || '',
+                    waktuRespon: row.waktuRespon || '',
+                    statusAkhir: row.statusAkhir || 'COMPLETED',
+                    timeProgress: row.timeProgress || '',
+                    permasalahan: row.permasalahan || '',
+                    tindakan: row.tindakan || '',
+                    keterangan: row.keterangan || '',
+                    bulan: month,
+                    tahun: year,
+                    bulanTahun: `${month}/${year}`,
+                    pelaksanaGabungan: `${row.pelaksana1 || ''} ${row.pelaksana2 || ''}`.trim()
+                };
+            }).filter(item => item.namaAlat); // Filter out empty rows
+        }
+
+        function parseExcelDataUpload(binaryData) {
+            try {
+                const workbook = XLSX.read(binaryData, { type: 'binary' });
+                const firstSheet = workbook.Sheets[workbook.SheetNames[0]];
+                const jsonData = XLSX.utils.sheet_to_json(firstSheet, { defval: '' });
+                
+                return jsonData.map((row, index) => {
+                    // Normalize column names
+                    const getValue = (keys) => {
+                        for (const key of keys) {
+                            if (row[key] !== undefined) return row[key];
+                        }
+                        return '';
+                    };
+                    
+                    const tanggalLapor = getValue(['Tanggal Lapor', 'tanggal_lapor', 'Tanggal', 'DATE']);
+                    let month = 1, year = new Date().getFullYear();
+                    
+                    if (tanggalLapor) {
+                        if (typeof tanggalLapor === 'string') {
+                            const dateParts = tanggalLapor.split(/[\/\-]/);
+                            month = parseInt(dateParts[0]) || 1;
+                            year = parseInt(dateParts[2]) || new Date().getFullYear();
+                        } else if (tanggalLapor instanceof Date) {
+                            month = tanggalLapor.getMonth() + 1;
+                            year = tanggalLapor.getFullYear();
+                        }
+                    }
+                    
+                    return {
+                        nomor: getValue(['Nomor', 'nomor', 'NO', 'No']) || '',
+                        namaAlat: getValue(['Nama Alat/Barang/Perangkat', 'nama_alat', 'Nama Alat', 'ITEM']) || '',
+                        lokasi: getValue(['Lokasi/Ruangan', 'lokasi', 'Lokasi', 'ROOM']) || '',
+                        pelapor: getValue(['Pelapor', 'pelapor', 'Reporter']) || '',
+                        pelaksana1: getValue(['Pelaksana I', 'pelaksana_1', 'Pelaksana1', 'Technician1']) || '',
+                        pelaksana2: getValue(['Pelaksana II', 'pelaksana_2', 'Pelaksana2', 'Technician2']) || '',
+                        tanggalLapor: tanggalLapor ? tanggalLapor.toString() : '',
+                        waktuLapor: getValue(['Waktu Lapor', 'waktu_lapor', 'Time']) || '',
+                        statusAwal: getValue(['Status Awal', 'status_awal', 'Initial Status']) || '',
+                        tanggalRespon: getValue(['Tanggal Respon', 'tanggal_respon', 'Response Date']) || '',
+                        waktuRespon: getValue(['Waktu Respon', 'waktu_respon', 'Response Time']) || '',
+                        statusAkhir: getValue(['Status Akhir', 'status_akhir', 'Final Status', 'Status']) || 'COMPLETED',
+                        timeProgress: getValue(['Time Progess', 'time_progress', 'Progress Time']) || '',
+                        permasalahan: getValue(['Permasalahan', 'permasalahan', 'Problem', 'Issue']) || '',
+                        tindakan: getValue(['Tindakan', 'tindakan', 'Action', 'Solution']) || '',
+                        keterangan: getValue(['Keterangan Pelaksana', 'keterangan', 'Remarks', 'Notes']) || '',
+                        bulan: month,
+                        tahun: year,
+                        bulanTahun: `${month}/${year}`,
+                        pelaksanaGabungan: `${getValue(['Pelaksana I', 'pelaksana_1']) || ''} ${getValue(['Pelaksana II', 'pelaksana_2']) || ''}`.trim()
+                    };
+                }).filter(item => item.namaAlat); // Filter out empty rows
+                
+            } catch (error) {
+                console.error('Excel parse error:', error);
+                throw new Error('Format Excel tidak sesuai. Pastikan file memiliki kolom yang benar.');
+            }
+        }
+
+        function downloadTemplate() {
+            // Create template data
+            const templateData = [{
+                'Nomor': '1',
+                'Nama Alat/Barang/Perangkat': 'PRINTER EPSON L3210',
+                'Lokasi/Ruangan': 'REKAM MEDIK',
+                'Pelapor': 'IBU ALFRIDA',
+                'Pelaksana I': 'JOSHUA REINER WALANDA',
+                'Pelaksana II': 'MUDIN',
+                'Tanggal Lapor': '12/18/2025',
+                'Waktu Lapor': '11:38:00 AM',
+                'Status Awal': 'IN PROCESS',
+                'Tanggal Respon': '12/18/2025',
+                'Waktu Respon': '11:45:00 AM',
+                'Status Akhir': 'COMPLETED',
+                'Time Progess': '12/18/2025 1:26:00 PM',
+                'Permasalahan': 'Paper less (Karet penarik kertas printer rusak)',
+                'Tindakan': 'Service printer',
+                'Keterangan Pelaksana': 'Selesai'
+            }];
+            
+            // Create worksheet
+            const ws = XLSX.utils.json_to_sheet(templateData);
+            
+            // Set column widths
+            const wscols = [
+                {wch: 8},   // Nomor
+                {wch: 30},  // Nama Alat
+                {wch: 20},  // Lokasi
+                {wch: 20},  // Pelapor
+                {wch: 25},  // Pelaksana I
+                {wch: 25},  // Pelaksana II
+                {wch: 15},  // Tanggal Lapor
+                {wch: 15},  // Waktu Lapor
+                {wch: 15},  // Status Awal
+                {wch: 15},  // Tanggal Respon
+                {wch: 15},  // Waktu Respon
+                {wch: 15},  // Status Akhir
+                {wch: 20},  // Time Progress
+                {wch: 40},  // Permasalahan
+                {wch: 40},  // Tindakan
+                {wch: 30}   // Keterangan
+            ];
+            ws['!cols'] = wscols;
+            
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Template");
+            
+            // Save file
+            XLSX.writeFile(wb, "Template_Upload_IT_Maintenance.xlsx");
+            
+            showNotification('Template berhasil didownload', 'success');
+        }
+
+        function refreshData() {
+            loadDataFromStorage();
+            filteredData = [...allData];
+            currentPage = 1;
+            renderDashboard();
+            showNotification('Data berhasil direfresh', 'success');
+        }
+
+        function clearAllData() {
+            if (confirm('Apakah Anda yakin ingin menghapus semua data? Tindakan ini tidak dapat dibatalkan.')) {
+                allData = [];
+                filteredData = [];
+                localStorage.removeItem('itMaintenanceData');
+                currentPage = 1;
+                renderDashboard();
+                showNotification('Semua data berhasil dihapus', 'success');
+            }
+        }
+
+        function showNotification(message, type = 'info') {
+            const notification = document.getElementById('notification');
+            notification.textContent = message;
+            notification.className = `notification ${type} show`;
+            
+            // Add icon based on type
+            let icon = 'ℹ️';
+            if (type === 'success') icon = '✅';
+            if (type === 'error') icon = '❌';
+            if (type === 'warning') icon = '⚠️';
+            
+            notification.innerHTML = `${icon} ${message}`;
+            
+            setTimeout(() => {
+                notification.classList.remove('show');
+            }, 3000);
+        }
+
+        function showLoading() {
+            document.getElementById('loading').classList.add('show');
+        }
+
+        function hideLoading() {
+            document.getElementById('loading').classList.remove('show');
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(e) {
+            // Ctrl + F to focus search
+            if (e.ctrlKey && e.key === 'f') {
+                e.preventDefault();
+                document.getElementById('searchFilter').focus();
+            }
+            
+            // Ctrl + E to export all
+            if (e.ctrlKey && e.key === 'e') {
+                e.preventDefault();
+                showExportAllModal();
+            }
+            
+            // Ctrl + R to refresh
+            if (e.ctrlKey && e.key === 'r') {
+                e.preventDefault();
+                refreshData();
+            }
+            
+            // Escape to close modal
+            if (e.key === 'Escape') {
+                closeUploadModal();
+                closeDetailModal();
+                closeExportAllModal();
+            }
+        });
+
+        // Add real-time search
+        let searchTimeout;
+        document.getElementById('searchFilter').addEventListener('input', function() {
+            clearTimeout(searchTimeout);
+            searchTimeout = setTimeout(() => {
+                applyFilters();
+            }, 500);
+        });
+    </script>
+</body>
+</html>

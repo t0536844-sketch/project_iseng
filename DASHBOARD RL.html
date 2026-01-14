@@ -1,0 +1,505 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard Top 10 Penyakit Kemenkes</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css" rel="stylesheet">
+    <link href="https://cdn.datatables.net/1.13.4/css/dataTables.bootstrap5.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <style>
+        :root {
+            --primary-color: #007bff; /* Blue */
+            --secondary-color: #6c757d; /* Gray */
+            --success-color: #28a745; /* Green */
+            --warning-color: #ffc107; /* Yellow */
+        }
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background-color: #f8f9fa;
+        }
+        .navbar {
+            background-color: var(--primary-color);
+            box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        .card {
+            border: none;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0,0,0,0.05);
+            margin-bottom: 20px;
+        }
+        .stat-card {
+            text-align: center;
+            padding: 20px;
+            border-radius: 10px;
+            color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+        .stat-card.blue { background-color: #007bff; }
+        .stat-card.green { background-color: #28a745; }
+        .stat-card.orange { background-color: #fd7e14; }
+        .stat-card.red { background-color: #dc3545; }
+        .stat-number {
+            font-size: 2.5rem;
+            font-weight: 700;
+        }
+        .file-upload-area {
+            border: 2px dashed #ccc;
+            border-radius: 10px;
+            padding: 40px 20px;
+            text-align: center;
+            transition: all 0.3s ease;
+            cursor: pointer;
+        }
+        .file-upload-area:hover {
+            border-color: var(--primary-color);
+            background-color: #e9ecef;
+        }
+        .loading-spinner {
+            display: none;
+            text-align: center;
+            padding: 30px;
+        }
+        .chart-container {
+            height: 400px;
+            padding: 10px;
+        }
+        .table-title {
+            color: var(--primary-color);
+            font-weight: 600;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark">
+        <div class="container">
+            <a class="navbar-brand" href="#">
+                <i class="fas fa-chart-line me-2"></i>
+                Dashboard Top 10 Penyakit
+            </a>
+        </div>
+    </nav>
+
+    <div class="container my-5">
+		<h1 style="text-align: center; background-color: lightgreen; padding: 10px;">RUMAH SAKIT UMUM DAERAH KABUPATEN MIMIKA</h1>
+		<h3 style="text-align: center; background-color: lightpink; padding: 10px;">ANALISIS 10 BESAR PENYAKIT (STANDAR KEMENKES)</h3>
+	        
+        <div class="card mb-5">
+            <div class="card-header bg-primary text-white">
+                <i class="fas fa-file-upload me-2"></i>Unggah Data RL
+            </div>
+            <div class="card-body">
+                <div id="file-upload-area" class="file-upload-area">
+                    <div class="mb-3">
+                        <i class="fas fa-cloud-upload-alt upload-icon" style="font-size: 3rem; color: var(--primary-color);"></i>
+                    </div>
+                    <h5 class="mb-3">Seret file Excel (.xlsx atau .xls) ke sini atau klik</h5>
+                    <input type="file" id="file-input" accept=".xlsx, .xls" style="display: none;">
+                </div>
+                <div id="file-info" class="mt-3 alert alert-info d-none">
+                    File berhasil dimuat: <strong id="file-name"></strong>
+                    <button id="process-btn" class="btn btn-sm btn-success float-end">
+                        <i class="fas fa-cog me-1"></i>Proses Data
+                    </button>
+                </div>
+            </div>
+        </div>
+
+        <div id="loading-spinner" class="loading-spinner">
+            <div class="spinner-border text-primary" role="status" style="width: 3rem; height: 3rem;">
+                <span class="visually-hidden">Loading...</span>
+            </div>
+            <p class="mt-3 text-muted">Memproses dan menghitung 10 besar penyakit, harap tunggu...</p>
+        </div>
+
+        <div id="results-section" style="display: none;">
+            
+            <div class="row mb-4" id="stats-section">
+                <div class="col-md-4">
+                    <div class="stat-card blue">
+                        <div class="stat-number" id="total-icd">0</div>
+                        <div class="stat-label">Total Jenis Penyakit (Kode ICD Unik)</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card green">
+                        <div class="stat-number" id="total-cases">0</div>
+                        <div class="stat-label">Total Kasus Tercatat</div>
+                    </div>
+                </div>
+                <div class="col-md-4">
+                    <div class="stat-card orange">
+                        <div class="stat-number" id="top10-share">0%</div>
+                        <div class="stat-label">Kontribusi Top 10 Terhadap Total Kasus</div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card mb-4">
+                <div class="card-header bg-success text-white">
+                    <i class="fas fa-chart-pie me-2"></i>Visualisasi Top 10 Penyakit
+                </div>
+                <div class="card-body">
+                    <div class="row">
+                        <div class="col-lg-6">
+                            <div class="chart-container">
+                                <canvas id="icdBarChart"></canvas>
+                            </div>
+                        </div>
+                        <div class="col-lg-6">
+                            <div class="chart-container">
+                                <canvas id="icdPieChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="card">
+                <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                    <span><i class="fas fa-table me-2"></i>Tabel 10 Besar Penyakit (Standar Kemenkes)</span>
+                    <button id="export-excel-btn" class="btn btn-sm btn-light">
+                        <i class="fas fa-file-excel me-1"></i> Export Data Top 10
+                    </button>
+                </div>
+                <div class="card-body">
+                    <div class="table-responsive">
+                        <table id="top10-table" class="table table-striped table-hover">
+                            <thead>
+                                <tr>
+                                    <th>Rank</th>
+                                    <th>Kode ICD</th>
+                                    <th>Total Kasus</th>
+                                    <th>Persentase</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <footer class="text-center py-3 mt-5 bg-dark text-white">
+        <p class="mb-0">&copy; 2025 Aplikasi Top 10 Penyakit. Dibuat untuk Analisis Data Kemenkes.</p>
+    </footer>
+
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/jquery@3.6.0/dist/jquery.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/jquery.dataTables.min.js"></script>
+    <script src="https://cdn.datatables.net/1.13.4/js/dataTables.bootstrap5.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+    <script>
+        let uploadedData = null;
+        let top10Data = [];
+        let totalAllCases = 0;
+        let dataTable = null;
+        let barChart = null;
+        let pieChart = null;
+
+        document.addEventListener('DOMContentLoaded', function() {
+            // Setup File Upload Area (Drag and Drop / Click)
+            const fileUploadArea = document.getElementById('file-upload-area');
+            const fileInput = document.getElementById('file-input');
+
+            fileUploadArea.addEventListener('click', () => fileInput.click());
+            
+            fileInput.addEventListener('change', (e) => {
+                if (e.target.files.length) handleFile(e.target.files[0]);
+            });
+
+            fileUploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                fileUploadArea.classList.add('bg-light');
+            });
+
+            fileUploadArea.addEventListener('dragleave', () => {
+                fileUploadArea.classList.remove('bg-light');
+            });
+
+            fileUploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                fileUploadArea.classList.remove('bg-light');
+                if (e.dataTransfer.files.length) handleFile(e.dataTransfer.files[0]);
+            });
+
+            document.getElementById('process-btn').addEventListener('click', processData);
+            document.getElementById('export-excel-btn').addEventListener('click', exportToExcel);
+        });
+
+        function handleFile(file) {
+            if (!file.name.match(/\.(xlsx|xls)$/)) {
+                alert('Harap pilih file Excel (.xlsx atau .xls)');
+                return;
+            }
+            uploadedData = file;
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-info').classList.remove('d-none');
+        }
+
+        function processData() {
+            if (!uploadedData) {
+                alert('Harap unggah file terlebih dahulu.');
+                return;
+            }
+
+            // Tampilkan loading dan sembunyikan hasil
+            document.getElementById('loading-spinner').style.display = 'block';
+            document.getElementById('results-section').style.display = 'none';
+
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    const firstSheetName = workbook.SheetNames[0];
+                    const worksheet = workbook.Sheets[firstSheetName];
+                    
+                    // Convert to array of arrays, including header
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    calculateTop10(jsonData);
+                    
+                    document.getElementById('loading-spinner').style.display = 'none';
+                    document.getElementById('results-section').style.display = 'block';
+                    
+                } catch (error) {
+                    console.error('Error processing file:', error);
+                    alert('Terjadi kesalahan saat memproses file: ' + error.message);
+                    document.getElementById('loading-spinner').style.display = 'none';
+                }
+            };
+            reader.readAsArrayBuffer(uploadedData);
+        }
+
+        function calculateTop10(jsonData) {
+            if (jsonData.length < 2) return;
+
+            const headers = jsonData[0];
+            const rows = jsonData.slice(1).filter(row => row.length > 1);
+
+            // Kolom ICD ada di index 1 (`ICD`)
+            const icdIndex = headers.indexOf('ICD');
+            
+            // Kolom data numerik dimulai dari index 2
+            const dataStartIndex = 2;
+            const dataIndices = headers.map((_, i) => i).filter(i => i >= dataStartIndex);
+            
+            if (icdIndex === -1) {
+                alert('Kolom "ICD" tidak ditemukan. Harap pastikan format header benar.');
+                return;
+            }
+
+            const diseaseMap = {};
+            totalAllCases = 0;
+            const uniqueIcdCodes = new Set();
+
+            rows.forEach(row => {
+                const kodeIcd = row[icdIndex];
+                
+                if (kodeIcd) {
+                    uniqueIcdCodes.add(kodeIcd);
+                    let totalCasesRow = 0;
+
+                    // Hitung total kasus untuk baris ini dari semua kolom data
+                    dataIndices.forEach(colIndex => {
+                        const value = row[colIndex];
+                        const numValue = (value && !isNaN(value)) ? parseFloat(value) : 0;
+                        totalCasesRow += numValue;
+                    });
+                    
+                    totalAllCases += totalCasesRow;
+
+                    // Jumlahkan total kasus per Kode ICD (Standar Kemenkes)
+                    if (diseaseMap[kodeIcd]) {
+                        diseaseMap[kodeIcd].totalCases += totalCasesRow;
+                    } else {
+                        // Asumsi Nama Penyakit ada di kolom sebelum ICD jika ada (tidak wajib, tapi data ini tidak punya kolom nama penyakit)
+                        // Karena data Anda hanya punya KD_ICD, ICD, dan kolom numerik
+                        // Kita gunakan Kode ICD sebagai label utama.
+                        diseaseMap[kodeIcd] = {
+                            kodeIcd: kodeIcd,
+                            totalCases: totalCasesRow,
+                        };
+                    }
+                }
+            });
+
+            // Konversi ke array dan urutkan
+            let allDiseases = Object.values(diseaseMap);
+            allDiseases.sort((a, b) => b.totalCases - a.totalCases);
+
+            // Ambil Top 10
+            top10Data = allDiseases.slice(0, 10);
+
+            // Update Dashboard
+            updateDashboard(uniqueIcdCodes.size);
+        }
+
+        function updateDashboard(totalUniqueIcd) {
+            // Hitung Kontribusi Top 10
+            const totalTop10Cases = top10Data.reduce((sum, item) => sum + item.totalCases, 0);
+            const top10Share = totalAllCases > 0 ? ((totalTop10Cases / totalAllCases) * 100).toFixed(1) : 0;
+
+            // Update Statistik
+            document.getElementById('total-icd').textContent = totalUniqueIcd.toLocaleString();
+            document.getElementById('total-cases').textContent = totalAllCases.toLocaleString();
+            document.getElementById('top10-share').textContent = top10Share + '%';
+
+            // Tampilkan Tabel
+            displayTable(totalAllCases);
+            
+            // Tampilkan Chart
+            updateCharts(totalTop10Cases);
+        }
+
+        function displayTable(totalAllCases) {
+            const tbody = document.querySelector('#top10-table tbody');
+            tbody.innerHTML = '';
+
+            if (dataTable) {
+                dataTable.destroy();
+                dataTable = null;
+            }
+
+            top10Data.forEach((item, index) => {
+                const percentage = totalAllCases > 0 ? ((item.totalCases / totalAllCases) * 100).toFixed(2) : 0;
+                
+                const tr = document.createElement('tr');
+                tr.innerHTML = `
+                    <td>${index + 1}</td>
+                    <td>${item.kodeIcd}</td>
+                    <td style="text-align: right; font-weight: bold;">${item.totalCases.toLocaleString()}</td>
+                    <td style="text-align: right;">${percentage}%</td>
+                `;
+                tbody.appendChild(tr);
+            });
+
+            // Inisialisasi DataTable
+            dataTable = new DataTable('#top10-table', {
+                pageLength: 10,
+                ordering: false, // Karena data sudah diurutkan
+                searching: false,
+                paging: false,
+                info: false
+            });
+        }
+
+        function updateCharts(totalTop10Cases) {
+            // Hancurkan chart lama jika ada
+            if (barChart) barChart.destroy();
+            if (pieChart) pieChart.destroy();
+
+            const labels = top10Data.map(item => item.kodeIcd);
+            const dataValues = top10Data.map(item => item.totalCases);
+            
+            // Random Color Generator
+            const colors = labels.map((_, i) => `hsl(${i * 360 / labels.length}, 70%, 50%)`);
+
+            // --- BAR CHART ---
+            const barCtx = document.getElementById('icdBarChart').getContext('2d');
+            barChart = new Chart(barCtx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Jumlah Kasus',
+                        data: dataValues,
+                        backgroundColor: colors,
+                        borderColor: colors.map(c => c.replace('70%', '50%')),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y', // Membuat bar horizontal
+                    plugins: {
+                        legend: { display: false },
+                        title: {
+                            display: true,
+                            text: '10 Penyakit Teratas Berdasarkan Kasus'
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Total Kasus'
+                            }
+                        }
+                    }
+                }
+            });
+
+            // --- PIE CHART ---
+            const pieCtx = document.getElementById('icdPieChart').getContext('2d');
+            pieChart = new Chart(pieCtx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: dataValues,
+                        backgroundColor: colors,
+                        hoverOffset: 4
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                boxWidth: 12,
+                            }
+                        },
+                        title: {
+                            display: true,
+                            text: `Distribusi Kasus di Top 10 (Total: ${totalTop10Cases.toLocaleString()})`
+                        }
+                    }
+                }
+            });
+        }
+
+        function exportToExcel() {
+            if (top10Data.length === 0) {
+                alert('Tidak ada data Top 10 untuk diekspor.');
+                return;
+            }
+            
+            const tableHeaders = ["Rank", "Kode ICD", "Total Kasus", "Persentase Kontribusi (%)"];
+            const tableData = top10Data.map((item, index) => {
+                const percentage = totalAllCases > 0 ? ((item.totalCases / totalAllCases) * 100).toFixed(2) : 0;
+                return [index + 1, item.kodeIcd, item.totalCases, parseFloat(percentage)];
+            });
+
+            const wsData = [tableHeaders, ...tableData];
+            const ws = XLSX.utils.aoa_to_sheet(wsData);
+            
+            // Formatting untuk kolom angka
+            const range = XLSX.utils.decode_range(ws['!ref']);
+            for(let R = range.s.r + 1; R <= range.e.r; ++R) {
+                // Kolom Total Kasus (Index 2/Kolom C)
+                const cellTotal = XLSX.utils.encode_cell({r: R, c: 2});
+                if(ws[cellTotal]) ws[cellTotal].z = "#,##0"; 
+                
+                // Kolom Persentase (Index 3/Kolom D)
+                const cellPercent = XLSX.utils.encode_cell({r: R, c: 3});
+                if(ws[cellPercent]) ws[cellPercent].z = "0.00%"; 
+            }
+
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Top 10 Penyakit");
+            
+            XLSX.writeFile(wb, "Top_10_Penyakit_Kemenkes.xlsx");
+        }
+    </script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

@@ -1,0 +1,317 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>IT Maintenance Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<!-- LIBRARY -->
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<!-- UI/UX MODERN -->
+<style>
+:root{
+ --primary:#2563eb;
+ --secondary:#06b6d4;
+ --success:#22c55e;
+ --warning:#f59e0b;
+ --danger:#ef4444;
+ --dark:#0f172a;
+ --light:#f8fafc;
+}
+
+body{
+ margin:0;
+ font-family:'Inter',Segoe UI,sans-serif;
+ background:linear-gradient(135deg,#eef2ff,#e0f2fe);
+ color:#0f172a;
+}
+
+header{
+ background:linear-gradient(135deg,#2563eb,#06b6d4);
+ color:#fff;
+ padding:30px;
+ border-radius:0 0 24px 24px;
+ box-shadow:0 15px 40px rgba(0,0,0,.2);
+}
+
+header h2{margin:0;font-size:28px}
+header p{opacity:.9}
+
+.container{
+ max-width:1550px;
+ margin:auto;
+ padding:30px;
+}
+
+.card{
+ background:rgba(255,255,255,.95);
+ border-radius:20px;
+ padding:24px;
+ margin-bottom:24px;
+ box-shadow:0 20px 50px rgba(0,0,0,.08);
+ transition:.35s;
+}
+
+.card:hover{
+ transform:translateY(-6px);
+ box-shadow:0 30px 70px rgba(0,0,0,.12);
+}
+
+.grid{
+ display:grid;
+ grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
+ gap:20px;
+}
+
+.stat{
+ font-size:36px;
+ font-weight:800;
+ margin-top:10px;
+}
+
+.stat.primary{color:var(--primary)}
+.stat.success{color:var(--success)}
+.stat.warning{color:var(--warning)}
+
+select,input{
+ width:100%;
+ padding:14px 16px;
+ border-radius:14px;
+ border:1px solid #cbd5e1;
+ font-size:14px;
+ background:#fff;
+}
+
+select:focus,input:focus{
+ outline:none;
+ border-color:var(--primary);
+ box-shadow:0 0 0 4px rgba(37,99,235,.2);
+}
+
+.table-wrap{
+ max-height:420px;
+ overflow:auto;
+ border-radius:16px;
+}
+
+table{
+ width:100%;
+ border-collapse:collapse;
+}
+
+th{
+ position:sticky;
+ top:0;
+ background:#e2e8f0;
+ padding:14px;
+ font-weight:700;
+}
+
+td{
+ padding:14px;
+ border-bottom:1px solid #e5e7eb;
+}
+
+tr:hover{background:#f1f5f9}
+
+.badge{
+ padding:6px 14px;
+ border-radius:999px;
+ font-size:12px;
+ font-weight:700;
+ color:#fff;
+}
+
+.COMPLETED{background:linear-gradient(135deg,#22c55e,#4ade80)}
+.INPROCESS{background:linear-gradient(135deg,#f59e0b,#facc15)}
+.OUTPROCESS{background:linear-gradient(135deg,#2563eb,#38bdf8)}
+.RUSAK{background:linear-gradient(135deg,#ef4444,#f87171)}
+
+canvas{max-height:280px}
+
+footer{
+ text-align:center;
+ padding:30px;
+ color:#64748b;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>IT Maintenance Support Dashboard</h2>
+<p>Laporan Bulanan & Tahunan • Monitoring Interaktif</p>
+</header>
+
+<div class="container">
+
+<!-- UPLOAD -->
+<div class="card">
+<input type="file" id="fileInput" accept=".csv,.xlsx">
+</div>
+
+<!-- FILTER -->
+<div class="card grid">
+<select id="filterYear"><option value="ALL">Semua Tahun</option></select>
+<select id="filterMonth"><option value="ALL">Semua Bulan</option></select>
+<select id="filterStatus"><option value="ALL">Semua Status</option></select>
+<select id="filterPelaksana"><option value="ALL">Semua Pelaksana</option></select>
+<input id="searchBox" placeholder="Cari laporan...">
+</div>
+
+<!-- STAT -->
+<div class="grid">
+<div class="card"><div>Total Laporan</div><div class="stat primary" id="total">0</div></div>
+<div class="card"><div>Selesai</div><div class="stat success" id="done">0</div></div>
+<div class="card"><div>Dalam Proses</div><div class="stat warning" id="process">0</div></div>
+</div>
+
+<!-- DASHBOARD CHART -->
+<div class="grid">
+<div class="card"><h4>Distribusi Status Laporan</h4><canvas id="chartStatus"></canvas></div>
+<div class="card"><h4>Laporan per Lokasi</h4><canvas id="chartLokasi"></canvas></div>
+<div class="card"><h4>Tren Bulanan</h4><canvas id="chartBulanan"></canvas></div>
+<div class="card"><h4>Jenis Perangkat</h4><canvas id="chartPerangkat"></canvas></div>
+</div>
+
+<!-- DASHBOARD PELAKSANA -->
+<div class="card">
+<h3>Dashboard Pelaksana</h3>
+<canvas id="chartPelaksana"></canvas>
+</div>
+
+<!-- TABLE -->
+<div class="card">
+<h3>Data Laporan</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>No</th><th>Perangkat</th><th>Lokasi</th><th>Pelaksana</th>
+<th>Tanggal</th><th>Status</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+<footer>© 2025 IT Maintenance Dashboard</footer>
+
+<script>
+let rawData=[],data=[];
+let charts={};
+
+fileInput.onchange=e=>{
+ const f=e.target.files[0];
+ if(!f)return;
+ if(f.name.endsWith('.csv')){
+  Papa.parse(f,{header:true,complete:r=>init(r.data)});
+ }else{
+  const r=new FileReader();
+  r.onload=x=>{
+   const wb=XLSX.read(x.target.result,{type:'array'});
+   init(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));
+  };
+  r.readAsArrayBuffer(f);
+ }
+};
+
+function init(d){
+ rawData=d.filter(x=>x['Tanggal Lapor']);
+ setupFilter();
+ apply();
+}
+
+function setupFilter(){
+ const y=new Set(),m=new Set(),s=new Set(),p=new Set();
+ rawData.forEach(r=>{
+  const [dd,mm,yy]=r['Tanggal Lapor'].split('/');
+  y.add(yy);m.add(mm);s.add(r['Status Akhir']);p.add(r['Pelaksana I']||'-');
+ });
+ fill(filterYear,y);fill(filterMonth,m);
+ fill(filterStatus,s);fill(filterPelaksana,p);
+}
+
+function fill(el,set){
+ [...set].sort().forEach(v=>el.innerHTML+=`<option>${v}</option>`);
+ el.onchange=apply;
+}
+searchBox.oninput=apply;
+
+function apply(){
+ data=rawData.filter(r=>{
+  const [d,m,y]=r['Tanggal Lapor'].split('/');
+  return (filterYear.value==='ALL'||y===filterYear.value)
+   &&(filterMonth.value==='ALL'||m===filterMonth.value)
+   &&(filterStatus.value==='ALL'||r['Status Akhir']===filterStatus.value)
+   &&(filterPelaksana.value==='ALL'||r['Pelaksana I']===filterPelaksana.value)
+   && JSON.stringify(r).toLowerCase().includes(searchBox.value.toLowerCase());
+ });
+ render();
+}
+
+function render(){
+ total.textContent=data.length;
+ done.textContent=data.filter(x=>x['Status Akhir']==='COMPLETED').length;
+ process.textContent=data.filter(x=>x['Status Akhir']!=='COMPLETED').length;
+ renderTable();
+ renderCharts();
+}
+
+function renderTable(){
+ tableBody.innerHTML='';
+ data.forEach((r,i)=>{
+  tableBody.innerHTML+=`
+  <tr>
+   <td>${i+1}</td>
+   <td>${r['Nama AlatBarangPerangkat']}</td>
+   <td>${r['LokasiRuangan']}</td>
+   <td>${r['Pelaksana I']}</td>
+   <td>${r['Tanggal Lapor']}</td>
+   <td><span class="badge ${r['Status Akhir'].replace(' ','')}">${r['Status Akhir']}</span></td>
+  </tr>`;
+ });
+}
+
+function renderCharts(){
+ draw('chartStatus','doughnut',group('Status Akhir'));
+ draw('chartLokasi','bar',group('LokasiRuangan'),true);
+ draw('chartBulanan','line',groupMonth());
+ draw('chartPerangkat','bar',group('Nama AlatBarangPerangkat'));
+ draw('chartPelaksana','bar',group('Pelaksana I'));
+}
+
+function group(k){
+ const o={};
+ data.forEach(r=>o[r[k]]=(o[r[k]]||0)+1);
+ return o;
+}
+
+function groupMonth(){
+ const o={};
+ data.forEach(r=>{
+  const m=r['Tanggal Lapor'].split('/')[1];
+  o[m]=(o[m]||0)+1;
+ });
+ return o;
+}
+
+function draw(id,type,obj,hor=false){
+ if(charts[id])charts[id].destroy();
+ charts[id]=new Chart(document.getElementById(id),{
+  type,
+  data:{labels:Object.keys(obj),datasets:[{data:Object.values(obj)}]},
+  options:{indexAxis:hor?'y':'x',responsive:true}
+ });
+}
+</script>
+
+</body>
+</html>

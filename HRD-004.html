@@ -1,0 +1,277 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIM-PEGAWAI Pro v1.1</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background: #374151; }
+        .active-link { background: #2563eb; border-left: 4px solid #fff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+        /* Modal Style */
+        .modal { display: none; position: fixed; z-index: 50; left: 0; top: 0; width: 100%; height: 100%; background: rgba(0,0,0,0.5); }
+    </style>
+</head>
+<body class="bg-gray-50 h-screen overflow-hidden">
+
+<div class="flex h-full">
+    <aside class="w-64 bg-slate-900 text-white flex-shrink-0 flex flex-col">
+        <div class="p-6 text-2xl font-bold tracking-tighter border-b border-slate-800">
+            <i class="fas fa-hospital-user mr-2 text-blue-400"></i>SIM-PEGAWAI
+        </div>
+        <nav class="mt-4 flex-1">
+            <a href="#" onclick="showSection('dashboard')" id="link-dashboard" class="sidebar-link active-link flex items-center py-3 px-6 transition">
+                <i class="fas fa-chart-line mr-3 w-5"></i> Dashboard
+            </a>
+            <a href="#" onclick="showSection('input')" id="link-input" class="sidebar-link flex items-center py-3 px-6 transition">
+                <i class="fas fa-user-plus mr-3 w-5"></i> Input Data Baru
+            </a>
+            <a href="#" onclick="showSection('tabel')" id="link-tabel" class="sidebar-link flex items-center py-3 px-6 transition">
+                <i class="fas fa-users mr-3 w-5"></i> Database Pegawai
+            </a>
+        </nav>
+        <div class="p-4 border-t border-slate-800 text-[10px] text-slate-500 text-center uppercase tracking-widest">Administrator Mode</div>
+    </aside>
+
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white shadow-sm border-b py-4 px-8 flex justify-between items-center">
+            <h2 id="section-title" class="text-xl font-bold text-slate-800 uppercase tracking-wide">Dashboard Utama</h2>
+            <div id="current-date" class="text-slate-500 text-sm font-medium"></div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto bg-gray-50 p-6">
+            
+            <div id="dashboard" class="tab-content active">
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6 mb-8">
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-l-4 border-l-blue-500">
+                        <div class="flex justify-between items-center">
+                            <div><p class="text-slate-500 text-xs font-bold uppercase">Total Pegawai</p><h4 id="count-total" class="text-3xl font-black mt-1">0</h4></div>
+                            <i class="fas fa-users text-slate-200 text-3xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-l-4 border-l-green-500">
+                        <div class="flex justify-between items-center">
+                            <div><p class="text-slate-500 text-xs font-bold uppercase">PNS Aktif</p><h4 id="count-pns" class="text-3xl font-black mt-1">0</h4></div>
+                            <i class="fas fa-user-check text-slate-200 text-3xl"></i>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-xl shadow-sm border border-l-4 border-l-red-500">
+                        <div class="flex justify-between items-center">
+                            <div><p class="text-slate-500 text-xs font-bold uppercase">STR Segera Expired</p><h4 id="count-str" class="text-3xl font-black mt-1">0</h4></div>
+                            <i class="fas fa-id-card-alt text-slate-200 text-3xl"></i>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="input" class="tab-content">
+                <form id="employeeForm" class="bg-white shadow-lg rounded-2xl p-8 max-w-5xl mx-auto border border-slate-200">
+                    <input type="hidden" id="edit-index" value="-1">
+                    <div class="mb-8">
+                        <h3 class="text-blue-600 font-bold mb-6 uppercase text-sm border-b pb-2 flex items-center">
+                            <i class="fas fa-id-card mr-2"></i> Identitas Pegawai
+                        </h3>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase">Nama Lengkap</label>
+                                <input type="text" id="f-nama" required class="w-full border-2 border-slate-100 p-2.5 rounded-lg focus:border-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase">NIP</label>
+                                <input type="text" id="f-nip" required class="w-full border-2 border-slate-100 p-2.5 rounded-lg focus:border-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase">Pangkat/Golongan</label>
+                                <select id="f-pangkat" class="w-full border-2 border-slate-100 p-2.5 rounded-lg focus:border-blue-500 outline-none">
+                                    <option>III/a</option><option>III/b</option><option>III/c</option><option>III/d</option>
+                                    <option>IV/a</option><option>IV/b</option><option>IV/c</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase">Status Kepegawaian</label>
+                                <select id="f-status" class="w-full border-2 border-slate-100 p-2.5 rounded-lg focus:border-blue-500 outline-none">
+                                    <option value="PNS">PNS</option><option value="PPPK">PPPK</option><option value="KONTRAK">KONTRAK</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-red-500 uppercase">Masa Berlaku STR</label>
+                                <input type="date" id="f-str" class="w-full border-2 border-slate-100 p-2.5 rounded-lg focus:border-blue-500 outline-none">
+                            </div>
+                            <div>
+                                <label class="text-[10px] font-black text-slate-500 uppercase">Jenis Kelamin</label>
+                                <select id="f-jk" class="w-full border-2 border-slate-100 p-2.5 rounded-lg focus:border-blue-500 outline-none">
+                                    <option value="Laki-Laki">Laki-Laki</option><option value="Perempuan">Perempuan</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="flex justify-end gap-3 pt-6 border-t">
+                        <button type="reset" class="px-6 py-2 border rounded-lg font-bold text-slate-400 hover:bg-gray-50">BATAL</button>
+                        <button type="submit" class="px-10 py-2 bg-blue-600 text-white rounded-lg font-bold shadow-blue-200 shadow-lg hover:bg-blue-700">SIMPAN PERUBAHAN</button>
+                    </div>
+                </form>
+            </div>
+
+            <div id="tabel" class="tab-content">
+                <div class="bg-white rounded-xl shadow-sm border p-6">
+                    <div class="flex justify-between items-center mb-6">
+                        <div class="relative w-1/3">
+                            <i class="fas fa-search absolute left-3 top-3.5 text-slate-400"></i>
+                            <input type="text" id="searchBox" onkeyup="searchData()" placeholder="Cari Nama atau NIP..." class="pl-10 pr-4 py-2.5 border rounded-full w-full outline-none focus:ring-2 focus:ring-blue-100">
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-black tracking-tighter border-b">
+                                <tr>
+                                    <th class="px-6 py-4">Nama / NIP</th>
+                                    <th class="px-6 py-4">Golongan</th>
+                                    <th class="px-6 py-4">Status</th>
+                                    <th class="px-6 py-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="list-pegawai" class="text-sm divide-y divide-slate-100"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </main>
+    </div>
+</div>
+
+<div id="detailModal" class="modal flex items-center justify-center">
+    <div class="bg-white rounded-2xl p-8 max-w-md w-full shadow-2xl">
+        <h2 class="text-xl font-black text-slate-800 mb-4 border-b pb-2">Detail Personel</h2>
+        <div id="detailContent" class="space-y-3 text-sm"></div>
+        <button onclick="closeModal()" class="mt-6 w-full bg-slate-800 text-white py-2 rounded-lg font-bold">TUTUP</button>
+    </div>
+</div>
+
+<script>
+    let db = JSON.parse(localStorage.getItem('hrd_db')) || [];
+
+    function showSection(id) {
+        document.querySelectorAll('.tab-content').forEach(s => s.classList.remove('active'));
+        document.getElementById(id).classList.add('active');
+        document.querySelectorAll('.sidebar-link').forEach(l => l.classList.remove('active-link'));
+        document.getElementById('link-' + id).classList.add('active-link');
+        
+        const titles = { 'dashboard': 'Dashboard Utama', 'input': 'Input Data Baru', 'tabel': 'Database Pegawai' };
+        document.getElementById('section-title').innerText = titles[id];
+        
+        if(id === 'tabel') renderTable();
+        updateStats();
+    }
+
+    function renderTable(filterData = db) {
+        const tbody = document.getElementById('list-pegawai');
+        tbody.innerHTML = '';
+        
+        filterData.forEach((item, index) => {
+            // Logika Warna STR Expired (H-30 hari)
+            const isExpiring = item.str && (new Date(item.str) - new Date()) / (1000*60*60*24) < 30;
+            
+            tbody.innerHTML += `
+                <tr class="hover:bg-blue-50/50 transition">
+                    <td class="px-6 py-4 font-bold text-slate-800">
+                        ${item.nama}<br><span class="text-[10px] text-slate-400 font-normal uppercase tracking-tighter">NIP. ${item.nip}</span>
+                    </td>
+                    <td class="px-6 py-4 font-medium text-slate-600">${item.pangkat}</td>
+                    <td class="px-6 py-4">
+                        <span class="px-2 py-0.5 rounded text-[10px] font-black ${item.status === 'PNS' ? 'bg-green-100 text-green-700' : 'bg-blue-100 text-blue-700'}">
+                            ${item.status}
+                        </span>
+                    </td>
+                    <td class="px-6 py-4 text-center space-x-3">
+                        <button onclick="viewDetail(${index})" class="text-slate-400 hover:text-blue-600"><i class="fas fa-eye"></i></button>
+                        <button onclick="editData(${index})" class="text-slate-400 hover:text-green-600"><i class="fas fa-edit"></i></button>
+                        <button onclick="deleteData(${index})" class="text-slate-400 hover:text-red-600"><i class="fas fa-trash"></i></button>
+                    </td>
+                </tr>`;
+        });
+    }
+
+    document.getElementById('employeeForm').onsubmit = function(e) {
+        e.preventDefault();
+        const editIdx = document.getElementById('edit-index').value;
+        const data = {
+            nama: document.getElementById('f-nama').value,
+            nip: document.getElementById('f-nip').value,
+            pangkat: document.getElementById('f-pangkat').value,
+            status: document.getElementById('f-status').value,
+            str: document.getElementById('f-str').value,
+            jk: document.getElementById('f-jk').value
+        };
+
+        if(editIdx === "-1") db.push(data);
+        else { db[editIdx] = data; document.getElementById('edit-index').value = "-1"; }
+
+        localStorage.setItem('hrd_db', JSON.stringify(db));
+        this.reset();
+        showSection('tabel');
+    };
+
+    function searchData() {
+        const val = document.getElementById('searchBox').value.toLowerCase();
+        const filtered = db.filter(i => i.nama.toLowerCase().includes(val) || i.nip.includes(val));
+        renderTable(filtered);
+    }
+
+    function viewDetail(idx) {
+        const item = db[idx];
+        document.getElementById('detailContent').innerHTML = `
+            <div class="grid grid-cols-2 gap-2 border-b pb-2"><b>Nama</b> <span>: ${item.nama}</span></div>
+            <div class="grid grid-cols-2 gap-2 border-b pb-2"><b>NIP</b> <span>: ${item.nip}</span></div>
+            <div class="grid grid-cols-2 gap-2 border-b pb-2"><b>Golongan</b> <span>: ${item.pangkat}</span></div>
+            <div class="grid grid-cols-2 gap-2 border-b pb-2"><b>Status</b> <span>: ${item.status}</span></div>
+            <div class="grid grid-cols-2 gap-2 border-b pb-2"><b>STR</b> <span class="text-red-600 font-bold">: ${item.str || '-'}</span></div>
+            <div class="grid grid-cols-2 gap-2"><b>Gender</b> <span>: ${item.jk}</span></div>
+        `;
+        document.getElementById('detailModal').style.display = 'flex';
+    }
+
+    function closeModal() { document.getElementById('detailModal').style.display = 'none'; }
+
+    function deleteData(index) {
+        if(confirm("Hapus data " + db[index].nama + "?")) {
+            db.splice(index, 1);
+            localStorage.setItem('hrd_db', JSON.stringify(db));
+            renderTable();
+            updateStats();
+        }
+    }
+
+    function editData(index) {
+        const item = db[index];
+        document.getElementById('edit-index').value = index;
+        document.getElementById('f-nama').value = item.nama;
+        document.getElementById('f-nip').value = item.nip;
+        document.getElementById('f-pangkat').value = item.pangkat;
+        document.getElementById('f-status').value = item.status;
+        document.getElementById('f-str').value = item.str;
+        document.getElementById('f-jk').value = item.jk;
+        showSection('input');
+    }
+
+    function updateStats() {
+        const today = new Date();
+        const thirtyDaysLater = new Date();
+        thirtyDaysLater.setDate(today.getDate() + 30);
+
+        document.getElementById('count-total').innerText = db.length;
+        document.getElementById('count-pns').innerText = db.filter(i => i.status === 'PNS').length;
+        // Hitung STR yang expired atau akan expired dalam 30 hari
+        document.getElementById('count-str').innerText = db.filter(i => i.str && new Date(i.str) <= thirtyDaysLater).length;
+    }
+
+    document.getElementById('current-date').innerText = new Date().toLocaleDateString('id-ID', { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' });
+    updateStats();
+</script>
+</body>
+</html>

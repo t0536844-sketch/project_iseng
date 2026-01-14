@@ -1,0 +1,2441 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>IT Maintenance Support Dashboard</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Inter', -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, sans-serif;
+        }
+        
+        :root {
+            --primary: #4361ee;
+            --primary-light: #4895ef;
+            --secondary: #3a0ca3;
+            --accent: #f72585;
+            --success: #4cc9f0;
+            --warning: #f8961e;
+            --danger: #e63946;
+            --light: #f8f9fa;
+            --dark: #212529;
+            --gray: #6c757d;
+            --light-gray: #e9ecef;
+            --card-bg: #ffffff;
+            --sidebar-bg: #1a1a2e;
+            --gradient-primary: linear-gradient(135deg, #4361ee 0%, #3a0ca3 100%);
+            --gradient-success: linear-gradient(135deg, #4cc9f0 0%, #4895ef 100%);
+            --gradient-warning: linear-gradient(135deg, #f8961e 0%, #f3722c 100%);
+            --gradient-accent: linear-gradient(135deg, #f72585 0%, #b5179e 100%);
+            --gradient-dark: linear-gradient(135deg, #1a1a2e 0%, #16213e 100%);
+            --shadow-sm: 0 2px 4px rgba(0,0,0,0.05);
+            --shadow-md: 0 4px 6px rgba(0,0,0,0.07);
+            --shadow-lg: 0 10px 15px rgba(0,0,0,0.1);
+            --shadow-xl: 0 20px 25px rgba(0,0,0,0.15);
+            --radius-sm: 8px;
+            --radius-md: 12px;
+            --radius-lg: 16px;
+            --radius-xl: 24px;
+            --transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
+        }
+        
+        body {
+            background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%);
+            color: var(--dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
+        
+        .container {
+            max-width: 1600px;
+            margin: 0 auto;
+            padding: 30px;
+        }
+        
+        header {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 30px 0;
+            border-radius: var(--radius-lg);
+            margin-bottom: 40px;
+            box-shadow: var(--shadow-lg);
+            position: relative;
+            overflow: hidden;
+        }
+        
+        header::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-accent);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 0 30px;
+            position: relative;
+            z-index: 1;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+        }
+        
+        .logo-icon {
+            width: 60px;
+            height: 60px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.3);
+        }
+        
+        .logo-icon i {
+            font-size: 2rem;
+            color: white;
+        }
+        
+        .logo-text h1 {
+            font-size: 2.2rem;
+            font-weight: 800;
+            margin-bottom: 5px;
+            text-shadow: 0 2px 4px rgba(0,0,0,0.2);
+        }
+        
+        .logo-text p {
+            font-size: 1rem;
+            opacity: 0.9;
+            font-weight: 400;
+        }
+        
+        .header-info {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+            background: rgba(255, 255, 255, 0.15);
+            padding: 15px 25px;
+            border-radius: var(--radius-md);
+            backdrop-filter: blur(10px);
+            border: 1px solid rgba(255, 255, 255, 0.2);
+        }
+        
+        .header-info i {
+            font-size: 1.5rem;
+        }
+        
+        .upload-section {
+            background: var(--card-bg);
+            padding: 40px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 40px;
+            text-align: center;
+            position: relative;
+            border: 1px solid rgba(255, 255, 255, 0.3);
+            backdrop-filter: blur(10px);
+        }
+        
+        .upload-section h2 {
+            font-size: 1.8rem;
+            color: var(--secondary);
+            margin-bottom: 15px;
+            font-weight: 700;
+        }
+        
+        .upload-section p {
+            color: var(--gray);
+            font-size: 1.1rem;
+            margin-bottom: 30px;
+        }
+        
+        .upload-area {
+            border: 3px dashed var(--primary-light);
+            border-radius: var(--radius-lg);
+            padding: 60px 40px;
+            margin: 30px 0;
+            transition: var(--transition);
+            cursor: pointer;
+            background: rgba(67, 97, 238, 0.03);
+            position: relative;
+        }
+        
+        .upload-area:hover {
+            border-color: var(--accent);
+            background: rgba(247, 37, 133, 0.05);
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-lg);
+        }
+        
+        .upload-area i {
+            font-size: 4rem;
+            color: var(--primary);
+            margin-bottom: 20px;
+            transition: var(--transition);
+        }
+        
+        .upload-area:hover i {
+            color: var(--accent);
+            transform: scale(1.1);
+        }
+        
+        .upload-btn {
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            padding: 16px 40px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 1.1rem;
+            cursor: pointer;
+            transition: var(--transition);
+            display: inline-flex;
+            align-items: center;
+            gap: 12px;
+            margin-top: 20px;
+            box-shadow: var(--shadow-md);
+        }
+        
+        .upload-btn:hover {
+            background: var(--gradient-accent);
+            transform: translateY(-3px) scale(1.05);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .upload-btn:active {
+            transform: translateY(-1px);
+        }
+        
+        .dashboard {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            box-shadow: var(--shadow-md);
+            transition: var(--transition);
+            position: relative;
+            overflow: hidden;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .card:hover {
+            transform: translateY(-10px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: var(--gradient-primary);
+        }
+        
+        .card:nth-child(2)::before { background: var(--gradient-success); }
+        .card:nth-child(3)::before { background: var(--gradient-warning); }
+        .card:nth-child(4)::before { background: var(--gradient-accent); }
+        .card:nth-child(5)::before { background: var(--gradient-dark); }
+        
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+        }
+        
+        .card-header h3 {
+            font-size: 1.3rem;
+            color: var(--dark);
+            font-weight: 600;
+        }
+        
+        .card-header i {
+            font-size: 2rem;
+            background: linear-gradient(135deg, var(--primary), var(--secondary));
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+        
+        .stat-number {
+            font-size: 3rem;
+            font-weight: 800;
+            color: var(--dark);
+            margin-bottom: 10px;
+            line-height: 1;
+        }
+        
+        .stat-desc {
+            color: var(--gray);
+            font-size: 1rem;
+            font-weight: 400;
+        }
+        
+        .technician-stats {
+            margin-top: 25px;
+        }
+        
+        .technician-item {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding: 12px 0;
+            border-bottom: 1px solid var(--light-gray);
+            transition: var(--transition);
+        }
+        
+        .technician-item:hover {
+            background: rgba(67, 97, 238, 0.05);
+            transform: translateX(5px);
+            padding-left: 10px;
+            border-radius: var(--radius-sm);
+        }
+        
+        .technician-item:last-child {
+            border-bottom: none;
+        }
+        
+        .technician-name {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            font-weight: 600;
+            color: var(--dark);
+        }
+        
+        .technician-name i {
+            color: var(--primary);
+            font-size: 1.1rem;
+        }
+        
+        .technician-count {
+            background: var(--gradient-primary);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-weight: 600;
+            font-size: 0.9rem;
+            min-width: 40px;
+            text-align: center;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .rank-badge {
+            display: inline-flex;
+            align-items: center;
+            justify-content: center;
+            width: 28px;
+            height: 28px;
+            border-radius: 50%;
+            font-weight: 800;
+            font-size: 0.85rem;
+            margin-right: 10px;
+            box-shadow: var(--shadow-sm);
+        }
+        
+        .rank-1 {
+            background: linear-gradient(135deg, #FFD700 0%, #FFA500 100%);
+            color: #333;
+        }
+        
+        .rank-2 {
+            background: linear-gradient(135deg, #C0C0C0 0%, #A9A9A9 100%);
+            color: #333;
+        }
+        
+        .rank-3 {
+            background: linear-gradient(135deg, #CD7F32 0%, #8B4513 100%);
+            color: white;
+        }
+        
+        .filters {
+            background: var(--card-bg);
+            padding: 30px;
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 40px;
+            display: flex;
+            flex-wrap: wrap;
+            gap: 20px;
+            align-items: flex-end;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .filter-group {
+            display: flex;
+            flex-direction: column;
+            min-width: 220px;
+            flex: 1;
+        }
+        
+        .filter-group label {
+            font-weight: 600;
+            margin-bottom: 10px;
+            color: var(--dark);
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+        
+        .filter-group label i {
+            color: var(--primary);
+        }
+        
+        select, input {
+            padding: 14px 18px;
+            border: 2px solid var(--light-gray);
+            border-radius: var(--radius-md);
+            font-size: 1rem;
+            background: white;
+            transition: var(--transition);
+            color: var(--dark);
+        }
+        
+        select:focus, input:focus {
+            outline: none;
+            border-color: var(--primary);
+            box-shadow: 0 0 0 3px rgba(67, 97, 238, 0.1);
+        }
+        
+        select:hover, input:hover {
+            border-color: var(--primary-light);
+        }
+        
+        .data-table-container {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            overflow: hidden;
+            box-shadow: var(--shadow-lg);
+            margin-bottom: 40px;
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .table-header {
+            padding: 25px;
+            background: var(--gradient-primary);
+            color: white;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-header h3 {
+            font-size: 1.4rem;
+            font-weight: 600;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th {
+            background: rgba(67, 97, 238, 0.05);
+            padding: 18px 20px;
+            text-align: left;
+            font-weight: 600;
+            color: var(--dark);
+            border-bottom: 2px solid var(--light-gray);
+            font-size: 0.95rem;
+            text-transform: uppercase;
+            letter-spacing: 0.5px;
+        }
+        
+        td {
+            padding: 18px 20px;
+            border-bottom: 1px solid var(--light-gray);
+            color: var(--gray);
+        }
+        
+        tr {
+            transition: var(--transition);
+        }
+        
+        tr:hover {
+            background: rgba(67, 97, 238, 0.03);
+            transform: scale(1.005);
+        }
+        
+        .status {
+            padding: 6px 14px;
+            border-radius: 50px;
+            font-size: 0.85rem;
+            font-weight: 600;
+            display: inline-block;
+            min-width: 100px;
+            text-align: center;
+        }
+        
+        .status-completed {
+            background: rgba(76, 201, 240, 0.1);
+            color: #4cc9f0;
+            border: 1px solid rgba(76, 201, 240, 0.3);
+        }
+        
+        .status-inprocess {
+            background: rgba(248, 150, 30, 0.1);
+            color: #f8961e;
+            border: 1px solid rgba(248, 150, 30, 0.3);
+        }
+        
+        .status-outprocess {
+            background: rgba(67, 97, 238, 0.1);
+            color: #4361ee;
+            border: 1px solid rgba(67, 97, 238, 0.3);
+        }
+        
+        .status-rusak {
+            background: rgba(230, 57, 70, 0.1);
+            color: #e63946;
+            border: 1px solid rgba(230, 57, 70, 0.3);
+        }
+        
+        .pagination {
+            display: flex;
+            justify-content: center;
+            padding: 25px;
+            gap: 10px;
+            background: rgba(67, 97, 238, 0.02);
+        }
+        
+        .page-btn {
+            padding: 10px 18px;
+            background: white;
+            border: 2px solid var(--light-gray);
+            border-radius: var(--radius-md);
+            cursor: pointer;
+            transition: var(--transition);
+            font-weight: 600;
+            color: var(--gray);
+        }
+        
+        .page-btn:hover {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: var(--primary);
+            transform: translateY(-2px);
+        }
+        
+        .page-btn.active {
+            background: var(--gradient-primary);
+            color: white;
+            border-color: var(--primary);
+            box-shadow: var(--shadow-md);
+        }
+        
+        footer {
+            text-align: center;
+            padding: 30px;
+            color: var(--gray);
+            font-size: 0.95rem;
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            margin-top: 40px;
+            box-shadow: var(--shadow-md);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .footer-heart {
+            color: var(--accent);
+            animation: heartbeat 1.5s ease-in-out infinite;
+        }
+        
+        @keyframes heartbeat {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.1); }
+        }
+        
+        .charts-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 30px;
+            margin-bottom: 40px;
+        }
+        
+        .chart-card {
+            background: var(--card-bg);
+            border-radius: var(--radius-lg);
+            padding: 30px;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+            border: 1px solid rgba(255, 255, 255, 0.5);
+        }
+        
+        .chart-card:hover {
+            transform: translateY(-5px);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .chart-card h3 {
+            color: var(--dark);
+            margin-bottom: 25px;
+            font-size: 1.3rem;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+        
+        .chart-container {
+            height: 320px;
+            position: relative;
+        }
+        
+        .no-data {
+            text-align: center;
+            padding: 60px 30px;
+            color: var(--gray);
+        }
+        
+        .no-data i {
+            font-size: 4rem;
+            margin-bottom: 25px;
+            color: var(--light-gray);
+            opacity: 0.5;
+        }
+        
+        .no-data h3 {
+            font-size: 1.4rem;
+            color: var(--dark);
+            margin-bottom: 15px;
+        }
+        
+        .no-data p {
+            font-size: 1.1rem;
+            max-width: 400px;
+            margin: 0 auto;
+        }
+        
+        .floating-buttons {
+            position: fixed;
+            bottom: 30px;
+            right: 30px;
+            display: flex;
+            flex-direction: column;
+            gap: 15px;
+            z-index: 1000;
+        }
+        
+        .floating-btn {
+            width: 60px;
+            height: 60px;
+            border-radius: 50%;
+            background: var(--gradient-primary);
+            color: white;
+            border: none;
+            cursor: pointer;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+            box-shadow: var(--shadow-lg);
+            transition: var(--transition);
+        }
+        
+        .floating-btn:hover {
+            background: var(--gradient-accent);
+            transform: scale(1.1) rotate(10deg);
+            box-shadow: var(--shadow-xl);
+        }
+        
+        .floating-btn:nth-child(2) {
+            background: var(--gradient-success);
+        }
+        
+        .floating-btn:nth-child(3) {
+            background: var(--gradient-accent);
+        }
+        
+        .progress-bar {
+            height: 4px;
+            background: var(--gradient-primary);
+            border-radius: 2px;
+            margin-top: 10px;
+            position: relative;
+            overflow: hidden;
+        }
+        
+        .progress-bar::after {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: -100%;
+            width: 100%;
+            height: 100%;
+            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.5), transparent);
+            animation: shimmer 2s infinite;
+        }
+        
+        @keyframes shimmer {
+            100% { left: 100%; }
+        }
+        
+        .file-info-card {
+            background: var(--gradient-success);
+            color: white;
+            padding: 25px;
+            border-radius: var(--radius-lg);
+            margin-top: 25px;
+            display: none;
+            animation: slideIn 0.5s ease-out;
+            box-shadow: var(--shadow-lg);
+        }
+        
+        @keyframes slideIn {
+            from {
+                opacity: 0;
+                transform: translateY(-20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .stats-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-top: 15px;
+        }
+        
+        .stat-item {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .stat-icon {
+            width: 50px;
+            height: 50px;
+            background: rgba(255, 255, 255, 0.2);
+            border-radius: var(--radius-md);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.5rem;
+        }
+        
+        .stat-text {
+            flex: 1;
+        }
+        
+        .stat-text p {
+            font-size: 0.9rem;
+            opacity: 0.9;
+        }
+        
+        .stat-text h4 {
+            font-size: 1.5rem;
+            font-weight: 700;
+            margin-top: 5px;
+        }
+        
+        @media (max-width: 1200px) {
+            .container {
+                padding: 20px;
+            }
+            
+            .charts-container {
+                grid-template-columns: 1fr;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+                gap: 25px;
+            }
+            
+            .dashboard {
+                grid-template-columns: 1fr;
+            }
+            
+            .filters {
+                flex-direction: column;
+            }
+            
+            .upload-area {
+                padding: 40px 20px;
+            }
+            
+            .floating-buttons {
+                bottom: 20px;
+                right: 20px;
+            }
+            
+            .floating-btn {
+                width: 50px;
+                height: 50px;
+                font-size: 1.3rem;
+            }
+            
+            .chart-card {
+                padding: 20px;
+            }
+            
+            .chart-container {
+                height: 280px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .container {
+                padding: 15px;
+            }
+            
+            .upload-section {
+                padding: 25px;
+            }
+            
+            .upload-btn {
+                padding: 14px 30px;
+                font-size: 1rem;
+            }
+            
+            .card {
+                padding: 25px;
+            }
+            
+            .stat-number {
+                font-size: 2.5rem;
+            }
+        }
+        
+        /* Animations */
+        .fade-in {
+            animation: fadeIn 0.8s ease-out;
+        }
+        
+        @keyframes fadeIn {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+        
+        .pulse {
+            animation: pulse 2s infinite;
+        }
+        
+        @keyframes pulse {
+            0% {
+                box-shadow: 0 0 0 0 rgba(67, 97, 238, 0.4);
+            }
+            70% {
+                box-shadow: 0 0 0 10px rgba(67, 97, 238, 0);
+            }
+            100% {
+                box-shadow: 0 0 0 0 rgba(67, 97, 238, 0);
+            }
+        }
+        
+        /* Scrollbar Styling */
+        ::-webkit-scrollbar {
+            width: 10px;
+            height: 10px;
+        }
+        
+        ::-webkit-scrollbar-track {
+            background: rgba(67, 97, 238, 0.05);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb {
+            background: var(--gradient-primary);
+            border-radius: 10px;
+        }
+        
+        ::-webkit-scrollbar-thumb:hover {
+            background: var(--gradient-accent);
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <header class="fade-in">
+            <div class="header-content">
+                <div class="logo">
+                    <div class="logo-icon pulse">
+                        <i class="fas fa-tools"></i>
+                    </div>
+                    <div class="logo-text">
+                        <h1>IT Maintenance Support Dashboard</h1>
+                        <p>Laporan Bulanan dan Tahunan • Dashboard Monitoring • Analytics</p>
+                    </div>
+                </div>
+                <div class="header-info">
+                    <i class="fas fa-calendar-alt"></i>
+                    <p>Laporan per: <span id="current-date">Desember 2025</span></p>
+                </div>
+            </div>
+        </header>
+        
+        <section class="upload-section fade-in">
+            <h2><i class="fas fa-file-upload"></i> Unggah Data Laporan</h2>
+            <p>Unggah file CSV atau Excel untuk memuat data laporan maintenance IT</p>
+            
+            <div class="upload-area" id="upload-area">
+                <i class="fas fa-cloud-upload-alt"></i>
+                <p style="font-size: 1.2rem; font-weight: 500; margin-bottom: 10px;">Seret dan lepas file di sini</p>
+                <p style="color: var(--gray); margin-bottom: 20px;">atau klik tombol di bawah</p>
+                <input type="file" id="file-input" accept=".csv,.xlsx,.xls" hidden>
+                <button class="upload-btn" onclick="document.getElementById('file-input').click()">
+                    <i class="fas fa-folder-open"></i> Pilih File Data
+                </button>
+                <p style="margin-top: 25px; font-size: 0.95rem; color: var(--gray);">
+                    <i class="fas fa-info-circle"></i> Format yang didukung: .csv, .xlsx, .xls
+                </p>
+            </div>
+            
+            <div id="file-info" class="file-info-card">
+                <div style="display: flex; align-items: center; justify-content: space-between; margin-bottom: 20px;">
+                    <div>
+                        <h3 style="font-size: 1.3rem; font-weight: 600; margin-bottom: 5px;">
+                            <i class="fas fa-file"></i> <span id="file-name"></span>
+                        </h3>
+                        <p><i class="fas fa-database"></i> <span id="row-count"></span> baris data dimuat</p>
+                    </div>
+                    <div style="background: rgba(255,255,255,0.2); padding: 8px 16px; border-radius: 50px;">
+                        <span id="file-size"></span>
+                    </div>
+                </div>
+                <div class="stats-grid">
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-clipboard-check"></i>
+                        </div>
+                        <div class="stat-text">
+                            <p>Total Laporan</p>
+                            <h4 id="file-total-reports">0</h4>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-user-cog"></i>
+                        </div>
+                        <div class="stat-text">
+                            <p>Teknisi Aktif</p>
+                            <h4 id="file-technicians">0</h4>
+                        </div>
+                    </div>
+                    <div class="stat-item">
+                        <div class="stat-icon">
+                            <i class="fas fa-map-marker-alt"></i>
+                        </div>
+                        <div class="stat-text">
+                            <p>Lokasi</p>
+                            <h4 id="file-locations">0</h4>
+                        </div>
+                    </div>
+                </div>
+                <div class="progress-bar"></div>
+            </div>
+        </section>
+        
+        <section class="dashboard" id="dashboard-stats" style="display: none;">
+            <!-- Cards will be populated by JavaScript -->
+        </section>
+        
+        <section class="charts-container" id="charts-section" style="display: none;">
+            <!-- Charts will be populated by JavaScript -->
+        </section>
+        
+        <section class="filters" id="filters-section" style="display: none;">
+            <!-- Filters will be populated by JavaScript -->
+        </section>
+        
+        <section class="data-table-container" id="table-section" style="display: none;">
+            <!-- Table will be populated by JavaScript -->
+        </section>
+        
+        <footer class="fade-in">
+            <p>IT Maintenance Support Dashboard &copy; 2025 | Dibuat dengan <i class="fas fa-heart footer-heart"></i> untuk monitoring laporan IT</p>
+            <p style="margin-top: 10px; font-size: 0.85rem; opacity: 0.8;">Dashboard analytics dengan visualisasi data interaktif</p>
+        </footer>
+        
+        <div class="floating-buttons">
+            <button class="floating-btn" onclick="scrollToTop()" title="Kembali ke atas">
+                <i class="fas fa-arrow-up"></i>
+            </button>
+            <button class="floating-btn" onclick="exportToCSV()" title="Ekspor ke CSV">
+                <i class="fas fa-download"></i>
+            </button>
+            <button class="floating-btn" onclick="refreshData()" title="Refresh Data">
+                <i class="fas fa-sync-alt"></i>
+            </button>
+        </div>
+    </div>
+    
+    <script>
+        // Data variabel global
+        let allData = [];
+        let filteredData = [];
+        let currentPage = 1;
+        const rowsPerPage = 15;
+        
+        // Chart instances
+        let statusChart = null;
+        let locationChart = null;
+        let monthlyChart = null;
+        let technicianChart = null;
+        
+        // Fungsi untuk menyembunyikan dashboard
+        function hideDashboard() {
+            document.getElementById('dashboard-stats').style.display = 'none';
+            document.getElementById('charts-section').style.display = 'none';
+            document.getElementById('filters-section').style.display = 'none';
+            document.getElementById('table-section').style.display = 'none';
+            document.getElementById('file-info').style.display = 'none';
+        }
+        
+        // Fungsi untuk menampilkan dashboard
+        function showDashboard() {
+            document.getElementById('dashboard-stats').style.display = 'grid';
+            document.getElementById('charts-section').style.display = 'grid';
+            document.getElementById('filters-section').style.display = 'flex';
+            document.getElementById('table-section').style.display = 'block';
+            document.getElementById('file-info').style.display = 'block';
+        }
+        
+        // Inisialisasi aplikasi
+        document.addEventListener('DOMContentLoaded', function() {
+            // Atur tanggal saat ini
+            const now = new Date();
+            const months = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+            document.getElementById('current-date').textContent = `${months[now.getMonth()]} ${now.getFullYear()}`;
+            
+            // Setup event listeners
+            setupEventListeners();
+            
+            // Sembunyikan dashboard di awal
+            hideDashboard();
+            
+            // Load contoh data untuk demonstrasi
+            setTimeout(loadExampleData, 1000);
+        });
+        
+        function setupEventListeners() {
+            // File upload event
+            document.getElementById('file-input').addEventListener('change', handleFileUpload);
+            
+            // Drag and drop events
+            const uploadArea = document.getElementById('upload-area');
+            uploadArea.addEventListener('dragover', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--accent)';
+                uploadArea.style.backgroundColor = 'rgba(247, 37, 133, 0.1)';
+            });
+            
+            uploadArea.addEventListener('dragleave', () => {
+                uploadArea.style.borderColor = 'var(--primary-light)';
+                uploadArea.style.backgroundColor = 'rgba(67, 97, 238, 0.03)';
+            });
+            
+            uploadArea.addEventListener('drop', (e) => {
+                e.preventDefault();
+                uploadArea.style.borderColor = 'var(--primary-light)';
+                uploadArea.style.backgroundColor = 'rgba(67, 97, 238, 0.03)';
+                
+                if (e.dataTransfer.files.length) {
+                    document.getElementById('file-input').files = e.dataTransfer.files;
+                    handleFileUpload();
+                }
+            });
+        }
+        
+        function handleFileUpload() {
+            const fileInput = document.getElementById('file-input');
+            if (!fileInput.files.length) return;
+            
+            const file = fileInput.files[0];
+            const fileSize = (file.size / 1024).toFixed(2);
+            
+            // Update file info display
+            document.getElementById('file-name').textContent = file.name;
+            document.getElementById('file-size').textContent = `${fileSize} KB`;
+            
+            // Parse file based on extension
+            const fileExtension = file.name.split('.').pop().toLowerCase();
+            
+            if (fileExtension === 'csv') {
+                parseCSVFile(file);
+            } else if (fileExtension === 'xlsx' || fileExtension === 'xls') {
+                parseExcelFile(file);
+            } else {
+                alert('Format file tidak didukung. Harap unggah file CSV atau Excel.');
+            }
+        }
+        
+        function parseCSVFile(file) {
+            Papa.parse(file, {
+                header: true,
+                skipEmptyLines: true,
+                complete: function(results) {
+                    if (results.data && results.data.length > 0) {
+                        processData(results.data);
+                    } else {
+                        alert('File CSV tidak berisi data yang valid.');
+                    }
+                },
+                error: function(error) {
+                    alert('Terjadi kesalahan saat memproses file CSV: ' + error.message);
+                }
+            });
+        }
+        
+        function parseExcelFile(file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                const data = new Uint8Array(e.target.result);
+                const workbook = XLSX.read(data, { type: 'array' });
+                
+                // Ambil sheet pertama
+                const firstSheetName = workbook.SheetNames[0];
+                const worksheet = workbook.Sheets[firstSheetName];
+                
+                // Konversi ke JSON
+                const jsonData = XLSX.utils.sheet_to_json(worksheet);
+                
+                if (jsonData && jsonData.length > 0) {
+                    processData(jsonData);
+                } else {
+                    alert('File Excel tidak berisi data yang valid.');
+                }
+            };
+            reader.readAsArrayBuffer(file);
+        }
+        
+        function processData(data) {
+            // Simpan data asli
+            allData = data;
+            
+            // Format data jika diperlukan
+            allData.forEach((item, index) => {
+                // Tambahkan ID jika tidak ada
+                if (!item.id) {
+                    item.id = index + 1;
+                }
+                
+                // Format tanggal jika dalam format Excel serial number
+                if (item['Tanggal Lapor'] && typeof item['Tanggal Lapor'] === 'number') {
+                    item['Tanggal Lapor'] = excelDateToJSDate(item['Tanggal Lapor']);
+                }
+                
+                // Gabungkan teknisi I dan II untuk analisis
+                if (item['Pelaksana I'] && item['Pelaksana II']) {
+                    item['Teknisi'] = `${item['Pelaksana I']}, ${item['Pelaksana II']}`;
+                } else if (item['Pelaksana I']) {
+                    item['Teknisi'] = item['Pelaksana I'];
+                } else if (item['Pelaksana II']) {
+                    item['Teknisi'] = item['Pelaksana II'];
+                } else {
+                    item['Teknisi'] = 'Tidak diketahui';
+                }
+            });
+            
+            // Update jumlah baris
+            document.getElementById('row-count').textContent = allData.length.toLocaleString();
+            
+            // Update file info stats
+            updateFileInfoStats();
+            
+            // Tampilkan dashboard
+            showDashboard();
+            
+            // Update dashboard UI
+            updateDashboardUI();
+            
+            // Terapkan filter awal
+            applyFilters();
+        }
+        
+        function updateFileInfoStats() {
+            // Hitung statistik untuk file info card
+            const totalReports = allData.length;
+            const technicians = new Set();
+            const locations = new Set();
+            
+            allData.forEach(item => {
+                if (item['Pelaksana I']) technicians.add(item['Pelaksana I']);
+                if (item['Pelaksana II']) technicians.add(item['Pelaksana II']);
+                if (item.LokasiRuangan) locations.add(item.LokasiRuangan);
+            });
+            
+            document.getElementById('file-total-reports').textContent = totalReports.toLocaleString();
+            document.getElementById('file-technicians').textContent = technicians.size.toLocaleString();
+            document.getElementById('file-locations').textContent = locations.size.toLocaleString();
+        }
+        
+        function updateDashboardUI() {
+            // Update dashboard cards
+            updateDashboardCards();
+            
+            // Update filters
+            updateFilters();
+            
+            // Update charts section
+            updateChartsSection();
+            
+            // Update table section
+            updateTableSection();
+        }
+        
+        function updateDashboardCards() {
+            const dashboardStats = document.getElementById('dashboard-stats');
+            
+            // Hitung statistik
+            const totalReports = allData.length;
+            const completed = allData.filter(item => item['Status Akhir'] === 'COMPLETED').length;
+            const inProcess = allData.filter(item => 
+                item['Status Akhir'] === 'IN PROCESS' || 
+                item['Status Awal'] === 'IN PROCESS'
+            ).length;
+            
+            // Cari perangkat dengan laporan terbanyak
+            const deviceCounts = {};
+            allData.forEach(item => {
+                const device = item['Nama AlatBarangPerangkat'] || 'Tidak diketahui';
+                deviceCounts[device] = (deviceCounts[device] || 0) + 1;
+            });
+            
+            let topDevice = '-';
+            let maxCount = 0;
+            for (const [device, count] of Object.entries(deviceCounts)) {
+                if (count > maxCount) {
+                    maxCount = count;
+                    topDevice = device;
+                }
+            }
+            
+            // Hitung statistik teknisi
+            const technicianCounts = {};
+            allData.forEach(item => {
+                if (item['Pelaksana I']) {
+                    technicianCounts[item['Pelaksana I']] = (technicianCounts[item['Pelaksana I']] || 0) + 1;
+                }
+                if (item['Pelaksana II']) {
+                    technicianCounts[item['Pelaksana II']] = (technicianCounts[item['Pelaksana II']] || 0) + 1;
+                }
+            });
+            
+            const sortedTechnicians = Object.entries(technicianCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 5);
+            
+            const topTechnician = sortedTechnicians.length > 0 ? sortedTechnicians[0][0] : '-';
+            
+            // Generate cards HTML
+            const cardsHTML = `
+                <div class="card fade-in">
+                    <div class="card-header">
+                        <h3>Total Laporan</h3>
+                        <i class="fas fa-clipboard-list"></i>
+                    </div>
+                    <div class="stat-number">${totalReports.toLocaleString()}</div>
+                    <p class="stat-desc">Jumlah seluruh laporan maintenance</p>
+                    <div class="progress-bar"></div>
+                </div>
+                
+                <div class="card fade-in" style="animation-delay: 0.1s">
+                    <div class="card-header">
+                        <h3>Selesai</h3>
+                        <i class="fas fa-check-circle"></i>
+                    </div>
+                    <div class="stat-number">${completed.toLocaleString()}</div>
+                    <p class="stat-desc">Laporan dengan status COMPLETED</p>
+                    <div class="progress-bar"></div>
+                </div>
+                
+                <div class="card fade-in" style="animation-delay: 0.2s">
+                    <div class="card-header">
+                        <h3>Dalam Proses</h3>
+                        <i class="fas fa-spinner"></i>
+                    </div>
+                    <div class="stat-number">${inProcess.toLocaleString()}</div>
+                    <p class="stat-desc">Laporan dengan status IN PROCESS</p>
+                    <div class="progress-bar"></div>
+                </div>
+                
+                <div class="card fade-in" style="animation-delay: 0.3s">
+                    <div class="card-header">
+                        <h3>Perangkat Terbanyak</h3>
+                        <i class="fas fa-print"></i>
+                    </div>
+                    <div class="stat-number" title="${topDevice}">${topDevice.length > 15 ? topDevice.substring(0, 15) + '...' : topDevice}</div>
+                    <p class="stat-desc">Jenis perangkat dengan laporan terbanyak</p>
+                    <div class="progress-bar"></div>
+                </div>
+                
+                <div class="card fade-in" style="animation-delay: 0.4s">
+                    <div class="card-header">
+                        <h3>Teknisi Teraktif</h3>
+                        <i class="fas fa-user-cog"></i>
+                    </div>
+                    <div class="stat-number" title="${topTechnician}">${topTechnician.length > 15 ? topTechnician.substring(0, 15) + '...' : topTechnician}</div>
+                    <p class="stat-desc">Teknisi dengan penanganan terbanyak</p>
+                    
+                    <div class="technician-stats">
+                        ${sortedTechnicians.length > 0 ? sortedTechnicians.map(([technician, count], index) => {
+                            const rankClass = index < 3 ? `rank-${index + 1}` : '';
+                            const rankBadge = `<span class="rank-badge ${rankClass}">${index + 1}</span>`;
+                            return `
+                                <div class="technician-item">
+                                    <div class="technician-name">
+                                        ${rankBadge}
+                                        <i class="fas fa-user-cog"></i>
+                                        <span title="${technician}">${technician.length > 20 ? technician.substring(0, 20) + '...' : technician}</span>
+                                    </div>
+                                    <div class="technician-count">${count}</div>
+                                </div>
+                            `;
+                        }).join('') : `
+                            <div class="no-data">
+                                <p>Tidak ada data teknisi</p>
+                            </div>
+                        `}
+                    </div>
+                </div>
+            `;
+            
+            dashboardStats.innerHTML = cardsHTML;
+        }
+        
+        function updateFilters() {
+            const filtersSection = document.getElementById('filters-section');
+            
+            // Collect unique values for filters
+            const years = new Set();
+            const locations = new Set();
+            const technicians = new Set();
+            
+            allData.forEach(item => {
+                if (item['Tanggal Lapor']) {
+                    const dateParts = item['Tanggal Lapor'].toString().split('/');
+                    if (dateParts.length === 3) {
+                        years.add(dateParts[2]);
+                    }
+                }
+                if (item.LokasiRuangan) locations.add(item.LokasiRuangan);
+                if (item['Pelaksana I']) technicians.add(item['Pelaksana I']);
+                if (item['Pelaksana II']) technicians.add(item['Pelaksana II']);
+            });
+            
+            const sortedYears = Array.from(years).sort((a, b) => b - a);
+            const sortedLocations = Array.from(locations).sort();
+            const sortedTechnicians = Array.from(technicians).sort();
+            
+            const filtersHTML = `
+                <div class="filter-group fade-in" style="animation-delay: 0.1s">
+                    <label for="month-filter"><i class="fas fa-calendar"></i> Bulan</label>
+                    <select id="month-filter">
+                        <option value="all">Semua Bulan</option>
+                        <option value="1">Januari</option>
+                        <option value="2">Februari</option>
+                        <option value="3">Maret</option>
+                        <option value="4">April</option>
+                        <option value="5">Mei</option>
+                        <option value="6">Juni</option>
+                        <option value="7">Juli</option>
+                        <option value="8">Agustus</option>
+                        <option value="9">September</option>
+                        <option value="10">Oktober</option>
+                        <option value="11">November</option>
+                        <option value="12">Desember</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group fade-in" style="animation-delay: 0.2s">
+                    <label for="year-filter"><i class="fas fa-calendar-alt"></i> Tahun</label>
+                    <select id="year-filter">
+                        <option value="all">Semua Tahun</option>
+                        ${sortedYears.map(year => `<option value="${year}">${year}</option>`).join('')}
+                    </select>
+                </div>
+                
+                <div class="filter-group fade-in" style="animation-delay: 0.3s">
+                    <label for="status-filter"><i class="fas fa-tasks"></i> Status</label>
+                    <select id="status-filter">
+                        <option value="all">Semua Status</option>
+                        <option value="COMPLETED">COMPLETED</option>
+                        <option value="IN PROCESS">IN PROCESS</option>
+                        <option value="OUT PROCESS">OUT PROCESS</option>
+                        <option value="RUSAK">RUSAK</option>
+                    </select>
+                </div>
+                
+                <div class="filter-group fade-in" style="animation-delay: 0.4s">
+                    <label for="location-filter"><i class="fas fa-map-marker-alt"></i> Lokasi</label>
+                    <select id="location-filter">
+                        <option value="all">Semua Lokasi</option>
+                        ${sortedLocations.map(location => `<option value="${location}">${location}</option>`).join('')}
+                    </select>
+                </div>
+                
+                <div class="filter-group fade-in" style="animation-delay: 0.5s">
+                    <label for="technician-filter"><i class="fas fa-user-cog"></i> Teknisi</label>
+                    <select id="technician-filter">
+                        <option value="all">Semua Teknisi</option>
+                        ${sortedTechnicians.map(tech => `<option value="${tech}">${tech}</option>`).join('')}
+                    </select>
+                </div>
+                
+                <div class="filter-group fade-in" style="animation-delay: 0.6s">
+                    <label for="search-input"><i class="fas fa-search"></i> Cari</label>
+                    <input type="text" id="search-input" placeholder="Cari berdasarkan perangkat, pelapor, masalah...">
+                </div>
+            `;
+            
+            filtersSection.innerHTML = filtersHTML;
+            
+            // Add event listeners to filters
+            document.getElementById('month-filter').addEventListener('change', applyFilters);
+            document.getElementById('year-filter').addEventListener('change', applyFilters);
+            document.getElementById('status-filter').addEventListener('change', applyFilters);
+            document.getElementById('location-filter').addEventListener('change', applyFilters);
+            document.getElementById('technician-filter').addEventListener('change', applyFilters);
+            document.getElementById('search-input').addEventListener('input', applyFilters);
+        }
+        
+        function updateChartsSection() {
+            const chartsSection = document.getElementById('charts-section');
+            
+            const chartsHTML = `
+                <div class="chart-card fade-in" style="animation-delay: 0.1s">
+                    <h3><i class="fas fa-chart-pie"></i> Distribusi Status Laporan</h3>
+                    <div class="chart-container">
+                        <canvas id="statusChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card fade-in" style="animation-delay: 0.2s">
+                    <h3><i class="fas fa-chart-bar"></i> Laporan per Lokasi</h3>
+                    <div class="chart-container">
+                        <canvas id="locationChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card fade-in" style="animation-delay: 0.3s">
+                    <h3><i class="fas fa-chart-line"></i> Tren Bulanan</h3>
+                    <div class="chart-container">
+                        <canvas id="monthlyChart"></canvas>
+                    </div>
+                </div>
+                
+                <div class="chart-card fade-in" style="animation-delay: 0.4s">
+                    <h3><i class="fas fa-user-cog"></i> Performa Teknisi</h3>
+                    <div class="chart-container">
+                        <canvas id="technicianChart"></canvas>
+                    </div>
+                </div>
+            `;
+            
+            chartsSection.innerHTML = chartsHTML;
+            updateCharts();
+        }
+        
+        function updateTableSection() {
+            const tableSection = document.getElementById('table-section');
+            
+            const tableHTML = `
+                <div class="table-header">
+                    <h3><i class="fas fa-table"></i> Data Laporan IT Maintenance</h3>
+                    <div>
+                        <button class="upload-btn" onclick="exportToCSV()" style="padding: 12px 25px;">
+                            <i class="fas fa-download"></i> Ekspor CSV
+                        </button>
+                    </div>
+                </div>
+                
+                <div id="table-content">
+                    <table id="data-table">
+                        <thead>
+                            <tr>
+                                <th>No</th>
+                                <th>Perangkat</th>
+                                <th>Lokasi</th>
+                                <th>Pelapor</th>
+                                <th>Teknisi</th>
+                                <th>Tanggal Lapor</th>
+                                <th>Masalah</th>
+                                <th>Tindakan</th>
+                                <th>Status</th>
+                            </tr>
+                        </thead>
+                        <tbody id="table-body">
+                            <!-- Data akan diisi oleh JavaScript -->
+                        </tbody>
+                    </table>
+                    
+                    <div class="pagination" id="pagination">
+                        <!-- Pagination akan diisi oleh JavaScript -->
+                    </div>
+                </div>
+            `;
+            
+            tableSection.innerHTML = tableHTML;
+            updateTable();
+        }
+        
+        function excelDateToJSDate(serial) {
+            const utc_days = Math.floor(serial - 25569);
+            const utc_value = utc_days * 86400;
+            const date_info = new Date(utc_value * 1000);
+            
+            const day = date_info.getDate().toString().padStart(2, '0');
+            const month = (date_info.getMonth() + 1).toString().padStart(2, '0');
+            const year = date_info.getFullYear();
+            
+            return `${day}/${month}/${year}`;
+        }
+        
+        function applyFilters() {
+            const monthFilter = document.getElementById('month-filter').value;
+            const yearFilter = document.getElementById('year-filter').value;
+            const statusFilter = document.getElementById('status-filter').value;
+            const locationFilter = document.getElementById('location-filter').value;
+            const technicianFilter = document.getElementById('technician-filter').value;
+            const searchInput = document.getElementById('search-input').value.toLowerCase();
+            
+            // Filter data
+            filteredData = allData.filter(item => {
+                // Filter berdasarkan bulan
+                if (monthFilter !== 'all' && item['Tanggal Lapor']) {
+                    const dateParts = item['Tanggal Lapor'].toString().split('/');
+                    if (dateParts.length === 3) {
+                        const month = dateParts[1];
+                        if (parseInt(month) !== parseInt(monthFilter)) {
+                            return false;
+                        }
+                    }
+                }
+                
+                // Filter berdasarkan tahun
+                if (yearFilter !== 'all' && item['Tanggal Lapor']) {
+                    const dateParts = item['Tanggal Lapor'].toString().split('/');
+                    if (dateParts.length === 3) {
+                        const year = dateParts[2];
+                        if (year !== yearFilter) {
+                            return false;
+                        }
+                    }
+                }
+                
+                // Filter berdasarkan status
+                if (statusFilter !== 'all' && item['Status Akhir']) {
+                    if (item['Status Akhir'] !== statusFilter) {
+                        return false;
+                    }
+                }
+                
+                // Filter berdasarkan lokasi
+                if (locationFilter !== 'all' && item.LokasiRuangan) {
+                    if (item.LokasiRuangan !== locationFilter) {
+                        return false;
+                    }
+                }
+                
+                // Filter berdasarkan teknisi
+                if (technicianFilter !== 'all') {
+                    const hasTechnician = 
+                        (item['Pelaksana I'] && item['Pelaksana I'].includes(technicianFilter)) ||
+                        (item['Pelaksana II'] && item['Pelaksana II'].includes(technicianFilter));
+                    
+                    if (!hasTechnician) {
+                        return false;
+                    }
+                }
+                
+                // Filter berdasarkan pencarian
+                if (searchInput) {
+                    const searchableFields = [
+                        item['Nama AlatBarangPerangkat'] || '',
+                        item.LokasiRuangan || '',
+                        item.Pelapor || '',
+                        item['Pelaksana I'] || '',
+                        item['Pelaksana II'] || '',
+                        item.Permasalahan || '',
+                        item.Tindakan || ''
+                    ].join(' ').toLowerCase();
+                    
+                    if (!searchableFields.includes(searchInput)) {
+                        return false;
+                    }
+                }
+                
+                return true;
+            });
+            
+            // Reset ke halaman pertama
+            currentPage = 1;
+            
+            // Update tampilan
+            updateCharts();
+            updateTable();
+            updatePagination();
+        }
+        
+        function updateTable() {
+            const tableBody = document.getElementById('table-body');
+            if (!tableBody) return;
+            
+            tableBody.innerHTML = '';
+            
+            // Hitung indeks untuk pagination
+            const startIndex = (currentPage - 1) * rowsPerPage;
+            const endIndex = Math.min(startIndex + rowsPerPage, filteredData.length);
+            
+            // Tampilkan data untuk halaman saat ini
+            for (let i = startIndex; i < endIndex; i++) {
+                const item = filteredData[i];
+                const row = document.createElement('tr');
+                
+                // Tentukan kelas status
+                let statusClass = '';
+                let statusText = item['Status Akhir'] || item['Status Awal'] || 'Tidak diketahui';
+                
+                if (statusText.includes('COMPLETED')) {
+                    statusClass = 'status-completed';
+                } else if (statusText.includes('IN PROCESS')) {
+                    statusClass = 'status-inprocess';
+                } else if (statusText.includes('OUT PROCESS')) {
+                    statusClass = 'status-outprocess';
+                } else if (statusText.includes('RUSAK')) {
+                    statusClass = 'status-rusak';
+                }
+                
+                // Gabungkan teknisi I dan II untuk ditampilkan
+                let technicians = '';
+                if (item['Pelaksana I'] && item['Pelaksana II']) {
+                    technicians = `${item['Pelaksana I']}, ${item['Pelaksana II']}`;
+                } else if (item['Pelaksana I']) {
+                    technicians = item['Pelaksana I'];
+                } else if (item['Pelaksana II']) {
+                    technicians = item['Pelaksana II'];
+                } else {
+                    technicians = '-';
+                }
+                
+                row.innerHTML = `
+                    <td>${item.Nomor || item.id || i + 1}</td>
+                    <td><strong>${item['Nama AlatBarangPerangkat'] || '-'}</strong></td>
+                    <td>${item.LokasiRuangan || '-'}</td>
+                    <td>${item.Pelapor || '-'}</td>
+                    <td>${technicians}</td>
+                    <td><span class="date-badge">${item['Tanggal Lapor'] || '-'}</span></td>
+                    <td title="${item.Permasalahan || ''}">${item.Permasalahan ? (item.Permasalahan.length > 50 ? item.Permasalahan.substring(0, 50) + '...' : item.Permasalahan) : '-'}</td>
+                    <td title="${item.Tindakan || ''}">${item.Tindakan ? (item.Tindakan.length > 50 ? item.Tindakan.substring(0, 50) + '...' : item.Tindakan) : '-'}</td>
+                    <td><span class="status ${statusClass}">${statusText}</span></td>
+                `;
+                
+                tableBody.appendChild(row);
+            }
+        }
+        
+        function updatePagination() {
+            const pagination = document.getElementById('pagination');
+            if (!pagination) return;
+            
+            pagination.innerHTML = '';
+            
+            const totalPages = Math.ceil(filteredData.length / rowsPerPage);
+            
+            if (totalPages <= 1) return;
+            
+            // Tombol sebelumnya
+            const prevButton = document.createElement('button');
+            prevButton.className = 'page-btn';
+            prevButton.innerHTML = '<i class="fas fa-chevron-left"></i>';
+            prevButton.disabled = currentPage === 1;
+            prevButton.onclick = () => {
+                if (currentPage > 1) {
+                    currentPage--;
+                    updateTable();
+                    updatePagination();
+                }
+            };
+            pagination.appendChild(prevButton);
+            
+            // Tampilkan halaman
+            for (let i = 1; i <= totalPages; i++) {
+                // Tampilkan hanya beberapa halaman di sekitar halaman saat ini
+                if (i === 1 || i === totalPages || (i >= currentPage - 1 && i <= currentPage + 1)) {
+                    const pageButton = document.createElement('button');
+                    pageButton.className = `page-btn ${i === currentPage ? 'active' : ''}`;
+                    pageButton.textContent = i;
+                    pageButton.onclick = () => {
+                        currentPage = i;
+                        updateTable();
+                        updatePagination();
+                    };
+                    pagination.appendChild(pageButton);
+                } else if (i === currentPage - 2 || i === currentPage + 2) {
+                    // Tambahkan ellipsis
+                    const ellipsis = document.createElement('span');
+                    ellipsis.textContent = '...';
+                    ellipsis.style.padding = '8px 5px';
+                    ellipsis.style.color = 'var(--gray)';
+                    pagination.appendChild(ellipsis);
+                }
+            }
+            
+            // Tombol berikutnya
+            const nextButton = document.createElement('button');
+            nextButton.className = 'page-btn';
+            nextButton.innerHTML = '<i class="fas fa-chevron-right"></i>';
+            nextButton.disabled = currentPage === totalPages;
+            nextButton.onclick = () => {
+                if (currentPage < totalPages) {
+                    currentPage++;
+                    updateTable();
+                    updatePagination();
+                }
+            };
+            pagination.appendChild(nextButton);
+        }
+        
+        function updateCharts() {
+            // Siapkan data untuk chart
+            const statusData = getStatusData();
+            const locationData = getLocationData();
+            const monthlyData = getMonthlyData();
+            const technicianData = getTechnicianData();
+            
+            // Update atau buat chart status
+            updateStatusChart(statusData);
+            
+            // Update atau buat chart lokasi
+            updateLocationChart(locationData);
+            
+            // Update atau buat chart bulanan
+            updateMonthlyChart(monthlyData);
+            
+            // Update atau buat chart teknisi
+            updateTechnicianChart(technicianData);
+        }
+        
+        function getStatusData() {
+            const statusCounts = {
+                'COMPLETED': 0,
+                'IN PROCESS': 0,
+                'OUT PROCESS': 0,
+                'RUSAK': 0,
+                'LAINNYA': 0
+            };
+            
+            filteredData.forEach(item => {
+                const status = item['Status Akhir'] || item['Status Awal'] || '';
+                
+                if (status.includes('COMPLETED')) {
+                    statusCounts['COMPLETED']++;
+                } else if (status.includes('IN PROCESS')) {
+                    statusCounts['IN PROCESS']++;
+                } else if (status.includes('OUT PROCESS')) {
+                    statusCounts['OUT PROCESS']++;
+                } else if (status.includes('RUSAK')) {
+                    statusCounts['RUSAK']++;
+                } else if (status) {
+                    statusCounts['LAINNYA']++;
+                }
+            });
+            
+            return {
+                labels: Object.keys(statusCounts),
+                data: Object.values(statusCounts),
+                colors: ['#4cc9f0', '#f8961e', '#4361ee', '#e63946', '#6c757d']
+            };
+        }
+        
+        function getLocationData() {
+            const locationCounts = {};
+            
+            filteredData.forEach(item => {
+                const location = item.LokasiRuangan || 'Tidak diketahui';
+                locationCounts[location] = (locationCounts[location] || 0) + 1;
+            });
+            
+            // Urutkan berdasarkan jumlah, ambil 10 teratas
+            const sortedLocations = Object.entries(locationCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 10);
+            
+            return {
+                labels: sortedLocations.map(item => item[0]),
+                data: sortedLocations.map(item => item[1]),
+                colors: generateColors(sortedLocations.length)
+            };
+        }
+        
+        function getMonthlyData() {
+            const monthlyCounts = {};
+            
+            // Inisialisasi semua bulan dengan 0
+            const monthNames = ['Jan', 'Feb', 'Mar', 'Apr', 'Mei', 'Jun', 'Jul', 'Agu', 'Sep', 'Okt', 'Nov', 'Des'];
+            monthNames.forEach(month => {
+                monthlyCounts[month] = 0;
+            });
+            
+            // Hitung berdasarkan data
+            filteredData.forEach(item => {
+                if (item['Tanggal Lapor']) {
+                    const dateParts = item['Tanggal Lapor'].toString().split('/');
+                    if (dateParts.length === 3) {
+                        const monthIndex = parseInt(dateParts[1]) - 1;
+                        if (monthIndex >= 0 && monthIndex < 12) {
+                            monthlyCounts[monthNames[monthIndex]]++;
+                        }
+                    }
+                }
+            });
+            
+            return {
+                labels: monthNames,
+                data: monthNames.map(month => monthlyCounts[month]),
+                colors: ['#4361ee']
+            };
+        }
+        
+        function getTechnicianData() {
+            const technicianCounts = {};
+            
+            // Hitung jumlah laporan per teknisi
+            filteredData.forEach(item => {
+                if (item['Pelaksana I']) {
+                    technicianCounts[item['Pelaksana I']] = (technicianCounts[item['Pelaksana I']] || 0) + 1;
+                }
+                if (item['Pelaksana II']) {
+                    technicianCounts[item['Pelaksana II']] = (technicianCounts[item['Pelaksana II']] || 0) + 1;
+                }
+            });
+            
+            // Urutkan berdasarkan jumlah, ambil 8 teratas
+            const sortedTechnicians = Object.entries(technicianCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+            
+            return {
+                labels: sortedTechnicians.map(item => item[0]),
+                data: sortedTechnicians.map(item => item[1]),
+                colors: generateColors(sortedTechnicians.length, true)
+            };
+        }
+        
+        function updateStatusChart(data) {
+            const ctx = document.getElementById('statusChart');
+            if (!ctx) return;
+            
+            // Hancurkan chart sebelumnya jika ada
+            if (statusChart) {
+                statusChart.destroy();
+            }
+            
+            statusChart = new Chart(ctx.getContext('2d'), {
+                type: 'doughnut',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        data: data.data,
+                        backgroundColor: data.colors,
+                        borderWidth: 2,
+                        borderColor: '#ffffff',
+                        hoverOffset: 15
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                            labels: {
+                                padding: 20,
+                                usePointStyle: true,
+                                font: {
+                                    size: 11
+                                }
+                            }
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    },
+                    cutout: '65%',
+                    animation: {
+                        animateScale: true,
+                        animateRotate: true
+                    }
+                }
+            });
+        }
+        
+        function updateLocationChart(data) {
+            const ctx = document.getElementById('locationChart');
+            if (!ctx) return;
+            
+            // Hancurkan chart sebelumnya jika ada
+            if (locationChart) {
+                locationChart.destroy();
+            }
+            
+            locationChart = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Jumlah Laporan',
+                        data: data.data,
+                        backgroundColor: data.colors,
+                        borderColor: data.colors.map(color => color.replace('0.8', '1')),
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        hoverBackgroundColor: data.colors.map(color => color.replace('0.8', '1'))
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    indexAxis: 'y',
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        y: {
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Laporan: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateMonthlyChart(data) {
+            const ctx = document.getElementById('monthlyChart');
+            if (!ctx) return;
+            
+            // Hancurkan chart sebelumnya jika ada
+            if (monthlyChart) {
+                monthlyChart.destroy();
+            }
+            
+            monthlyChart = new Chart(ctx.getContext('2d'), {
+                type: 'line',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Jumlah Laporan',
+                        data: data.data,
+                        backgroundColor: 'rgba(67, 97, 238, 0.1)',
+                        borderColor: data.colors[0],
+                        borderWidth: 3,
+                        fill: true,
+                        tension: 0.4,
+                        pointBackgroundColor: '#ffffff',
+                        pointBorderColor: data.colors[0],
+                        pointBorderWidth: 2,
+                        pointRadius: 6,
+                        pointHoverRadius: 8
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        x: {
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        }
+                    },
+                    plugins: {
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Laporan: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function updateTechnicianChart(data) {
+            const ctx = document.getElementById('technicianChart');
+            if (!ctx) return;
+            
+            // Hancurkan chart sebelumnya jika ada
+            if (technicianChart) {
+                technicianChart.destroy();
+            }
+            
+            technicianChart = new Chart(ctx.getContext('2d'), {
+                type: 'bar',
+                data: {
+                    labels: data.labels,
+                    datasets: [{
+                        label: 'Jumlah Laporan',
+                        data: data.data,
+                        backgroundColor: data.colors,
+                        borderColor: data.colors.map(color => color.replace('0.8', '1')),
+                        borderWidth: 1,
+                        borderRadius: 6,
+                        hoverBackgroundColor: data.colors.map(color => color.replace('0.8', '1'))
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            ticks: {
+                                stepSize: 1,
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                color: 'rgba(0,0,0,0.05)'
+                            }
+                        },
+                        x: {
+                            ticks: {
+                                font: {
+                                    size: 11
+                                }
+                            },
+                            grid: {
+                                display: false
+                            }
+                        }
+                    },
+                    plugins: {
+                        legend: {
+                            display: false
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    return `Laporan: ${context.raw}`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        function generateColors(count, vibrant = false) {
+            const colors = [];
+            
+            if (vibrant) {
+                // Warna vibrant untuk teknisi
+                const vibrantPalette = [
+                    '#FF6384', '#36A2EB', '#FFCE56', '#4BC0C0', 
+                    '#9966FF', '#FF9F40', '#8AC926', '#1982C4'
+                ];
+                
+                for (let i = 0; i < count; i++) {
+                    colors.push(vibrantPalette[i % vibrantPalette.length]);
+                }
+            } else {
+                // Warna pastel untuk lokasi
+                const pastelPalette = [
+                    'rgba(255, 99, 132, 0.8)', 'rgba(54, 162, 235, 0.8)', 
+                    'rgba(255, 206, 86, 0.8)', 'rgba(75, 192, 192, 0.8)',
+                    'rgba(153, 102, 255, 0.8)', 'rgba(255, 159, 64, 0.8)',
+                    'rgba(201, 203, 207, 0.8)', 'rgba(102, 204, 153, 0.8)',
+                    'rgba(204, 102, 153, 0.8)', 'rgba(102, 153, 204, 0.8)'
+                ];
+                
+                for (let i = 0; i < count; i++) {
+                    colors.push(pastelPalette[i % pastelPalette.length]);
+                }
+            }
+            
+            return colors;
+        }
+        
+        function exportToCSV() {
+            if (filteredData.length === 0) {
+                alert('Tidak ada data untuk diekspor.');
+                return;
+            }
+            
+            // Buat header CSV
+            const headers = Object.keys(filteredData[0]).filter(key => 
+                key !== 'Paraf Pelapor' && 
+                key !== 'Documentasi' && 
+                key !== 'UPDATE PDF' && 
+                key !== 'PRINT' && 
+                key !== 'MAP' && 
+                key !== 'Column1'
+            );
+            
+            // Buat baris CSV
+            const csvRows = [];
+            csvRows.push(headers.join(','));
+            
+            // Tambahkan data
+            filteredData.forEach(item => {
+                const row = headers.map(header => {
+                    const value = item[header] || '';
+                    // Escape nilai yang mengandung koma atau tanda kutip
+                    const escapedValue = String(value).replace(/"/g, '""');
+                    return `"${escapedValue}"`;
+                });
+                csvRows.push(row.join(','));
+            });
+            
+            // Buat file CSV
+            const csvContent = csvRows.join('\n');
+            const blob = new Blob([csvContent], { type: 'text/csv;charset=utf-8;' });
+            const url = URL.createObjectURL(blob);
+            
+            // Buat link download
+            const link = document.createElement('a');
+            link.href = url;
+            link.setAttribute('download', `laporan-it-maintenance-${new Date().toISOString().slice(0,10)}.csv`);
+            document.body.appendChild(link);
+            link.click();
+            document.body.removeChild(link);
+        }
+        
+        function loadExampleData() {
+            // Contoh data untuk demonstrasi
+            const exampleData = [
+                {
+                    "Nomor": "213",
+                    "Nama AlatBarangPerangkat": "PESAWAT TELEPHONE",
+                    "LokasiRuangan": "POLI INTERNA",
+                    "Pelapor": "IBU AMARANTJE",
+                    "Pelaksana I": "JOSHUA REINER WALANDA",
+                    "Pelaksana II": "MUDIN , FILLO PRANOWO",
+                    "Tanggal Lapor": "12/12/2025",
+                    "Waktu Lapor": "00:00:00",
+                    "Status Awal": "OUT PROCESS",
+                    "Tanggal Respon": "12/13/2025",
+                    "Waktu Respon": "07:32:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "12/13/2025 8:27:00 AM",
+                    "Permasalahan": "SUARA KELUAR TIDAK TERDENGAR",
+                    "Tindakan": "GANTI PESAWAT TELEPHONE",
+                    "Keterangan Pelaksana": "Atas permintaan petugas, perbaikan setelah pelayanan"
+                },
+                {
+                    "Nomor": "161",
+                    "Nama AlatBarangPerangkat": "PRINTER EPSON L3210",
+                    "LokasiRuangan": "IBS-OK",
+                    "Pelapor": "IBU RANI",
+                    "Pelaksana I": "WANDER",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "9/12/2025",
+                    "Waktu Lapor": "09:54:31",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "9/12/2025",
+                    "Waktu Respon": "09:56:50",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "9/12/2025 10:10:40 AM",
+                    "Permasalahan": "Kertas tersangkut",
+                    "Tindakan": "Melakukan penarikan kertas",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "160",
+                    "Nama AlatBarangPerangkat": "TELPON PANASONIC",
+                    "LokasiRuangan": "LOKET PENDAFTARAN",
+                    "Pelapor": "IBU IDA",
+                    "Pelaksana I": "WANDER",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "9/10/2025",
+                    "Waktu Lapor": "09:41:32",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "9/10/2025",
+                    "Waktu Respon": "09:43:20",
+                    "Status Akhir": "IN PROCESS",
+                    "Time Progess": "9/10/2025 9:56:00 AM",
+                    "Permasalahan": "Kabel telpon",
+                    "Tindakan": "Melakukan pergantian kabel telpon",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "95",
+                    "Nama AlatBarangPerangkat": "KOMPUTER LENOVO",
+                    "LokasiRuangan": "KASIR IRD",
+                    "Pelapor": "PAK BENI",
+                    "Pelaksana I": "JOSHUA REINER WALANDA , FILLO PRANOWO",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "5/10/2025",
+                    "Waktu Lapor": "09:27:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/10/2025",
+                    "Waktu Respon": "09:30:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/10/2025 9:52:00 AM",
+                    "Permasalahan": "Komputer tidak bisa konek wifi",
+                    "Tindakan": "Setting komputer",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "94",
+                    "Nama AlatBarangPerangkat": "TELEPON PANASONIC",
+                    "LokasiRuangan": "LOBBY",
+                    "Pelapor": "FANY",
+                    "Pelaksana I": "WANDER",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "5/10/2025",
+                    "Waktu Lapor": "00:00:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/10/2025",
+                    "Waktu Respon": "00:00:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/10/2025 12:18:40 PM",
+                    "Permasalahan": "Tombol 8 dan 9 tidak berfungsi",
+                    "Tindakan": "Mengganti karet telepon",
+                    "Keterangan Pelaksana": "Baik"
+                },
+                {
+                    "Nomor": "93",
+                    "Nama AlatBarangPerangkat": "MONITOR DELL",
+                    "LokasiRuangan": "LABORATORIUM",
+                    "Pelapor": "IBU SARI",
+                    "Pelaksana I": "JOSHUA REINER WALANDA",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "5/9/2025",
+                    "Waktu Lapor": "14:30:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/9/2025",
+                    "Waktu Respon": "14:45:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/9/2025 15:30:00 PM",
+                    "Permasalahan": "Monitor tidak menyala",
+                    "Tindakan": "Ganti kabel power monitor",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "92",
+                    "Nama AlatBarangPerangkat": "KOMPUTER HP",
+                    "LokasiRuangan": "ADMINISTRASI",
+                    "Pelapor": "PAK ADI",
+                    "Pelaksana I": "MUDIN",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "5/8/2025",
+                    "Waktu Lapor": "10:15:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/8/2025",
+                    "Waktu Respon": "10:30:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/8/2025 11:45:00 AM",
+                    "Permasalahan": "Komputer lambat",
+                    "Tindakan": "Cleanup disk dan defragment",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "91",
+                    "Nama AlatBarangPerangkat": "PRINTER CANON",
+                    "LokasiRuangan": "KEUANGAN",
+                    "Pelapor": "IBU DEWI",
+                    "Pelaksana I": "FILLO PRANOWO",
+                    "Pelaksana II": "",
+                    "Tanggal Lapor": "5/7/2025",
+                    "Waktu Lapor": "13:20:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/7/2025",
+                    "Waktu Respon": "13:45:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/7/2025 14:30:00 PM",
+                    "Permasalahan": "Printer macet",
+                    "Tindakan": "Bersihkan roller dan ganti cartridge",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "90",
+                    "Nama AlatBarangPerangkat": "SCANNER",
+                    "LokasiRuangan": "ARSIP",
+                    "Pelapor": "IBU LINA",
+                    "Pelaksana I": "JOSHUA REINER WALANDA",
+                    "Pelaksana II": "MUDIN",
+                    "Tanggal Lapor": "5/6/2025",
+                    "Waktu Lapor": "09:00:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/6/2025",
+                    "Waktu Respon": "09:15:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/6/2025 10:00:00 AM",
+                    "Permasalahan": "Scanner tidak terdeteksi",
+                    "Tindakan": "Install ulang driver scanner",
+                    "Keterangan Pelaksana": "Selesai"
+                },
+                {
+                    "Nomor": "89",
+                    "Nama AlatBarangPerangkat": "ROUTER CISCO",
+                    "LokasiRuangan": "IT ROOM",
+                    "Pelapor": "PAK BUDI",
+                    "Pelaksana I": "WANDER",
+                    "Pelaksana II": "FILLO PRANOWO",
+                    "Tanggal Lapor": "5/5/2025",
+                    "Waktu Lapor": "11:30:00",
+                    "Status Awal": "IN PROCESS",
+                    "Tanggal Respon": "5/5/2025",
+                    "Waktu Respon": "11:45:00",
+                    "Status Akhir": "COMPLETED",
+                    "Time Progess": "5/5/2025 12:30:00 PM",
+                    "Permasalahan": "Koneksi wifi lemah",
+                    "Tindakan": "Reset dan konfigurasi ulang router",
+                    "Keterangan Pelaksana": "Selesai"
+                }
+            ];
+            
+            // Tampilkan contoh data
+            processData(exampleData);
+        }
+        
+        // Utility functions
+        function scrollToTop() {
+            window.scrollTo({ top: 0, behavior: 'smooth' });
+        }
+        
+        function refreshData() {
+            if (allData.length > 0) {
+                applyFilters();
+                showNotification('Data berhasil diperbarui!', 'success');
+            }
+        }
+        
+        function showNotification(message, type = 'info') {
+            // Create notification element
+            const notification = document.createElement('div');
+            notification.style.cssText = `
+                position: fixed;
+                top: 20px;
+                right: 20px;
+                padding: 15px 25px;
+                background: ${type === 'success' ? 'var(--gradient-success)' : 'var(--gradient-primary)'};
+                color: white;
+                border-radius: var(--radius-md);
+                box-shadow: var(--shadow-lg);
+                z-index: 10000;
+                transform: translateX(100%);
+                opacity: 0;
+                transition: all 0.3s ease;
+                font-weight: 500;
+                display: flex;
+                align-items: center;
+                gap: 10px;
+            `;
+            
+            notification.innerHTML = `
+                <i class="fas ${type === 'success' ? 'fa-check-circle' : 'fa-info-circle'}"></i>
+                ${message}
+            `;
+            
+            document.body.appendChild(notification);
+            
+            // Animate in
+            setTimeout(() => {
+                notification.style.transform = 'translateX(0)';
+                notification.style.opacity = '1';
+            }, 10);
+            
+            // Remove after 3 seconds
+            setTimeout(() => {
+                notification.style.transform = 'translateX(100%)';
+                notification.style.opacity = '0';
+                setTimeout(() => {
+                    document.body.removeChild(notification);
+                }, 300);
+            }, 3000);
+        }
+        
+        // Add CSS for date badges
+        const style = document.createElement('style');
+        style.textContent = `
+            .date-badge {
+                background: rgba(67, 97, 238, 0.1);
+                padding: 4px 10px;
+                border-radius: 20px;
+                font-size: 0.85rem;
+                color: #4361ee;
+                font-weight: 500;
+            }
+        `;
+        document.head.appendChild(style);
+    </script>
+</body>
+</html>

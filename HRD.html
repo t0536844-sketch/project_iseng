@@ -1,0 +1,398 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIM-ASN Pro | Manajemen Pegawai & Unit Kerja</title>
+    
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.3.2/papaparse.min.js"></script>
+
+    <style>
+        .modal { transition: opacity 0.25s ease; }
+        body.modal-active { overflow: hidden; }
+        .tab-content { animation: fadeIn 0.3s ease; }
+        @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
+    </style>
+</head>
+<body class="bg-gray-100 font-sans text-gray-800">
+
+    <div class="flex min-h-screen">
+        <aside class="w-64 bg-slate-900 text-white fixed h-full shadow-xl z-50">
+            <div class="p-6 border-b border-slate-800 flex items-center space-x-3">
+                <div class="bg-blue-600 p-2 rounded-lg text-white"><i class="fas fa-id-card-alt"></i></div>
+                <h1 class="text-xl font-bold tracking-tighter">SIM-ASN</h1>
+            </div>
+            <nav class="p-4 space-y-1">
+                <button onclick="switchTab('dashboard')" id="nav-dashboard" class="nav-link w-full flex items-center p-3 rounded-xl transition bg-blue-600">
+                    <i class="fas fa-th-large w-6"></i> Dashboard
+                </button>
+                <button onclick="switchTab('pegawai')" id="nav-pegawai" class="nav-link w-full flex items-center p-3 rounded-xl transition text-slate-400 hover:bg-slate-800">
+                    <i class="fas fa-users w-6"></i> Data Pegawai
+                </button>
+                <button onclick="switchTab('unit')" id="nav-unit" class="nav-link w-full flex items-center p-3 rounded-xl transition text-slate-400 hover:bg-slate-800">
+                    <i class="fas fa-hospital w-6"></i> Unit Kerja
+                </button>
+            </nav>
+        </aside>
+
+        <main class="flex-1 ml-64 p-8">
+            <section id="tab-dashboard" class="tab-content">
+                <h2 class="text-3xl font-bold mb-6 italic">Ringkasan Data ASN</h2>
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-10">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                        <p class="text-gray-400 text-xs font-bold uppercase">Total Pegawai</p>
+                        <h3 class="text-4xl font-black text-blue-600" id="statTotal">0</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-indigo-500">
+                        <p class="text-gray-400 text-xs font-bold uppercase">PNS/CPNS</p>
+                        <h3 class="text-4xl font-black" id="statPNS">0</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-purple-500">
+                        <p class="text-gray-400 text-xs font-bold uppercase">PPPK</p>
+                        <h3 class="text-4xl font-black" id="statPPPK">0</h3>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-l-4 border-orange-500">
+                        <p class="text-gray-400 text-xs font-bold uppercase">Unit Kerja</p>
+                        <h3 class="text-4xl font-black" id="statUnit">0</h3>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-pegawai" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold text-slate-800">Manajemen Database ASN</h2>
+                    <div class="flex gap-2">
+                        <button onclick="openModal()" class="bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 shadow-md">
+                            <i class="fas fa-plus mr-2"></i> Tambah Baru
+                        </button>
+                        <label class="bg-indigo-600 text-white px-4 py-2 rounded-lg cursor-pointer hover:bg-indigo-700 transition">
+                            <i class="fas fa-file-import mr-2"></i> Import File
+                            <input type="file" id="fileInput" accept=".xlsx, .xls, .csv" class="hidden" onchange="handleFileImport(this)">
+                        </label>
+                        <button onclick="exportExcel()" class="bg-emerald-600 text-white px-4 py-2 rounded-lg hover:bg-emerald-700 transition shadow-md">
+                            <i class="fas fa-file-excel mr-2"></i> Export Excel
+                        </button>
+                    </div>
+                </div>
+
+                <div class="bg-white rounded-2xl shadow-sm border border-gray-200 overflow-hidden">
+                    <div class="p-4 border-b bg-gray-50 flex gap-4">
+                        <input type="text" id="searchInput" onkeyup="renderPegawaiTable()" placeholder="Cari Nama atau NIP..." class="flex-1 pl-4 pr-4 py-2 rounded-lg border border-gray-200 focus:ring-2 focus:ring-blue-500 outline-none">
+                    </div>
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-left">
+                            <thead class="bg-gray-50 text-gray-400 text-[10px] uppercase font-bold tracking-widest border-b">
+                                <tr>
+                                    <th class="p-4">Pegawai</th>
+                                    <th class="p-4">Gol / Jabatan</th>
+                                    <th class="p-4">Unit Kerja</th>
+                                    <th class="p-4">Agama / JK</th>
+                                    <th class="p-4 text-center">Aksi</th>
+                                </tr>
+                            </thead>
+                            <tbody id="pegawaiTableBody" class="divide-y divide-gray-100 text-sm"></tbody>
+                        </table>
+                    </div>
+                </div>
+            </section>
+
+            <section id="tab-unit" class="tab-content hidden">
+                <div class="flex justify-between items-center mb-6">
+                    <h2 class="text-2xl font-bold italic">Daftar Unit Kerja / Penempatan</h2>
+                    <form id="unitForm" class="flex gap-2">
+                        <input type="text" id="newUnit" placeholder="Tambah Unit Baru..." class="border p-2 rounded-lg uppercase font-bold outline-none focus:ring-2 focus:ring-blue-500" required>
+                        <button type="submit" class="bg-blue-600 text-white px-4 rounded-lg font-bold">Tambah</button>
+                    </form>
+                </div>
+                <div class="grid grid-cols-1 md:grid-cols-3 gap-6" id="unitGrid"></div>
+            </section>
+        </main>
+    </div>
+
+    <div id="modalPegawai" class="modal fixed w-full h-full top-0 left-0 flex items-center justify-center opacity-0 pointer-events-none z-[100]">
+        <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-60"></div>
+        <div class="modal-container bg-white w-full max-w-4xl mx-auto rounded-2xl shadow-2xl z-50 overflow-y-auto max-h-[90vh]">
+            <div class="modal-content py-6 px-8">
+                <div class="flex justify-between items-center pb-4 border-b">
+                    <p class="text-xl font-bold text-slate-800" id="modalTitle">Form Data Pegawai</p>
+                    <button onclick="closeModal()" class="text-gray-400 hover:text-red-500 text-2xl">&times;</button>
+                </div>
+                <form id="pegawaiFormManual" class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
+                    <input type="hidden" id="editIndex">
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-blue-600 border-b pb-1 text-xs uppercase">I. Identitas Pokok</h4>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase">Nama Lengkap</label><input type="text" id="formNama" class="w-full border p-2 rounded-lg outline-none" required></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="block text-[10px] font-bold text-gray-500 uppercase">NIP</label><input type="text" id="formNip" class="w-full border p-2 rounded-lg outline-none" required></div>
+                            <div><label class="block text-[10px] font-bold text-gray-500 uppercase">Gol</label><input type="text" id="formGol" class="w-full border p-2 rounded-lg outline-none"></div>
+                        </div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase">TTL (Tempat, Tgl-Bln-Thn)</label><input type="text" id="formTtl" class="w-full border p-2 rounded-lg outline-none"></div>
+                        <div class="grid grid-cols-2 gap-2">
+                            <div><label class="block text-[10px] font-bold text-gray-500 uppercase">Jenis Kelamin</label><select id="formJk" class="w-full border p-2 rounded-lg outline-none"><option value="Pria">Pria</option><option value="Wanita">Wanita</option></select></div>
+                            <div>
+                                <label class="block text-[10px] font-bold text-gray-500 uppercase">Agama</label>
+                                <select id="formAgama" class="w-full border p-2 rounded-lg outline-none">
+                                    <option value="Islam">Islam</option>
+                                    <option value="Kristen">Kristen</option>
+                                    <option value="Katolik">Katolik</option>
+                                    <option value="Hindu">Hindu</option>
+                                    <option value="Budha">Budha</option>
+                                    <option value="Konghucu">Konghucu</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="space-y-4">
+                        <h4 class="font-bold text-blue-600 border-b pb-1 text-xs uppercase">II. Jabatan & Unit</h4>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase">Status</label><select id="formStatus" class="w-full border p-2 rounded-lg outline-none"><option value="PNS">PNS</option><option value="CPNS">CPNS</option><option value="PPPK">PPPK</option></select></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase">Jabatan Sekarang</label><input type="text" id="formJabatan" class="w-full border p-2 rounded-lg outline-none" required></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase">Unit Kerja</label><select id="formUnit" class="w-full border p-2 rounded-lg outline-none bg-blue-50 font-bold"></select></div>
+                        <div><label class="block text-[10px] font-bold text-gray-500 uppercase">Pendidikan</label><input type="text" id="formPendidikan" class="w-full border p-2 rounded-lg outline-none"></div>
+                    </div>
+                    <div class="md:col-span-2 bg-slate-50 p-4 rounded-xl border border-dashed grid grid-cols-3 gap-4">
+                        <div><label class="block text-[10px] font-bold text-gray-400 uppercase">NPWP</label><input type="text" id="formNpwp" class="w-full border p-2 rounded-lg text-xs outline-none"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-400 uppercase">No. STR</label><input type="text" id="formStr" class="w-full border p-2 rounded-lg text-xs outline-none"></div>
+                        <div><label class="block text-[10px] font-bold text-gray-400 uppercase">Keluarga</label><input type="text" id="formKeluarga" class="w-full border p-2 rounded-lg text-xs outline-none"></div>
+                    </div>
+                    <div class="md:col-span-2 flex justify-end gap-3 pt-4 border-t">
+                        <button type="button" onclick="closeModal()" class="px-6 py-2 rounded-lg bg-gray-100 font-bold">Batal</button>
+                        <button type="submit" class="px-10 py-2 rounded-lg bg-blue-600 text-white font-bold hover:bg-blue-700">Simpan</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+    </div>
+
+    <div id="modalDetail" class="modal fixed w-full h-full top-0 left-0 flex items-center justify-center opacity-0 pointer-events-none z-[110]">
+        <div class="modal-overlay absolute w-full h-full bg-slate-900 opacity-70"></div>
+        <div class="modal-container bg-white w-full max-w-2xl mx-auto rounded-2xl shadow-2xl z-50 overflow-y-auto max-h-[85vh]">
+            <div class="modal-content py-6 px-8">
+                <div class="flex justify-between items-center pb-4 border-b">
+                    <p class="text-xl font-bold text-slate-800"><i class="fas fa-eye mr-2 text-emerald-600"></i>Detail Profil ASN</p>
+                    <button onclick="closeDetail()" class="text-gray-400 hover:text-red-500 text-2xl">&times;</button>
+                </div>
+                <div id="detailContent" class="mt-6 space-y-4"></div>
+                <div class="mt-8 pt-4 border-t flex justify-end"><button onclick="closeDetail()" class="px-6 py-2 bg-slate-100 rounded-lg font-bold">Tutup</button></div>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let pegawaiList = [];
+        let unitList = ["RSUD PRATAMA", "PUSKESMAS A", "DINAS KESEHATAN", "BAPPEDA"];
+
+        function switchTab(tabId) {
+            document.querySelectorAll('.tab-content').forEach(t => t.classList.add('hidden'));
+            document.getElementById('tab-' + tabId).classList.remove('hidden');
+            document.querySelectorAll('.nav-link').forEach(btn => {
+                btn.classList.remove('bg-blue-600', 'text-white');
+                btn.classList.add('text-slate-400', 'hover:bg-slate-800');
+            });
+            document.getElementById('nav-' + tabId).classList.add('bg-blue-600', 'text-white');
+            if(tabId === 'pegawai') renderPegawaiTable();
+            if(tabId === 'unit') renderUnitGrid();
+            updateDashboard();
+        }
+
+        function openModal(editIdx = null) {
+            document.getElementById('formUnit').innerHTML = unitList.map(u => `<option value="${u}">${u}</option>`).join('');
+            document.getElementById('pegawaiFormManual').reset();
+            document.getElementById('editIndex').value = editIdx !== null ? editIdx : "";
+            document.getElementById('modalTitle').innerText = editIdx !== null ? "Ubah Data Pegawai" : "Tambah Pegawai Baru";
+
+            if (editIdx !== null) {
+                const p = pegawaiList[editIdx];
+                document.getElementById('formNama').value = p.nama;
+                document.getElementById('formNip').value = p.nip;
+                document.getElementById('formGol').value = p.gol;
+                document.getElementById('formStatus').value = p.status;
+                document.getElementById('formJabatan').value = p.jabatan;
+                document.getElementById('formUnit').value = p.unit;
+                document.getElementById('formTtl').value = p.ttl || "";
+                document.getElementById('formAgama').value = p.agama || "Islam";
+                document.getElementById('formJk').value = p.jk || "Pria";
+                document.getElementById('formNpwp').value = p.npwp || "";
+                document.getElementById('formStr').value = p.str || "";
+                document.getElementById('formPendidikan').value = p.pendidikan || "";
+                document.getElementById('formKeluarga').value = p.keluarga || "";
+            }
+            document.getElementById('modalPegawai').classList.remove('opacity-0', 'pointer-events-none');
+            document.body.classList.add('modal-active');
+        }
+
+        function closeModal() {
+            document.getElementById('modalPegawai').classList.add('opacity-0', 'pointer-events-none');
+            document.body.classList.remove('modal-active');
+        }
+
+        function viewDetail(idx) {
+            const p = pegawaiList[idx];
+            document.getElementById('detailContent').innerHTML = `
+                <div class="grid grid-cols-2 gap-4 text-sm">
+                    <div class="col-span-2 bg-blue-50 p-4 rounded-xl border-l-4 border-blue-500">
+                        <p class="text-[10px] uppercase font-bold text-blue-400 italic">Data Utama</p>
+                        <p class="text-xl font-black text-slate-800">${p.nama}</p>
+                        <p class="text-sm font-mono text-slate-500">NIP. ${p.nip}</p>
+                    </div>
+                    <div class="border-b pb-1"><strong>Status/Gol:</strong> ${p.status} - ${p.gol}</div>
+                    <div class="border-b pb-1"><strong>Jabatan:</strong> ${p.jabatan}</div>
+                    <div class="border-b pb-1"><strong>Unit:</strong> ${p.unit}</div>
+                    <div class="border-b pb-1"><strong>TTL:</strong> ${p.ttl || '-'}</div>
+                    <div class="border-b pb-1"><strong>Agama/JK:</strong> ${p.agama || '-'} / ${p.jk || '-'}</div>
+                    <div class="border-b pb-1"><strong>NPWP:</strong> ${p.npwp || '-'}</div>
+                    <div class="border-b pb-1"><strong>STR:</strong> ${p.str || '-'}</div>
+                    <div class="border-b pb-1"><strong>Pendidikan:</strong> ${p.pendidikan || '-'}</div>
+                </div>
+            `;
+            document.getElementById('modalDetail').classList.remove('opacity-0', 'pointer-events-none');
+        }
+
+        function closeDetail() { document.getElementById('modalDetail').classList.add('opacity-0', 'pointer-events-none'); }
+
+        // PERBAIKAN FITUR EXPORT
+        function exportExcel() {
+            try {
+                if (pegawaiList.length === 0) {
+                    alert("Tidak ada data untuk diekspor!");
+                    return;
+                }
+
+                // Map data agar header Excel rapi sesuai format user
+                const exportData = pegawaiList.map(p => ({
+                    "NAMA LENGKAP": p.nama,
+                    "NIP": p.nip,
+                    "PANGKAT/GOL": p.gol,
+                    "STATUS": p.status,
+                    "JABATAN": p.jabatan,
+                    "UNIT KERJA": p.unit,
+                    "TTL": p.ttl,
+                    "AGAMA": p.agama,
+                    "JK": p.jk,
+                    "NPWP": p.npwp,
+                    "STR": p.str,
+                    "PENDIDIKAN": p.pendidikan,
+                    "KELUARGA": p.keluarga
+                }));
+
+                const worksheet = XLSX.utils.json_to_sheet(exportData);
+                const workbook = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(workbook, worksheet, "ASN");
+                
+                // Generate Excel file
+                XLSX.writeFile(workbook, `Database_ASN_${new Date().toISOString().slice(0,10)}.xlsx`);
+            } catch (err) {
+                console.error(err);
+                alert("Gagal ekspor: " + err.message);
+            }
+        }
+
+        // CRUD & RENDER
+        document.getElementById('pegawaiFormManual').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const idx = document.getElementById('editIndex').value;
+            const data = {
+                nama: document.getElementById('formNama').value,
+                nip: document.getElementById('formNip').value.replace(/\s/g, ''),
+                gol: document.getElementById('formGol').value,
+                status: document.getElementById('formStatus').value,
+                jabatan: document.getElementById('formJabatan').value,
+                unit: document.getElementById('formUnit').value,
+                ttl: document.getElementById('formTtl').value,
+                agama: document.getElementById('formAgama').value,
+                jk: document.getElementById('formJk').value,
+                npwp: document.getElementById('formNpwp').value,
+                str: document.getElementById('formStr').value,
+                pendidikan: document.getElementById('formPendidikan').value,
+                keluarga: document.getElementById('formKeluarga').value
+            };
+            if (idx === "") pegawaiList.push(data);
+            else pegawaiList[idx] = data;
+            closeModal(); renderPegawaiTable(); updateDashboard();
+        });
+
+        function renderPegawaiTable() {
+            const kw = document.getElementById('searchInput').value.toLowerCase();
+            const body = document.getElementById('pegawaiTableBody');
+            const filtered = pegawaiList.filter(p => p.nama.toLowerCase().includes(kw) || p.nip.includes(kw));
+
+            body.innerHTML = filtered.map((p, i) => `
+                <tr class="hover:bg-gray-50 border-b">
+                    <td class="p-4"><div class="font-bold text-slate-800">${p.nama}</div><div class="text-[10px] text-gray-400 font-mono italic">NIP. ${p.nip}</div></td>
+                    <td class="p-4"><span class="text-[10px] font-black px-2 py-0.5 rounded bg-blue-50 text-blue-600">${p.gol}</span><div class="text-[11px] font-bold mt-1">${p.jabatan}</div></td>
+                    <td class="p-4"><div class="text-xs font-bold text-slate-500 uppercase">${p.unit}</div></td>
+                    <td class="p-4 text-xs">${p.agama || '-'} / ${p.jk}</td>
+                    <td class="p-4 text-center">
+                        <div class="flex justify-center gap-2">
+                            <button onclick="viewDetail(${i})" class="text-emerald-500 hover:scale-125 transition"><i class="fas fa-eye"></i></button>
+                            <button onclick="openModal(${i})" class="text-blue-500 hover:scale-125 transition"><i class="fas fa-edit"></i></button>
+                            <button onclick="deletePegawai(${i})" class="text-red-300 hover:text-red-500 hover:scale-125 transition"><i class="fas fa-trash-alt"></i></button>
+                        </div>
+                    </td>
+                </tr>
+            `).join('');
+        }
+
+        function handleFileImport(input) {
+            const file = input.files[0];
+            const reader = new FileReader();
+            reader.onload = (e) => {
+                const data = e.target.result;
+                if (file.name.endsWith('.csv')) {
+                    Papa.parse(data, { header: true, complete: (res) => processRawData(res.data) });
+                } else {
+                    const workbook = XLSX.read(data, {type: 'binary'});
+                    processRawData(XLSX.utils.sheet_to_json(workbook.Sheets[workbook.SheetNames[0]]));
+                }
+            };
+            if(file.name.endsWith('.csv')) reader.readAsText(file); else reader.readAsBinaryString(file);
+        }
+
+        function processRawData(raw) {
+            const cleaned = raw.map(row => {
+                const nama = row['N   A   M   A'] || row['Nama'] || row['NAMA_LENGKAP'];
+                const nip = String(row['NIP'] || row['nip'] || "").replace(/\s/g, '');
+                if (!nama || !nip || nip === "undefined") return null;
+                const unit = (row['UNIT_KERJA'] || "UMUM").toUpperCase();
+                if (!unitList.includes(unit)) unitList.push(unit);
+                return {
+                    nama, nip, jabatan: row['JABATAN'] || "-", gol: row['PANGKAT/GOL'] || "-",
+                    status: (row['STATUS KEPEGAWAIAN'] || "").includes('PPPK') ? 'PPPK' : 'PNS',
+                    unit, ttl: row['TTL'] || "", agama: row['AGAMA'] || "Islam", jk: row['JK'] || "Pria"
+                };
+            }).filter(i => i !== null);
+            pegawaiList = [...pegawaiList, ...cleaned];
+            renderPegawaiTable(); updateDashboard();
+            alert("Impor berhasil: " + cleaned.length + " data.");
+        }
+
+        function updateDashboard() {
+            document.getElementById('statTotal').innerText = pegawaiList.length;
+            document.getElementById('statPNS').innerText = pegawaiList.filter(p => p.status === 'PNS' || p.status === 'CPNS').length;
+            document.getElementById('statPPPK').innerText = pegawaiList.filter(p => p.status === 'PPPK').length;
+            document.getElementById('statUnit').innerText = unitList.length;
+        }
+
+        function renderUnitGrid() {
+            document.getElementById('unitGrid').innerHTML = unitList.map(u => `
+                <div class="bg-white p-6 rounded-2xl shadow-sm border border-gray-200">
+                    <h4 class="font-black text-slate-700 uppercase">${u}</h4>
+                    <p class="text-xs text-blue-500 font-bold mt-2">${pegawaiList.filter(p => p.unit === u).length} Pegawai</p>
+                </div>
+            `).join('');
+        }
+
+        function deletePegawai(idx) { if(confirm("Hapus data ini?")) { pegawaiList.splice(idx, 1); renderPegawaiTable(); updateDashboard(); } }
+
+        document.getElementById('unitForm').addEventListener('submit', (e) => {
+            e.preventDefault();
+            const val = document.getElementById('newUnit').value.toUpperCase();
+            if(!unitList.includes(val)) { unitList.push(val); renderUnitGrid(); updateDashboard(); e.target.reset(); }
+        });
+
+        switchTab('dashboard');
+    </script>
+</body>
+</html>

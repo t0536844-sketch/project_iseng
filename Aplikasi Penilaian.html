@@ -1,0 +1,579 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Daftar Penilaian Pelaksanaan Pekerjaan Tenaga Kontrak</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            margin: 20px;
+            background-color: #f4f4f4;
+            font-size: 11pt;
+        }
+        .container {
+            max-width: 900px;
+            margin: auto;
+            background: #fff;
+            padding: 20px;
+            border-radius: 8px;
+            box-shadow: 0 0 10px rgba(0, 0, 0, 0.1);
+        }
+        /* Header/Kop Surat Dihapus Logo, Kembali Rata Tengah */
+        .header {
+            text-align: center;
+            border-bottom: 3px solid #000;
+            padding-bottom: 10px;
+            margin-bottom: 15px;
+        }
+        .header h3, .header h2, .header p {
+            margin: 3px 0 0;
+        }
+        
+        .title {
+            text-align: center;
+            margin: 15px 0;
+            font-weight: bold;
+            font-size: 1.1em;
+        }
+        /* Data Identitas */
+        .data-dinilai {
+            margin-bottom: 15px;
+            padding: 10px;
+            border-radius: 5px;
+            border: 1px solid #ccc; 
+        }
+        .data-dinilai p {
+            margin: 0;
+            padding: 2px 0;
+            display: flex;
+            align-items: center;
+        }
+        .data-dinilai label {
+            width: 25%;
+            min-width: 150px;
+            font-weight: bold;
+            margin-right: 5px;
+            text-align: right; 
+        }
+        .data-dinilai label::after {
+            content: ":"; 
+            margin-left: 5px;
+            font-weight: bold;
+        }
+        .data-dinilai input[type="text"] {
+            flex-grow: 1; 
+            padding: 5px;
+            border: 1px solid #ddd;
+            border-radius: 4px;
+            box-sizing: border-box;
+        }
+        /* Tabel Styles */
+        .table-container {
+            overflow-x: auto;
+        }
+        table {
+            width: 100%; 
+            border-collapse: collapse;
+            margin-bottom: 15px;
+            table-layout: auto; 
+        }
+        table, th, td {
+            border: 1px solid #000;
+        }
+        th, td {
+            padding: 5px; 
+            text-align: left;
+        }
+        th {
+            background-color: #e9e9e9;
+            text-align: center;
+            font-size: 0.9em;
+        }
+        td input[type="number"], td select {
+            width: 90%; 
+            padding: 3px;
+            box-sizing: border-box;
+            min-width: 40px; 
+        }
+        .text-center {
+            text-align: center;
+        }
+        
+        /* Footer/Tanda Tangan Styles */
+        .footer-table td {
+            border: none;
+            padding-top: 5px; 
+            vertical-align: top;
+        }
+        .footer-table label {
+            display: block;
+            font-weight: bold;
+            margin-bottom: 0;
+        }
+        .footer-table input[type="text"], .footer-table textarea {
+            border: 1px solid #ccc;
+            padding: 5px;
+            border-radius: 3px;
+            width: 95%;
+            box-sizing: border-box;
+            margin-top: 5px;
+        }
+        .footer-table textarea {
+            height: 60px;
+        }
+        .footer-penilai, .footer-mengetahui {
+            border: 1px solid #000;
+            padding: 5px;
+        }
+        .footer-rekomendasi {
+            border: 1px solid #000;
+            padding: 5px;
+        }
+        .ttd-label {
+            font-weight: bold;
+            display: inline-block;
+            width: 50px;
+            text-align: right;
+        }
+        .ttd-label::after {
+            content: ":";
+            margin-left: 5px;
+        }
+        .ttd-input {
+            border-bottom: 1px dotted #000;
+            width: calc(100% - 110px);
+            display: inline-block;
+            height: 1.2em;
+        }
+
+        .catatan {
+             border: 1px solid #ccc;
+             padding: 10px;
+             border-radius: 5px;
+        }
+        .catatan p {
+            margin: 3px 0;
+        }
+        .button-group {
+            text-align: center;
+            margin-top: 15px;
+        }
+        .button-group button {
+            padding: 8px 15px;
+            background-color: #007bff;
+            color: white;
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 1em;
+            margin: 0 5px;
+        }
+        .button-group button:hover {
+            background-color: #0056b3;
+        }
+
+        /* Style untuk Cetak (F4/Legal size optimization) */
+        @media print {
+            .button-group, form button {
+                display: none; 
+            }
+            @page {
+                size: legal portrait; 
+                margin: 8mm; 
+            }
+            body {
+                font-size: 10pt; 
+            }
+            .container {
+                box-shadow: none;
+                padding: 0;
+                width: 100%;
+                max-width: 100%;
+            }
+            /* Styling Header untuk Cetak */
+            .header {
+                padding-bottom: 5px;
+            }
+            .header-text {
+                font-size: 0.9em; 
+            }
+            .data-dinilai {
+                border: none; 
+                padding: 0;
+                margin-bottom: 5px;
+            }
+            .data-dinilai input[type="text"], table input, table select, table textarea {
+                border: none !important;
+                background: none !important;
+                -webkit-print-color-adjust: exact;
+                print-color-adjust: exact;
+                font-weight: normal !important;
+                color: #000 !important;
+                padding: 0 !important;
+                margin: 0 !important;
+            }
+            .data-dinilai input[type="text"] {
+                border-bottom: 1px dotted #000 !important;
+            }
+            table {
+                width: 100% !important; 
+                table-layout: fixed; 
+            }
+            .footer-table td {
+                border: 1px solid #000; 
+                padding: 3px 5px;
+            }
+            .footer-penilai, .footer-mengetahui, .footer-rekomendasi {
+                border: none; 
+                padding: 0;
+            }
+            .ttd-input {
+                border: none !important;
+                border-bottom: 1px dotted #000 !important; 
+                font-size: 10pt;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <div class="header">
+            <h3>PEMERINTAH KABUPATEN MIMIKA</h3>
+            <h2>RUMAH SAKIT UMUM DAERAH</h2>
+            <p>Jalan Yos Sudarso Kabupaten Mimika Provinsi Papua Tengah Kode Pos 99910</p>
+            <p>Handphone (Whatsapp) 08114905585, Pos-el rsudkabmimika@gmail.com</p>
+        </div>
+
+        <div class="title">
+            DAFTAR PENILAIAN PELAKSANAAN PEKERJAAN TENAGA KONTRAK
+            <p>PERIODE JANUARI 2024 s/d 31 DESEMBER 2024</p>
+        </div>
+
+        <form id="penilaianForm">
+            <div class="data-dinilai">
+                <p><label for="nama">Nama yang dinilai</label>
+                <input type="text" id="nama" name="nama" placeholder="Masukkan Nama yang dinilai" required></p>
+
+                <p><label for="pendidikan">Pendidikan</label>
+                <input type="text" id="pendidikan" name="pendidikan" placeholder="Masukkan Jenjang Pendidikan" required></p>
+
+                <p><label for="jabatan">Jabatan</label>
+                <input type="text" id="jabatan" name="jabatan" placeholder="Masukkan Jabatan" required></p>
+
+                <p><label for="unit_kerja">Unit Kerja</label>
+                <input type="text" id="unit_kerja" name="unit_kerja" placeholder="Masukkan Unit Kerja" required></p>
+            </div>
+
+            <div class="table-container">
+                <table>
+                    <thead>
+                        <tr>
+                            <th rowspan="2" class="text-center" style="width: 5%;">NO</th>
+                            <th rowspan="2" class="text-center" style="width: 35%;">UNSUR YANG DINILAI</th>
+                            <th colspan="2" class="text-center" style="width: 25%;">NILAI</th>
+                            <th rowspan="2" class="text-center" style="width: 35%;">KETERANGAN</th>
+                        </tr>
+                        <tr>
+                            <th class="text-center" style="width: 10%;">ANGKA</th>
+                            <th class="text-center" style="width: 15%;">SEBUTAN</th>
+                        </tr>
+                    </thead>
+                    <tbody>
+                        <tr><td class="text-center">1</td><td>Orientasi Pelayanan</td><td><input type="number" name="nilai_1" class="nilai-kinerja" min="0" max="100" oninput="calculateAverage()"></td><td><select name="sebutan_1"><option value="">Pilih</option></select></td><td><input type="text" name="keterangan_1"></td></tr>
+                        <tr><td class="text-center">2</td><td>Integritas</td><td><input type="number" name="nilai_2" class="nilai-kinerja" min="0" max="100" oninput="calculateAverage()"></td><td><select name="sebutan_2"><option value="">Pilih</option></select></td><td><input type="text" name="keterangan_2"></td></tr>
+                        <tr><td class="text-center">3</td><td>Komitmen</td><td><input type="number" name="nilai_3" class="nilai-kinerja" min="0" max="100" oninput="calculateAverage()"></td><td><select name="sebutan_3"><option value="">Pilih</option></select></td><td><input type="text" name="keterangan_3"></td></tr>
+                        <tr><td class="text-center">4</td><td>Disiplin</td><td><input type="number" name="nilai_4" class="nilai-kinerja" min="0" max="100" oninput="calculateAverage()"></td><td><select name="sebutan_4"><option value="">Pilih</option></select></td><td><input type="text" name="keterangan_4"></td></tr>
+                        <tr><td class="text-center">5</td><td>Kerjasama</td><td><input type="number" name="nilai_5" class="nilai-kinerja" min="0" max="100" oninput="calculateAverage()"></td><td><select name="sebutan_5"><option value="">Pilih</option></select></td><td><input type="text" name="keterangan_5"></td></tr>
+                        <tr><td class="text-center">6</td><td>Pengendalian dan Pencegahan Infeksi</td><td><input type="number" name="nilai_6" class="nilai-kinerja" min="0" max="100" oninput="calculateAverage()"></td><td><select name="sebutan_6"><option value="">Pilih</option></select></td><td><input type="text" name="keterangan_6"></td></tr>
+                        <tr><td class="text-center">7</td><td>Komunikasi</td><td><input type="number" name="nilai_7" class="nilai-kinerja" min="0" max="100" oninput="calculateAverage()"></td><td><select name="sebutan_7"><option value="">Pilih</option></select></td><td><input type="text" name="keterangan_7"></td></tr>
+                        <tr><td class="text-center">8</td><td>Kepemimpinan</td><td><input type="number" name="nilai_8" class="nilai-kinerja" min="0" max="100" oninput="calculateAverage()"></td><td><select name="sebutan_8"><option value="">Pilih</option></select></td><td><input type="text" name="keterangan_8"></td></tr>
+                        <tr><td class="text-center">9</td><td>Masa berlaku STR</td><td colspan="2"><input type="text" name="masa_berlaku_str" placeholder="Tanggal/Bulan/Tahun"></td><td><input type="text" name="keterangan_9"></td></tr>
+                        
+                        <tr><td rowspan="5" class="text-center">10</td><td colspan="4">**Jumlah Absensi**</td></tr>
+                        <tr><td>Hadir</td><td colspan="2"><input type="number" name="absensi_hadir" id="absensi_hadir" class="absensi-input" min="0" oninput="calculateAbsenceTotal()"></td><td>Hari/Bulan</td></tr>
+                        <tr><td>Sakit</td><td colspan="2"><input type="number" name="absensi_sakit" id="absensi_sakit" class="absensi-input" min="0" oninput="calculateAbsenceTotal()"></td><td>Hari/Bulan</td></tr>
+                        <tr><td>Ijin</td><td colspan="2"><input type="number" name="absensi_ijin" id="absensi_ijin" class="absensi-input" min="0" oninput="calculateAbsenceTotal()"></td><td>Hari/Bulan</td></tr>
+                        <tr><td>Alpa</td><td colspan="2"><input type="number" name="absensi_alpa" id="absensi_alpa" class="absensi-input" min="0" oninput="calculateAbsenceTotal()"></td><td>Hari/Bulan</td></tr>
+                        <tr><td colspan="2" class="text-center">Jumlah</td><td colspan="2"><input type="number" name="absensi_jumlah" id="absensi_jumlah" readonly></td><td></td></tr>
+                        <tr><td colspan="2" class="text-center">**Nilai rata – rata**</td><td colspan="2"><input type="number" name="nilai_rata_rata" id="nilai_rata_rata" readonly></td><td></td></tr>
+
+                        <tr class="footer-table">
+                            <td colspan="3" class="footer-penilai">
+                                <label for="nama_penilai">Nama Penilai:</label>
+                                <input type="text" id="nama_penilai" name="nama_penilai" class="ttd-input" style="border: none; border-bottom: 1px dotted #000; width: 95%; margin-bottom: 15px;">
+
+                                <label for="tanda_tangan_penilai">Tanda Tangan:</label>
+                                <input type="text" id="tanda_tangan_penilai" name="tanda_tangan_penilai" placeholder="(diisi tanda tangan/paraf)" class="ttd-input" style="border: none; border-bottom: 1px dotted #000; width: 95%; height: 1.5em;">
+                            </td>
+                            <td colspan="2" class="footer-rekomendasi">
+                                <label for="rekomendasi_penilai">Rekomendasi:</label>
+                                <textarea id="rekomendasi_penilai" name="rekomendasi_penilai" style="height: 120px;"></textarea>
+                            </td>
+                        </tr>
+
+                        <tr class="footer-table">
+                            <td colspan="3" class="footer-mengetahui">
+                                <label for="mengetahui" style="display: block;">Mengetahui Kepala Instalasi/Kepala Ruangan/Pj:</label>
+                                <input type="text" id="mengetahui" name="mengetahui" style="width: 95%; border: none; margin-bottom: 25px; padding: 0;">
+                                
+                                <p style="margin: 0; padding: 2px 0;">
+                                    <label for="nama_mengetahui" class="ttd-label">Nama</label>
+                                    <input type="text" id="nama_mengetahui" name="nama_mengetahui" class="ttd-input" style="border: none; border-bottom: 1px dotted #000; width: 65%;">
+                                </p>
+                                <p style="margin: 0; padding: 2px 0;">
+                                    <label for="nip_mengetahui" class="ttd-label">Nip</label>
+                                    <input type="text" id="nip_mengetahui" name="nip_mengetahui" class="ttd-input" style="border: none; border-bottom: 1px dotted #000; width: 65%;">
+                                </p>
+                            </td>
+                            <td colspan="2" class="footer-rekomendasi">
+                                <label for="rekomendasi_mengetahui">Rekomendasi:</label>
+                                <textarea id="rekomendasi_mengetahui" name="rekomendasi_mengetahui" style="height: 120px;"></textarea>
+                            </td>
+                        </tr>
+                    </tbody>
+                </table>
+            </div>
+
+            <div class="catatan">
+                **Catatan**:
+                <p>Nilai **91 s/d 100** sebutan **amat baik**</p>
+                <p>Nilai **76 s/d 90** sebutan **baik**</p>
+                <p>Nilai **61 s/d 75** sebutan **cukup**</p>
+                <p>Nilai **51 s/d 60** sebutan **sedang**</p>
+                <p>Nilai **50 ke bawah** sebutan **kurang**</p>
+            </div>
+        </form>
+
+        <div class="button-group">
+            <button onclick="window.print()" type="button">🖨️ Cetak (PDF)</button>
+            <button onclick="exportToWord()" type="button">⬇️ Unduh (WORD)</button>
+            <button type="submit" form="penilaianForm">💾 Simpan Penilaian</button>
+        </div>
+    </div>
+
+    <script>
+        const ratingCategories = [
+            { min: 91, max: 100, label: "Amat Baik" },
+            { min: 76, max: 90, label: "Baik" },
+            { min: 61, max: 75, label: "Cukup" },
+            { min: 51, max: 60, label: "Sedang" },
+            { min: 0, max: 50, label: "Kurang" }
+        ];
+
+        function getRatingLabel(value) {
+            if (value === null || isNaN(value)) return "";
+            for (const category of ratingCategories) {
+                if (value >= category.min && value <= category.max) {
+                    return category.label;
+                }
+            }
+            return "";
+        }
+
+        function calculateAbsenceTotal() {
+            const inputs = document.querySelectorAll('.absensi-input');
+            let total = 0;
+            inputs.forEach(input => {
+                const value = Math.max(0, parseInt(input.value) || 0);
+                total += value;
+            });
+            document.getElementById('absensi_jumlah').value = total;
+        }
+
+        function calculateAverage() {
+            const inputs = document.querySelectorAll('.nilai-kinerja');
+            let totalValue = 0;
+            let count = 0;
+
+            inputs.forEach((input, index) => {
+                const value = parseFloat(input.value);
+                const selectElement = document.querySelector(`select[name="sebutan_${index + 1}"]`);
+
+                if (selectElement) {
+                    const ratingLabel = getRatingLabel(value);
+                    selectElement.innerHTML = '';
+                    const defaultOption = document.createElement('option');
+                    defaultOption.value = ratingLabel.toLowerCase().replace(' ', '_');
+                    defaultOption.textContent = ratingLabel || 'Pilih';
+                    selectElement.appendChild(defaultOption);
+                }
+
+                if (!isNaN(value) && value >= 0 && value <= 100) {
+                    totalValue += value;
+                    count++;
+                }
+            });
+
+            const averageElement = document.getElementById('nilai_rata_rata');
+            if (count > 0) {
+                const average = totalValue / count;
+                averageElement.value = average.toFixed(2);
+            } else {
+                averageElement.value = "";
+            }
+        }
+        
+        // Fungsi untuk export data ke format Word (.doc)
+        function exportToWord() {
+            const container = document.querySelector('.container').cloneNode(true);
+            
+            container.querySelector('.button-group')?.remove();
+            
+            // Ganti semua elemen input/select/textarea dengan nilai teks (span)
+            container.querySelectorAll('input, textarea, select').forEach(element => {
+                let value = '';
+                let textHolder = document.createElement('span');
+
+                if (element.tagName === 'SELECT') {
+                    value = element.options[element.selectedIndex]?.text || '';
+                } else {
+                    value = element.value || '';
+                }
+
+                textHolder.textContent = value;
+                
+                if (element.closest('.data-dinilai')) {
+                    const labelElement = element.previousElementSibling;
+                    const labelText = labelElement.textContent.trim();
+                    
+                    const combinedText = document.createElement('p');
+                    combinedText.textContent = `${labelText} : ${value}`;
+                    combinedText.style.fontWeight = 'normal';
+                    combinedText.style.textDecoration = 'underline';
+                    
+                    element.closest('p').replaceWith(combinedText);
+                    
+                } else if (element.closest('.footer-table')) {
+                    
+                    if (element.tagName === 'INPUT' || element.tagName === 'TEXTAREA') {
+                        element.setAttribute('value', value); 
+                    } else {
+                        element.remove();
+                    }
+                } else if (element.closest('table')) {
+                    // Untuk input di tabel konten
+                    textHolder.style.fontWeight = 'bold';
+                    element.closest('td').innerHTML = textHolder.outerHTML; 
+                }
+                 if (!element.closest('.footer-table')) {
+                    element.remove();
+                }
+            });
+            
+            // Re-render konten footer untuk Word
+            const footerPenilai = container.querySelector('.footer-penilai');
+            const footerMengetahui = container.querySelector('.footer-mengetahui');
+
+            // Fungsi untuk membuat teks bergaris bawah untuk Word
+            const createWordField = (label, id) => {
+                const value = container.querySelector(`#${id}`)?.getAttribute('value') || '';
+                const style = `border: none; border-bottom: 1px solid #000; display: inline-block; width: 95%;`;
+                return `<p style="margin: 5px 0;"><span style="font-weight: bold; width: 100px; display: block; margin-bottom: 5px;">${label}:</span> <span style="${style} padding: 0 5px;">${value}</span></p>`;
+            };
+             const createWordTtdField = (label, id) => {
+                const value = container.querySelector(`#${id}`)?.getAttribute('value') || '';
+                const style = `border: none; border-bottom: 1px solid #000; display: inline-block; width: 65%;`;
+                return `<p style="margin: 2px 0;"><span style="font-weight: bold; width: 50px; text-align: right; display: inline-block; margin-right: 5px;">${label}:</span> <span style="${style} padding: 0 5px;">${value}</span></p>`;
+            };
+            const createWordRecField = (id) => {
+                const value = container.querySelector(`#${id}`)?.getAttribute('value') || '';
+                return `<label style="font-weight: bold; display: block; margin-bottom: 5px;">Rekomendasi:</label><textarea style="width: 95%; height: 120px; border: 1px solid #000;">${value}</textarea>`;
+            };
+
+            if (footerPenilai) {
+                footerPenilai.innerHTML = `
+                    ${createWordField('Nama Penilai', 'nama_penilai')}
+                    ${createWordField('Tanda Tangan', 'tanda_tangan_penilai')}
+                `;
+                 container.querySelector('.footer-rekomendasi').innerHTML = createWordRecField('rekomendasi_penilai');
+            }
+            if (footerMengetahui) {
+                footerMengetahui.innerHTML = `
+                    <p style="font-weight: bold; margin-bottom: 5px;">Mengetahui Kepala Instalasi/Kepala Ruangan/Pj:</p>
+                    <p style="margin-bottom: 30px;"><span style="border-bottom: 1px solid #000; display: inline-block; width: 95%; padding: 0 5px;">${container.querySelector('#mengetahui')?.getAttribute('value') || ''}</span></p>
+                    ${createWordTtdField('Nama', 'nama_mengetahui')}
+                    ${createWordTtdField('Nip', 'nip_mengetahui')}
+                `;
+                container.querySelector('.footer-rekomendasi:last-child').innerHTML = createWordRecField('rekomendasi_mengetahui');
+            }
+            
+            // Hapus input/textarea yang tersisa di footer untuk Word (sudah diproses di atas)
+            container.querySelectorAll('.footer-table input, .footer-table textarea').forEach(el => el.remove());
+
+            // Perbaikan untuk Header di Word
+            const headerWord = container.querySelector('.header');
+            if(headerWord) {
+                headerWord.style.textAlign = 'center';
+                headerWord.style.paddingBottom = '5px';
+                
+                headerWord.innerHTML = `
+                    <p style="margin: 0; padding: 0; font-size: 1.1em; font-weight: bold;">PEMERINTAH KABUPATEN MIMIKA</p>
+                    <p style="margin: 0; padding: 0; font-size: 1.3em; font-weight: bold;">RUMAH SAKIT UMUM DAERAH</p>
+                    <p style="margin: 0; padding: 0; font-size: 0.9em;">Jalan Yos Sudarso Kabupaten Mimika Provinsi Papua Tengah Kode Pos 99910</p>
+                    <p style="margin: 0; padding: 0; font-size: 0.9em;">Handphone (Whatsapp) 08114905585, Pos-el rsudkabmimika@gmail.com</p>
+                    <hr style="border: 1.5px solid #000; margin-top: 5px;">
+                `;
+            }
+
+            // Buat kerangka HTML khusus untuk Word
+            const htmlContent = `
+                <html xmlns:o='urn:schemas-microsoft-com:office:office' 
+                      xmlns:w='urn:schemas-microsoft-com:office:word' 
+                      xmlns='http://www.w3.org/TR/REC-html40'>
+                <head>
+                    <meta charset='utf-8'>
+                    <title>Daftar Penilaian Tenaga Kontrak</title>
+                    <style>
+                        @page { size: 21.59cm 33.02cm; margin: 1cm; } 
+                        body { font-family: Arial, sans-serif; font-size: 10pt; }
+                        
+                        table { width: 100%; border-collapse: collapse; margin-bottom: 15px; table-layout: fixed; }
+                        table, th, td { border: 1px solid #000; padding: 5px; text-align: left; vertical-align: top; }
+                        th { background-color: #f2f2f2; text-align: center; }
+                        .footer-table td { border: 1px solid #000; padding: 5px; vertical-align: top; }
+                        .data-dinilai { border: none !important; padding: 0 !important; margin-bottom: 5px; }
+                        .data-dinilai p { margin: 0; padding: 2px 0; } 
+                        textarea { width: 95%; height: 120px; border: 1px solid #000; }
+                    </style>
+                </head>
+                <body>
+                    ${container.innerHTML}
+                </body>
+                </html>
+            `;
+
+            // Buat Blob dan paksa download
+            const blob = new Blob(['\ufeff', htmlContent], {
+                type: 'application/msword'
+            });
+            
+            const url = URL.createObjectURL(blob);
+            const downloadLink = document.createElement("a");
+            
+            document.body.appendChild(downloadLink);
+            downloadLink.href = url;
+            downloadLink.download = 'Daftar_Penilaian_Tenaga_Kontrak.doc';
+            downloadLink.click();
+            
+            document.body.removeChild(downloadLink);
+            URL.revokeObjectURL(url);
+        }
+
+        document.addEventListener('DOMContentLoaded', () => {
+            calculateAbsenceTotal();
+            calculateAverage();
+
+            const absensiInputs = document.querySelectorAll('.absensi-input');
+            absensiInputs.forEach(input => {
+                input.addEventListener('input', calculateAbsenceTotal);
+            });
+            
+            const nilaiKinerjaInputs = document.querySelectorAll('.nilai-kinerja');
+            nilaiKinerjaInputs.forEach(input => {
+                input.addEventListener('input', calculateAverage);
+            });
+        });
+    </script>
+</body>
+</html>

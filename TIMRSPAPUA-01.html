@@ -1,0 +1,197 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+<meta charset="UTF-8">
+<title>IT Maintenance Dashboard</title>
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/PapaParse/5.4.1/papaparse.min.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+
+<style>
+body{font-family:Segoe UI;background:#f4f6f9;margin:0}
+header{background:#2c3e50;color:#fff;padding:20px}
+.container{padding:20px;max-width:1500px;margin:auto}
+.card{background:#fff;padding:20px;border-radius:10px;margin-bottom:20px;box-shadow:0 4px 10px rgba(0,0,0,.05)}
+.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(250px,1fr));gap:15px}
+.stat{font-size:28px;font-weight:bold}
+select,input,button{padding:8px;border-radius:5px;border:1px solid #ccc}
+button{background:#3498db;color:#fff;border:none;cursor:pointer}
+table{width:100%;border-collapse:collapse}
+th,td{padding:10px;border-bottom:1px solid #ddd;font-size:14px}
+th{background:#f0f2f5}
+.table-wrap{max-height:350px;overflow-y:auto}
+.badge{padding:4px 10px;border-radius:20px;font-size:12px;color:#fff}
+.COMPLETED{background:#27ae60}
+.INPROCESS{background:#f39c12}
+.OUTPROCESS{background:#3498db}
+.RUSAK{background:#e74c3c}
+footer{text-align:center;color:#777;padding:20px}
+</style>
+</head>
+
+<body>
+
+<header>
+<h2>IT Maintenance Support Dashboard</h2>
+<p>Laporan Bulanan & Tahunan</p>
+</header>
+
+<div class="container">
+
+<div class="card">
+<input type="file" id="fileInput" accept=".csv,.xlsx">
+</div>
+
+<div class="card grid">
+<select id="filterYear"><option value="ALL">Semua Tahun</option></select>
+<select id="filterMonth"><option value="ALL">Semua Bulan</option></select>
+<select id="filterStatus"><option value="ALL">Semua Status</option></select>
+<select id="filterPelaksana"><option value="ALL">Semua Pelaksana</option></select>
+<input id="searchBox" placeholder="Cari...">
+</div>
+
+<div class="grid">
+<div class="card"><div>Total Tiket</div><div class="stat" id="total">0</div></div>
+<div class="card"><div>Selesai</div><div class="stat" id="done">0</div></div>
+<div class="card"><div>Dalam Proses</div><div class="stat" id="process">0</div></div>
+</div>
+
+<!-- ===== DASHBOARD CHART ===== -->
+<div class="grid">
+<div class="card"><h4>Distribusi Status Laporan</h4><canvas id="chartStatus"></canvas></div>
+<div class="card"><h4>Laporan per Lokasi</h4><canvas id="chartLokasi"></canvas></div>
+<div class="card"><h4>Tren Bulanan</h4><canvas id="chartBulanan"></canvas></div>
+<div class="card"><h4>Jenis Perangkat</h4><canvas id="chartPerangkat"></canvas></div>
+</div>
+
+<div class="card">
+<h3>Data Laporan</h3>
+<div class="table-wrap">
+<table>
+<thead>
+<tr>
+<th>No</th><th>Perangkat</th><th>Lokasi</th><th>Pelaksana</th>
+<th>Tanggal</th><th>Status</th>
+</tr>
+</thead>
+<tbody id="tableBody"></tbody>
+</table>
+</div>
+</div>
+
+</div>
+
+<footer>© 2025 IT Maintenance Dashboard</footer>
+
+<script>
+let rawData=[],data=[];
+let cStatus,cLokasi,cBulanan,cPerangkat;
+
+fileInput.onchange=e=>{
+ const f=e.target.files[0];
+ if(!f)return;
+ if(f.name.endsWith('.csv')){
+  Papa.parse(f,{header:true,complete:r=>init(r.data)});
+ }else{
+  const r=new FileReader();
+  r.onload=x=>{
+   const wb=XLSX.read(x.target.result,{type:'array'});
+   init(XLSX.utils.sheet_to_json(wb.Sheets[wb.SheetNames[0]]));
+  };
+  r.readAsArrayBuffer(f);
+ }
+};
+
+function init(d){
+ rawData=d.filter(x=>x['Tanggal Lapor']);
+ setupFilter();
+ apply();
+}
+
+function setupFilter(){
+ const y=new Set(),m=new Set(),s=new Set(),p=new Set();
+ rawData.forEach(r=>{
+  const [dd,mm,yy]=r['Tanggal Lapor'].split('/');
+  y.add(yy);m.add(mm);
+  s.add(r['Status Akhir']);
+  p.add(r['Pelaksana I']||'-');
+ });
+ fill(filterYear,y);fill(filterMonth,m);
+ fill(filterStatus,s);fill(filterPelaksana,p);
+}
+
+function fill(el,set){
+ [...set].sort().forEach(v=>{
+  el.innerHTML+=`<option>${v}</option>`;
+ });
+ el.onchange=apply;
+}
+searchBox.oninput=apply;
+
+function apply(){
+ data=rawData.filter(r=>{
+  const [d,m,y]=r['Tanggal Lapor'].split('/');
+  return (filterYear.value==='ALL'||y===filterYear.value)
+  &&(filterMonth.value==='ALL'||m===filterMonth.value)
+  &&(filterStatus.value==='ALL'||r['Status Akhir']===filterStatus.value)
+  &&(filterPelaksana.value==='ALL'||r['Pelaksana I']===filterPelaksana.value)
+  && JSON.stringify(r).toLowerCase().includes(searchBox.value.toLowerCase());
+ });
+ render();
+}
+
+function render(){
+ total.textContent=data.length;
+ done.textContent=data.filter(x=>x['Status Akhir']==='COMPLETED').length;
+ process.textContent=data.filter(x=>x['Status Akhir']!=='COMPLETED').length;
+ renderTable();
+ renderCharts();
+}
+
+function renderTable(){
+ tableBody.innerHTML='';
+ data.forEach((r,i)=>{
+  tableBody.innerHTML+=`
+  <tr>
+   <td>${i+1}</td>
+   <td>${r['Nama AlatBarangPerangkat']}</td>
+   <td>${r['LokasiRuangan']}</td>
+   <td>${r['Pelaksana I']}</td>
+   <td>${r['Tanggal Lapor']}</td>
+   <td><span class="badge ${r['Status Akhir'].replace(' ','')}">${r['Status Akhir']}</span></td>
+  </tr>`;
+ });
+}
+
+function renderCharts(){
+ const status={},lokasi={},bulan={},alat={};
+
+ data.forEach(r=>{
+  status[r['Status Akhir']] = (status[r['Status Akhir']]||0)+1;
+  lokasi[r['LokasiRuangan']] = (lokasi[r['LokasiRuangan']]||0)+1;
+  alat[r['Nama AlatBarangPerangkat']] = (alat[r['Nama AlatBarangPerangkat']]||0)+1;
+  const m=r['Tanggal Lapor'].split('/')[1];
+  bulan[m]=(bulan[m]||0)+1;
+ });
+
+ drawChart('chartStatus','doughnut',status);
+ drawChart('chartLokasi','bar',lokasi,true);
+ drawChart('chartBulanan','line',bulan);
+ drawChart('chartPerangkat','bar',alat);
+}
+
+function drawChart(id,type,obj,horizontal=false){
+ const ctx=document.getElementById(id);
+ if(ctx.chart)ctx.chart.destroy();
+ ctx.chart=new Chart(ctx,{
+  type,
+  data:{labels:Object.keys(obj),datasets:[{data:Object.values(obj)}]},
+  options:{indexAxis:horizontal?'y':'x',responsive:true}
+ });
+}
+</script>
+
+</body>
+</html>

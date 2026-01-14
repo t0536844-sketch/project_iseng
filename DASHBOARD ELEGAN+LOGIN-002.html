@@ -1,0 +1,1488 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Sistem Penilaian Pegawai RSUD - Dashboard Elegan</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx@0.18.5/dist/xlsx.full.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf-autotable/3.5.28/jspdf.plugin.autotable.min.js"></script>
+    <style>
+        :root {
+            --primary: #2c3e50; /* Dark Blue/Charcoal */
+            --secondary: #3498db; /* Bright Blue */
+            --success: #27ae60; /* Green */
+            --warning: #f39c12; /* Orange */
+            --danger: #e74c3c; /* Red */
+            --info: #1abc9c; /* Teal/Cyan for Info */
+            --light-bg: #ecf0f1; /* Light Gray for background */
+        }
+
+        body {
+            background-color: var(--light-bg);
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            transition: margin-left 0.3s;
+        }
+
+        .sidebar {
+            background: linear-gradient(180deg, var(--primary) 0%, #34495e 100%);
+            color: white;
+            height: 100vh;
+            position: fixed;
+            padding-top: 20px;
+            overflow-y: auto;
+            width: 250px;
+            box-shadow: 2px 0 10px rgba(0,0,0,0.1);
+        }
+
+        .sidebar .nav-link {
+            color: rgba(255,255,255,0.8);
+            padding: 12px 20px;
+            margin: 5px 0;
+            border-radius: 5px;
+            transition: all 0.3s;
+        }
+
+        .sidebar .nav-link:hover, .sidebar .nav-link.active {
+            background-color: rgba(255,255,255,0.1);
+            color: white;
+        }
+
+        .sidebar .nav-link i {
+            margin-right: 10px;
+            width: 20px;
+            text-align: center;
+        }
+
+        .main-content {
+            margin-left: 250px;
+            padding: 30px; /* Lebih banyak padding */
+        }
+
+        .card {
+            border: none;
+            border-radius: 12px; /* Sudut lebih lembut */
+            box-shadow: 0 6px 15px rgba(0,0,0,0.08); 
+            margin-bottom: 20px;
+            transition: all 0.3s cubic-bezier(0.25, 0.8, 0.25, 1);
+        }
+
+        .card:hover {
+            transform: translateY(-3px); 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.15);
+        }
+
+        /* --- DASHBOARD ELEMENTS --- */
+
+        .welcome-banner {
+            background: linear-gradient(45deg, var(--secondary), #5DADE2);
+            color: white;
+            padding: 25px 30px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 4px 10px rgba(0, 0, 0, 0.1);
+        }
+        .welcome-banner h1 {
+            font-weight: 300;
+            margin-bottom: 5px;
+        }
+
+        .stat-card {
+            padding: 25px;
+            background-color: white;
+            text-align: left; 
+            border-radius: 12px;
+            border-left: 5px solid; 
+            transition: all 0.3s;
+        }
+
+        .stat-card .icon-box {
+            float: right;
+            font-size: 2.5rem;
+            line-height: 1;
+            opacity: 0.7;
+        }
+        .stat-card .value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin-bottom: 5px;
+        }
+        .stat-card p {
+            font-size: 0.9rem;
+            color: #777;
+        }
+
+        /* Enhanced Recent Assessments List */
+        .list-group-item-assessment {
+            border-left: 5px solid;
+            border-radius: 8px;
+            margin-bottom: 8px;
+            transition: all 0.2s;
+        }
+        .list-group-item-assessment:hover {
+            background-color: #f5f5f5;
+            transform: translateX(3px);
+        }
+        .score-badge {
+            font-size: 1.1rem;
+            padding: 5px 10px;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container" class="d-flex">
+        <div class="sidebar p-3 d-flex flex-column" id="app-sidebar">
+            <h4 class="text-center mb-4">RSUD DIGITAL</h4>
+            <nav class="nav nav-pills flex-column" id="nav-menu">
+                <a class="nav-link" href="#" data-page="dashboard"><i class="fas fa-tachometer-alt"></i> Dashboard</a>
+                
+                <div id="auth-links"> 
+                    <a class="nav-link" href="#" data-page="assessment"><i class="fas fa-pen-to-square"></i> Input Penilaian</a>
+                    <a class="nav-link" href="#" data-page="employee-list"><i class="fas fa-users"></i> Daftar Pegawai</a>
+                    <a class="nav-link" href="#" data-page="report"><i class="fas fa-chart-line"></i> Laporan</a>
+                    <a class="nav-link" href="#" data-page="settings"><i class="fas fa-cogs"></i> Pengaturan</a>
+                </div>
+                </nav>
+            <div class="mt-auto pt-3 border-top">
+                <button class="btn btn-sm btn-outline-light w-100" id="auth-button" onclick="handleAuthAction()"><i class="fas fa-sign-in-alt"></i> Login</button>
+            </div>
+        </div>
+
+        <div class="main-content flex-grow-1" id="main-content">
+            <div id="page-content">
+                </div>
+        </div>
+    </div>
+
+    <div class="modal fade" id="assessmentDetailModal" tabindex="-1" aria-labelledby="assessmentDetailModalLabel" aria-hidden="true">
+        <div class="modal-dialog modal-lg">
+            <div class="modal-content">
+                <div class="modal-header">
+                    <h5 class="modal-title" id="assessmentDetailModalLabel"><i class="fas fa-file-alt"></i> Ringkasan Penilaian</h5>
+                    <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <div id="assessmentDetailContent">
+                        </div>
+                </div>
+                <div class="modal-footer">
+                    <button type="button" class="btn btn-secondary" data-bs-dismiss="modal">Tutup</button>
+                    <button type="button" class="btn btn-primary" onclick="downloadAssessmentReport()"><i class="fas fa-download"></i> Unduh Laporan</button>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <div class="modal fade" id="loginModal" tabindex="-1" aria-labelledby="loginModalLabel" aria-hidden="true">
+        <div class="modal-dialog">
+            <div class="modal-content">
+                <div class="modal-header bg-primary text-white">
+                    <h5 class="modal-title" id="loginModalLabel"><i class="fas fa-lock"></i> Akses Admin</h5>
+                    <button type="button" class="btn-close btn-close-white" data-bs-dismiss="modal" aria-label="Close"></button>
+                </div>
+                <div class="modal-body">
+                    <form id="modalLoginForm">
+                        <div class="mb-3">
+                            <label for="modalUsername" class="form-label">Username</label>
+                            <input type="text" class="form-control" id="modalUsername" required>
+                        </div>
+                        <div class="mb-4">
+                            <label for="modalPassword" class="form-label">Password</label>
+                            <input type="password" class="form-control" id="modalPassword" required>
+                        </div>
+                        <button type="submit" class="btn btn-primary w-100"><i class="fas fa-sign-in-alt"></i> Login</button>
+                        <div class="mt-3 text-center login-info">
+                            <small class="text-muted">Gunakan: **admin** / **admin123**</small>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    <script>
+        // --- DATA DAN KONSTANTA ---
+        const criteria = [
+            { id: 1, name: "Orientasi Pelayanan", description: "Fokus pada kepentingan dan kepuasan pasien/masyarakat" },
+            { id: 2, name: "Integritas", description: "Kejujuran, dapat dipercaya, dan konsisten dalam bertindak" },
+            { id: 3, name: "Komitmen", description: "Dedikasi dan loyalitas terhadap tugas dan organisasi" },
+            { id: 4, name: "Disiplin", description: "Ketaatan terhadap peraturan dan prosedur yang berlaku" },
+            { id: 5, name: "Kerjasama", description: "Kemampuan bekerja sama dalam tim dan lintas unit" },
+            { id: 6, name: "Pengendalian & PPI", description: "Penerapan prosedur PPI dan keamanan data" },
+            { id: 7, name: "Komunikasi", description: "Kemampuan berkomunikasi efektif dengan pasien dan rekan kerja" },
+            { id: 8, name: "Kepemimpinan", description: "Kemampuan memimpin dan menginspirasi diri sendiri maupun orang lain" }
+        ];
+
+        let employees = [
+            { id: 1, name: "Ahmad Fauzi", position: "System Administrator", department: "IT", assessments: [{ date: "2023-10-15", scores: [9, 8, 9, 8, 9, 8, 9, 8], total: 8.5, file: null }] },
+            { id: 2, name: "Siti Rahayu", position: "IT Support", department: "IT", assessments: [{ date: "2023-10-10", scores: [8, 9, 8, 9, 8, 9, 8, 9], total: 8.5, file: null }] },
+            { id: 3, name: "Budi Santoso", position: "Database Administrator", department: "IT", assessments: [{ date: "2023-10-05", scores: [7, 8, 9, 8, 7, 9, 8, 9], total: 8.1, file: null }] },
+            { id: 4, name: "Citra Dewi", position: "Perawat Senior", department: "Keperawatan", assessments: [{ date: "2023-10-01", scores: [9, 9, 9, 9, 9, 9, 8, 7], total: 8.75, file: null }] }
+        ];
+
+        let currentEmployeeId = null;
+        let currentAssessmentIndex = null;
+        let employeeIdCounter = employees.length + 1;
+
+        // --- FUNGSI BANTUAN ---
+        function formatDate(dateString) {
+            const options = { year: 'numeric', month: 'long', day: 'numeric' };
+            return new Date(dateString).toLocaleDateString('id-ID', options);
+        }
+        function getRatingDescription(score) {
+            if (score >= 9) return 'Sangat Baik';
+            if (score >= 8) return 'Baik';
+            if (score >= 6) return 'Cukup';
+            return 'Perlu Peningkatan';
+        }
+        function getCategory(score) {
+            if (score >= 8.5) return 'Sangat Baik';
+            if (score >= 7.5) return 'Baik';
+            if (score >= 6.5) return 'Cukup';
+            return 'Perlu Peningkatan';
+        }
+        function getCategoryBadge(score) {
+            const category = getCategory(score);
+            let color = 'bg-danger';
+            if (category === 'Sangat Baik') color = 'bg-success';
+            else if (category === 'Baik') color = 'bg-info';
+            else if (category === 'Cukup') color = 'bg-warning';
+            return `<span class="badge ${color}">${category}</span>`;
+        }
+        function getRecommendation(score) {
+            if (score >= 8.5) return 'Pertahankan kinerja yang excellent. Pertimbangkan untuk promosi atau penghargaan.';
+            if (score >= 7.5) return 'Tingkatkan beberapa aspek untuk mencapai excellence. Fokus pada pengembangan spesifik.';
+            if (score >= 6.5) return 'Perlu peningkatan signifikan dalam beberapa area. Direkomendasikan pembinaan terarah.';
+            return 'Diperlukan pembinaan dan pelatihan intensif. Evaluasi mendalam terhadap penempatan atau kapabilitas.';
+        }
+        function calculateStatistics() {
+            const stats = {
+                totalEmployees: employees.length,
+                totalAssessments: 0,
+                overallAverage: 0,
+                highestScore: 0,
+                lowestScore: 10,
+                departmentStats: {},
+                recommendations: ''
+            };
+            let totalScore = 0;
+            let assessmentCount = 0;
+            employees.forEach(emp => {
+                stats.totalAssessments += emp.assessments.length;
+                if (emp.assessments.length > 0) {
+                    const empTotal = emp.assessments.reduce((sum, ass) => sum + ass.total, 0);
+                    const empAvg = empTotal / emp.assessments.length;
+                    totalScore += empAvg;
+                    assessmentCount++;
+                    stats.highestScore = Math.max(stats.highestScore, empAvg);
+                    stats.lowestScore = Math.min(stats.lowestScore, empAvg);
+                    if (!stats.departmentStats[emp.department]) {
+                        stats.departmentStats[emp.department] = { total: 0, count: 0, average: 0 };
+                    }
+                    stats.departmentStats[emp.department].total += empAvg;
+                    stats.departmentStats[emp.department].count++;
+                }
+            });
+            Object.keys(stats.departmentStats).forEach(dept => {
+                const deptStat = stats.departmentStats[dept];
+                deptStat.average = deptStat.count > 0 ? deptStat.total / deptStat.count : 0;
+            });
+            stats.overallAverage = assessmentCount > 0 ? parseFloat((totalScore / assessmentCount).toFixed(1)) : 0;
+            if (stats.overallAverage >= 8) {
+                stats.recommendations = 'Kinerja keseluruhan excellent. Pertahankan dan lanjutkan program pengembangan yang sudah berjalan dengan baik.';
+            } else if (stats.overallAverage >= 7) {
+                stats.recommendations = 'Kinerja baik namun masih ada ruang untuk improvement. Fokus pada pelatihan soft skills dan technical skills.';
+            } else {
+                stats.recommendations = 'Diperuhkan program pembinaan intensif dan evaluasi menyeluruh terhadap sistem penilaian dan pengembangan karyawan.';
+            }
+            return stats;
+        }
+        function getBestEmployees(limit = 5) {
+            return employees
+                .filter(emp => emp.assessments.length > 0)
+                .map(emp => {
+                    const total = emp.assessments.reduce((sum, ass) => sum + ass.total, 0);
+                    return {
+                        ...emp,
+                        average: parseFloat((total / emp.assessments.length).toFixed(1))
+                    };
+                })
+                .sort((a, b) => b.average - a.average)
+                .slice(0, limit);
+        }
+        function getCurrentPeriod() {
+            const now = new Date();
+            return now.toLocaleDateString('id-ID', { month: 'long', year: 'numeric' });
+        }
+
+
+        // --- FUNGSI UNTUK AUTENTIKASI ---
+
+        const VALID_USERNAME = "admin";
+        const VALID_PASSWORD = "admin123";
+
+        function checkAuthentication() {
+            return localStorage.getItem('isLoggedIn') === 'true';
+        }
+
+        function login() {
+            const usernameInput = document.getElementById('modalUsername').value;
+            const passwordInput = document.getElementById('modalPassword').value;
+
+            if (usernameInput === VALID_USERNAME && passwordInput === VALID_PASSWORD) {
+                localStorage.setItem('isLoggedIn', 'true');
+                alert('Login Berhasil! Selamat datang, Admin.');
+                
+                const loginModal = bootstrap.Modal.getInstance(document.getElementById('loginModal'));
+                if (loginModal) loginModal.hide();
+
+                initNavigation(); 
+            } else {
+                alert('Login Gagal. Username atau Password salah.');
+            }
+        }
+
+        function logout() {
+            if (confirm('Anda yakin ingin keluar dari sesi?')) {
+                localStorage.removeItem('isLoggedIn');
+                alert('Anda telah logout.');
+                
+                initNavigation();
+                document.querySelector('#nav-menu a[data-page="dashboard"]').click();
+            }
+        }
+        
+        function handleAuthAction() {
+            if (checkAuthentication()) {
+                logout();
+            } else {
+                const modal = new bootstrap.Modal(document.getElementById('loginModal'));
+                modal.show();
+                
+                document.getElementById('modalLoginForm').removeEventListener('submit', handleModalLoginSubmit);
+                document.getElementById('modalLoginForm').addEventListener('submit', handleModalLoginSubmit);
+            }
+        }
+
+        function handleModalLoginSubmit(e) {
+            e.preventDefault();
+            login();
+        }
+
+
+        // --- FUNGSI NAVIGASI DAN KONTEN UTAMA ---
+
+        function initNavigation() {
+            const isAuthenticated = checkAuthentication();
+            const navLinks = document.querySelectorAll('#nav-menu .nav-link');
+            const authLinksContainer = document.getElementById('auth-links');
+            const authButton = document.getElementById('auth-button');
+
+            // 1. Atur tampilan sidebar berdasarkan status login
+            if (isAuthenticated) {
+                authLinksContainer.style.display = 'block'; 
+                authButton.innerHTML = '<i class="fas fa-sign-out-alt"></i> Logout';
+            } else {
+                authLinksContainer.style.display = 'none'; 
+                authButton.innerHTML = '<i class="fas fa-sign-in-alt"></i> Login';
+            }
+
+            // 2. Pasang event listener untuk navigasi
+            function loadPage(pageName) {
+                let html = '';
+                
+                if (pageName !== 'dashboard' && !checkAuthentication()) { 
+                    alert('Akses ditolak. Silakan login untuk mengakses modul ini.');
+                    return;
+                }
+
+                switch (pageName) {
+                    case 'dashboard':
+                        html = renderDashboardContent();
+                        break;
+                    case 'assessment':
+                        html = renderAssessmentFormContent();
+                        break;
+                    case 'employee-list':
+                        html = renderEmployeeListContent();
+                        break;
+                    case 'report':
+                        html = renderReportContent();
+                        break;
+                    case 'settings':
+                        html = renderSettingsContent();
+                        break;
+                    default:
+                        html = renderDashboardContent();
+                }
+                document.getElementById('page-content').innerHTML = html;
+                
+                // Panggil fungsi render ulang setelah konten dimuat
+                if (pageName === 'dashboard') {
+                    updateDashboard();
+                    initCharts(); // Memuat kedua chart (kriteria & departemen)
+                    loadQuickStats();
+                    renderRecentAssessments();
+                } else if (pageName === 'assessment') {
+                    renderCriteriaForm();
+                } else if (pageName === 'employee-list') {
+                    renderEmployeeTable();
+                } else if (pageName === 'report') {
+                    renderReportTable();
+                }
+            }
+
+            function handleNavLinkClick(e) {
+                e.preventDefault();
+                const pageName = this.getAttribute('data-page');
+
+                const isCurrentlyAuthenticated = checkAuthentication();
+
+                if (pageName !== 'dashboard' && !isCurrentlyAuthenticated) {
+                    alert('Modul ini memerlukan akses admin. Silakan Login.');
+                    handleAuthAction(); 
+                    return;
+                }
+                
+                navLinks.forEach(l => l.classList.remove('active'));
+                this.classList.add('active');
+                
+                loadPage(pageName);
+            }
+
+            navLinks.forEach(link => {
+                link.removeEventListener('click', handleNavLinkClick); 
+                link.addEventListener('click', handleNavLinkClick); 
+            });
+
+            loadPage('dashboard');
+            document.querySelector('#nav-menu a[data-page="dashboard"]').classList.add('active');
+        }
+
+        // --- FUNGSI DASHBOARD YANG DIPERBARUI ---
+        
+        function renderDashboardContent() { 
+            return `
+                <div class="welcome-banner">
+                    <h1>Selamat Datang di Dashboard Admin</h1>
+                    <p>Monitor dan analisis kinerja pegawai RSUD Digital secara real-time. Periode Penilaian: ${getCurrentPeriod()}</p>
+                </div>
+
+                <div class="row" id="quick-stats">
+                    </div>
+                
+                <div class="row mt-4">
+                    <div class="col-lg-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-primary text-white" style="border-radius: 12px 12px 0 0;">
+                                <i class="fas fa-chart-bar"></i> Distribusi Nilai Rata-rata Kriteria
+                            </div>
+                            <div class="card-body">
+                                <canvas id="criteriaChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-6">
+                         <div class="card h-100">
+                            <div class="card-header bg-info text-white" style="border-radius: 12px 12px 0 0;">
+                                <i class="fas fa-sitemap"></i> Perbandingan Rata-rata Nilai Departemen
+                            </div>
+                            <div class="card-body">
+                                <canvas id="departmentChart"></canvas>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="row mt-4">
+                    <div class="col-lg-8">
+                        <div class="card">
+                            <div class="card-header bg-secondary text-white" style="border-radius: 12px 12px 0 0;">
+                                <i class="fas fa-history"></i> 5 Penilaian Terbaru
+                            </div>
+                            <div class="card-body">
+                                <div class="list-group" id="recent-assessments-list">
+                                    </div>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-lg-4">
+                        <div class="card h-100">
+                            <div class="card-header bg-success text-white" style="border-radius: 12px 12px 0 0;">
+                                <i class="fas fa-star"></i> Top Pegawai Bulan Ini
+                            </div>
+                            <div class="card-body">
+                                <ul class="list-group list-group-flush" id="best-employees-list">
+                                    </ul>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function loadQuickStats() { 
+            const stats = calculateStatistics();
+            const statsContainer = document.getElementById('quick-stats');
+            
+            const getStatCardStyle = (score) => {
+                if (score >= 8.5) return { color: 'var(--success)', icon: 'fa-trophy' };
+                if (score >= 7.5) return { color: 'var(--info)', icon: 'fa-arrow-up' };
+                return { color: 'var(--primary)', icon: 'fa-chart-line' };
+            };
+            const avgStats = getStatCardStyle(stats.overallAverage);
+
+            statsContainer.innerHTML = `
+                <div class="col-md-3">
+                    <div class="card stat-card" style="border-color: var(--primary);">
+                        <i class="fas fa-users text-primary icon-box"></i>
+                        <div class="value text-primary">${stats.totalEmployees}</div>
+                        <p class="text-muted mb-0">Total Pegawai</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card" style="border-color: var(--info);">
+                        <i class="fas fa-file-signature text-info icon-box"></i>
+                        <div class="value text-info">${stats.totalAssessments}</div>
+                        <p class="text-muted mb-0">Total Penilaian</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card" style="border-color: ${avgStats.color};">
+                        <i class="fas ${avgStats.icon}" style="color: ${avgStats.color};"></i>
+                        <div class="value" style="color: ${avgStats.color};">${stats.overallAverage}</div>
+                        <p class="text-muted mb-0">Rata-rata Keseluruhan</p>
+                    </div>
+                </div>
+                <div class="col-md-3">
+                    <div class="card stat-card" style="border-color: var(--success);">
+                        <i class="fas fa-award text-success icon-box"></i>
+                        <div class="value text-success">${stats.highestScore}</div>
+                        <p class="text-muted mb-0">Nilai Tertinggi (Avg)</p>
+                    </div>
+                </div>
+            `;
+        }
+        
+        function updateDashboard() { 
+            const bestEmployeesList = document.getElementById('best-employees-list');
+            const bestEmployees = getBestEmployees(5);
+            
+            bestEmployeesList.innerHTML = '';
+            if (bestEmployees.length === 0) {
+                bestEmployeesList.innerHTML = '<li class="list-group-item">Belum ada data penilaian.</li>';
+                return;
+            }
+
+            bestEmployees.forEach((emp, index) => {
+                bestEmployeesList.innerHTML += `
+                    <li class="list-group-item d-flex justify-content-between align-items-center">
+                        <span class="badge bg-secondary me-2">${index + 1}</span>
+                        <div>
+                            <strong>${emp.name}</strong> <br>
+                            <small class="text-muted">${emp.department}</small>
+                        </div>
+                        <span class="badge bg-success score-badge">${emp.average.toFixed(1)}</span>
+                    </li>
+                `;
+            });
+        }
+        
+        let criteriaChartInstance = null;
+        let departmentChartInstance = null; // Instans baru untuk chart Departemen
+
+        function initCharts() { 
+            // --- Logic Chart Kriteria (Bar) ---
+            const ctxCriteria = document.getElementById('criteriaChart');
+            if (!ctxCriteria) return;
+
+            const allScores = employees.flatMap(emp => 
+                emp.assessments.flatMap(ass => ass.scores)
+            );
+            
+            if (allScores.length > 0) {
+                const criteriaAverages = criteria.map((c, index) => {
+                    let totalScore = 0;
+                    let count = 0;
+                    employees.forEach(emp => {
+                        emp.assessments.forEach(ass => {
+                            totalScore += ass.scores[index];
+                            count++;
+                        });
+                    });
+                    return count > 0 ? parseFloat((totalScore / count).toFixed(1)) : 0;
+                });
+                
+                if (criteriaChartInstance) {
+                    criteriaChartInstance.destroy();
+                }
+
+                criteriaChartInstance = new Chart(ctxCriteria, {
+                    type: 'bar',
+                    data: {
+                        labels: criteria.map(c => c.name),
+                        datasets: [{
+                            label: 'Rata-rata Nilai',
+                            data: criteriaAverages,
+                            backgroundColor: 'var(--secondary)',
+                            borderColor: '#2980b9',
+                            borderWidth: 1
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            y: {
+                                beginAtZero: true,
+                                max: 10,
+                                title: {
+                                    display: true,
+                                    text: 'Nilai'
+                                }
+                            },
+                            x: {
+                                ticks: { autoSkip: false, maxRotation: 45, minRotation: 45 }
+                            }
+                        },
+                        plugins: {
+                            legend: { display: false },
+                            tooltip: { mode: 'index', intersect: false }
+                        }
+                    }
+                });
+            } else {
+                 if (criteriaChartInstance) criteriaChartInstance.destroy();
+                 ctxCriteria.getContext('2d').clearRect(0, 0, ctxCriteria.width, ctxCriteria.height);
+            }
+            
+            // --- Logic Chart Departemen (Polar Area) ---
+            const ctxDepartment = document.getElementById('departmentChart');
+            if (!ctxDepartment) return;
+            
+            const stats = calculateStatistics();
+            const deptLabels = Object.keys(stats.departmentStats);
+            const deptData = deptLabels.map(dept => stats.departmentStats[dept].average);
+            
+            if (departmentChartInstance) {
+                departmentChartInstance.destroy();
+            }
+            
+            if (deptLabels.length > 0) {
+                 departmentChartInstance = new Chart(ctxDepartment, {
+                    type: 'polarArea', 
+                    data: {
+                        labels: deptLabels,
+                        datasets: [{
+                            data: deptData,
+                            backgroundColor: [
+                                'var(--success)', 'var(--secondary)', 'var(--warning)', '#9b59b6', 'var(--danger)'
+                            ],
+                            hoverBackgroundColor: [
+                                '#2ecc71', '#5DADE2', '#f39c12', '#af7ac5', '#ec7063'
+                            ]
+                        }]
+                    },
+                    options: {
+                        responsive: true,
+                        scales: {
+                            r: {
+                                suggestedMin: 5,
+                                suggestedMax: 10,
+                                pointLabels: {
+                                    display: true,
+                                    centerPointLabels: true,
+                                    font: { size: 10 }
+                                }
+                            }
+                        },
+                        plugins: {
+                            legend: {
+                                position: 'right',
+                            },
+                            title: {
+                                display: true,
+                                text: 'Rata-rata Nilai Departemen'
+                            }
+                        }
+                    }
+                });
+            } else {
+                if (departmentChartInstance) departmentChartInstance.destroy();
+                ctxDepartment.getContext('2d').clearRect(0, 0, ctxDepartment.width, ctxDepartment.height);
+            }
+        }
+        
+        function renderRecentAssessments() { 
+            const recentList = document.getElementById('recent-assessments-list');
+            if (!recentList) return;
+
+            const allAssessments = employees.flatMap(emp => 
+                emp.assessments.map((ass, index) => ({
+                    ...ass,
+                    employeeId: emp.id,
+                    employeeName: emp.name,
+                    employeePosition: emp.position,
+                    assessmentIndex: index
+                }))
+            );
+            
+            allAssessments.sort((a, b) => new Date(b.date) - new Date(a.date));
+            const recentFive = allAssessments.slice(0, 5);
+
+            // Fungsi bantuan untuk warna border
+            const getBorderColor = (score) => {
+                if (score >= 8.5) return 'var(--success)';
+                if (score >= 7.5) return 'var(--info)';
+                if (score >= 6.5) return 'var(--warning)';
+                return 'var(--danger)';
+            };
+
+            recentList.innerHTML = '';
+            if (recentFive.length === 0) {
+                recentList.innerHTML = '<p class="text-muted p-3">Belum ada penilaian yang dicatat.</p>';
+                return;
+            }
+
+            recentFive.forEach(ass => {
+                const action = checkAuthentication() 
+                    ? `viewAssessmentDetail(${ass.employeeId}, ${ass.assessmentIndex})` 
+                    : `handleAuthAction();`;
+                    
+                const borderColor = getBorderColor(ass.total);
+                    
+                recentList.innerHTML += `
+                    <a href="#" class="list-group-item list-group-item-action list-group-item-assessment" onclick="event.preventDefault(); ${action}" style="border-left-color: ${borderColor};">
+                        <div class="d-flex w-100 justify-content-between align-items-center">
+                            <div>
+                                <h6 class="mb-1 text-primary">${ass.employeeName}</h6>
+                                <small class="text-muted">${ass.employeePosition} | ${formatDate(ass.date)}</small>
+                            </div>
+                            <div class="text-end">
+                                <span class="badge bg-dark score-badge">${ass.total.toFixed(1)}</span>
+                                ${getCategoryBadge(ass.total)}
+                            </div>
+                        </div>
+                    </a>
+                `;
+            });
+        }
+        
+        // --- FUNGSI LAINNYA (TETAP SAMA) ---
+        // ... (renderAssessmentFormContent, renderCriteriaForm, saveAssessment, renderEmployeeListContent, 
+        // renderEmployeeTable, addNewEmployee, deleteEmployee, renderReportContent, renderReportTable, 
+        // exportReportToExcel, generateComprehensiveReport, renderSettingsContent, viewAssessmentDetail, 
+        // downloadAssessmentReport, downloadAssessment, downloadAssessmentExcel tetap sama)
+
+        function renderAssessmentFormContent() { 
+            let employeeOptions = employees.map(emp => `<option value="${emp.id}">${emp.name} (${emp.department})</option>`).join('');
+            
+            return `
+                <h2 class="mb-4 text-primary"><i class="fas fa-pen-to-square"></i> Input Penilaian Kinerja</h2>
+                <div class="card">
+                    <div class="card-body">
+                        <form id="assessmentForm">
+                            <div class="row mb-3">
+                                <div class="col-md-6">
+                                    <label for="employeeSelect" class="form-label">Pilih Pegawai</label>
+                                    <select class="form-select" id="employeeSelect" required>
+                                        <option value="">-- Pilih Pegawai --</option>
+                                        ${employeeOptions}
+                                    </select>
+                                </div>
+                                <div class="col-md-6">
+                                    <label for="assessmentDate" class="form-label">Tanggal Penilaian</label>
+                                    <input type="date" class="form-control" id="assessmentDate" required>
+                                </div>
+                            </div>
+
+                            <h5 class="mt-4 mb-3 text-secondary">Nilai Kriteria (Skala 1-10)</h5>
+                            <div id="criteria-form-container">
+                                </div>
+                            
+                            <button type="submit" class="btn btn-primary mt-4"><i class="fas fa-save"></i> Simpan Penilaian</button>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+        function renderCriteriaForm() { 
+            const container = document.getElementById('criteria-form-container');
+            if (!container) return;
+
+            container.innerHTML = criteria.map(criterion => `
+                <div class="criteria-item row align-items-center mb-3">
+                    <div class="col-md-6">
+                        <strong>${criterion.name}</strong>
+                        <p class="text-muted mb-0"><small>${criterion.description}</small></p>
+                    </div>
+                    <div class="col-md-6">
+                        <label for="score-${criterion.id}" class="form-label visually-hidden">${criterion.name} Score</label>
+                        <input type="number" class="form-control score-input" id="score-${criterion.id}" min="1" max="10" value="5" required>
+                    </div>
+                </div>
+            `).join('');
+            
+            document.getElementById('assessmentDate').valueAsDate = new Date();
+            
+            document.getElementById('assessmentForm').removeEventListener('submit', saveAssessment);
+            document.getElementById('assessmentForm').addEventListener('submit', function(e) {
+                e.preventDefault();
+                saveAssessment();
+            });
+        }
+        function saveAssessment() { 
+            const employeeId = parseInt(document.getElementById('employeeSelect').value);
+            const date = document.getElementById('assessmentDate').value;
+            const scoreInputs = document.querySelectorAll('.score-input');
+            
+            if (!employeeId || !date) {
+                alert('Pilih Pegawai dan Tanggal Penilaian.');
+                return;
+            }
+            
+            const scores = Array.from(scoreInputs).map(input => parseInt(input.value));
+            
+            if (scores.some(score => isNaN(score) || score < 1 || score > 10)) {
+                alert('Pastikan semua nilai diisi dengan angka antara 1 sampai 10.');
+                return;
+            }
+            
+            const totalScore = scores.reduce((sum, score) => sum + score, 0);
+            const averageScore = parseFloat((totalScore / scores.length).toFixed(1));
+
+            const employee = employees.find(emp => emp.id === employeeId);
+
+            if (employee) {
+                const isDuplicate = employee.assessments.some(ass => ass.date === date);
+                if (isDuplicate) {
+                    alert(`Penilaian untuk ${employee.name} pada tanggal ${formatDate(date)} sudah ada.`);
+                    return;
+                }
+                
+                employee.assessments.push({
+                    date: date,
+                    scores: scores,
+                    total: averageScore,
+                    file: null
+                });
+                
+                employee.assessments.sort((a, b) => new Date(b.date) - new Date(a.date));
+
+                alert(`Penilaian untuk ${employee.name} (Nilai: ${averageScore}) berhasil disimpan!`);
+                
+                document.getElementById('assessmentForm').reset();
+                document.getElementById('assessmentDate').valueAsDate = new Date();
+                
+                updateDashboard();
+                renderRecentAssessments();
+                initCharts();
+            } else {
+                alert('Pegawai tidak ditemukan.');
+            }
+        }
+        function renderEmployeeListContent() { 
+            return `
+                <h2 class="mb-4 text-primary"><i class="fas fa-users"></i> Daftar Pegawai</h2>
+                <div class="card mb-4">
+                    <div class="card-header bg-secondary text-white" style="border-radius: 12px 12px 0 0;">
+                        Tambah Pegawai Baru
+                    </div>
+                    <div class="card-body">
+                        <form id="addEmployeeForm" class="row g-3">
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="newEmployeeName" placeholder="Nama Pegawai" required>
+                            </div>
+                            <div class="col-md-4">
+                                <input type="text" class="form-control" id="newEmployeePosition" placeholder="Posisi/Jabatan" required>
+                            </div>
+                            <div class="col-md-4">
+                                <div class="input-group">
+                                    <input type="text" class="form-control" id="newEmployeeDepartment" placeholder="Departemen" required>
+                                    <button class="btn btn-success" type="submit"><i class="fas fa-user-plus"></i> Tambah</button>
+                                </div>
+                            </div>
+                        </form>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="employeeTable">
+                                <thead>
+                                    <tr>
+                                        <th>ID</th>
+                                        <th>Nama Pegawai</th>
+                                        <th>Jabatan</th>
+                                        <th>Departemen</th>
+                                        <th>Nilai Rata-rata</th>
+                                        <th>Penilaian Terakhir</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        function renderEmployeeTable() { 
+            const tableBody = document.getElementById('employeeTable') ? document.getElementById('employeeTable').getElementsByTagName('tbody')[0] : null;
+            
+            const addEmployeeForm = document.getElementById('addEmployeeForm');
+            if (addEmployeeForm) {
+                addEmployeeForm.removeEventListener('submit', addNewEmployee);
+                addEmployeeForm.addEventListener('submit', function(e) {
+                    e.preventDefault();
+                    addNewEmployee();
+                });
+            }
+
+            if (!tableBody) return;
+
+            tableBody.innerHTML = '';
+            
+            employees.forEach(emp => {
+                let avgScore = 0;
+                let lastAssessmentDate = '-';
+                let lastAssessmentIndex = -1;
+                
+                if (emp.assessments.length > 0) {
+                    const total = emp.assessments.reduce((sum, ass) => sum + ass.total, 0);
+                    avgScore = (total / emp.assessments.length).toFixed(1);
+                    
+                    const lastAssessment = emp.assessments[0];
+                    lastAssessmentDate = formatDate(lastAssessment.date);
+                    lastAssessmentIndex = 0;
+                }
+                
+                const avgBadge = avgScore > 0 ? `<span class="badge bg-primary">${avgScore}</span>` : '<span class="badge bg-secondary">N/A</span>';
+                
+                const row = tableBody.insertRow();
+                row.innerHTML = `
+                    <td>${emp.id}</td>
+                    <td><strong>${emp.name}</strong></td>
+                    <td>${emp.position}</td>
+                    <td>${emp.department}</td>
+                    <td>${avgBadge}</td>
+                    <td>${lastAssessmentDate}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info text-white" onclick="viewAssessmentDetail(${emp.id}, ${lastAssessmentIndex})" ${lastAssessmentIndex === -1 ? 'disabled' : ''}>
+                            <i class="fas fa-eye"></i> Detail
+                        </button>
+                        <button class="btn btn-sm btn-danger" onclick="deleteEmployee(${emp.id})">
+                            <i class="fas fa-trash"></i> Hapus
+                        </button>
+                    </td>
+                `;
+            });
+        }
+        function addNewEmployee() { 
+            const name = document.getElementById('newEmployeeName').value.trim();
+            const position = document.getElementById('newEmployeePosition').value.trim();
+            const department = document.getElementById('newEmployeeDepartment').value.trim();
+            
+            if (name && position && department) {
+                employees.push({
+                    id: employeeIdCounter++,
+                    name: name,
+                    position: position,
+                    department: department,
+                    assessments: []
+                });
+                
+                alert(`Pegawai ${name} berhasil ditambahkan.`);
+                document.getElementById('addEmployeeForm').reset();
+                renderEmployeeTable();
+            } else {
+                alert('Semua kolom harus diisi.');
+            }
+        }
+        function deleteEmployee(id) { 
+            if (confirm(`Yakin ingin menghapus pegawai dengan ID ${id}? Semua data penilaian juga akan terhapus.`)) {
+                employees = employees.filter(emp => emp.id !== id);
+                alert('Pegawai berhasil dihapus.');
+                renderEmployeeTable();
+                updateDashboard();
+                renderRecentAssessments();
+                initCharts();
+            }
+        }
+        function renderReportContent() { 
+            const stats = calculateStatistics();
+            
+            return `
+                <h2 class="mb-4 text-primary"><i class="fas fa-chart-line"></i> Laporan dan Statistik Kinerja</h2>
+                
+                <div class="row mb-4">
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-info text-white" style="border-radius: 12px 12px 0 0;"><i class="fas fa-chart-pie"></i> Ringkasan Statistik Periode Ini</div>
+                            <div class="card-body">
+                                <p><strong>Periode:</strong> ${getCurrentPeriod()}</p>
+                                <ul class="list-group list-group-flush">
+                                    <li class="list-group-item">Rata-rata Nilai Keseluruhan: <span class="badge bg-primary float-end">${stats.overallAverage}</span></li>
+                                    <li class="list-group-item">Nilai Rata-rata Tertinggi: <span class="badge bg-success float-end">${stats.highestScore}</span></li>
+                                    <li class="list-group-item">Nilai Rata-rata Terendah: <span class="badge bg-danger float-end">${stats.lowestScore}</span></li>
+                                </ul>
+                                <h6 class="mt-3">Rekomendasi Umum:</h6>
+                                <p class="alert alert-light border-start border-4 border-info">${stats.recommendations}</p>
+                            </div>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <div class="card h-100">
+                            <div class="card-header bg-warning text-white" style="border-radius: 12px 12px 0 0;"><i class="fas fa-file-export"></i> Opsi Ekspor Laporan</div>
+                            <div class="card-body d-grid gap-2">
+                                <button class="btn btn-lg btn-success" onclick="generateComprehensiveReport()"><i class="fas fa-file-pdf"></i> Unduh Laporan Komprehensif (PDF)</button>
+                                <button class="btn btn-lg btn-secondary" onclick="exportReportToExcel()"><i class="fas fa-file-excel"></i> Unduh Data Pegawai (Excel)</button>
+                                <small class="text-muted mt-2">Laporan Komprehensif mencakup ringkasan statistik dan detail per departemen.</small>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card">
+                    <div class="card-header bg-primary text-white" style="border-radius: 12px 12px 0 0;">
+                        <i class="fas fa-table"></i> Rata-rata Kinerja Pegawai
+                    </div>
+                    <div class="card-body">
+                        <div class="table-responsive">
+                            <table class="table table-striped table-hover" id="reportTable">
+                                <thead>
+                                    <tr>
+                                        <th>Nama Pegawai</th>
+                                        <th>Departemen</th>
+                                        <th>Rata-rata Nilai</th>
+                                        <th>Kategori</th>
+                                        <th>Aksi</th>
+                                    </tr>
+                                </thead>
+                                <tbody>
+                                    </tbody>
+                            </table>
+                        </div>
+                    </div>
+                </div>
+            `;
+        }
+        function renderReportTable() { 
+            const tableBody = document.getElementById('reportTable') ? document.getElementById('reportTable').getElementsByTagName('tbody')[0] : null;
+            if (!tableBody) return;
+
+            tableBody.innerHTML = '';
+            
+            employees.forEach(emp => {
+                let avgScore = 0;
+                let lastAssessmentIndex = -1;
+                
+                if (emp.assessments.length > 0) {
+                    const total = emp.assessments.reduce((sum, ass) => sum + ass.total, 0);
+                    avgScore = total / emp.assessments.length;
+                    lastAssessmentIndex = 0;
+                }
+                
+                const avgBadge = avgScore > 0 ? `<span class="badge bg-primary">${avgScore.toFixed(1)}</span>` : '<span class="badge bg-secondary">N/A</span>';
+                
+                const row = tableBody.insertRow();
+                const action = checkAuthentication() 
+                    ? `viewAssessmentDetail(${emp.id}, ${lastAssessmentIndex})` 
+                    : `handleAuthAction();`;
+                    
+                row.innerHTML = `
+                    <td><strong>${emp.name}</strong></td>
+                    <td>${emp.department}</td>
+                    <td>${avgBadge}</td>
+                    <td>${avgScore > 0 ? getCategoryBadge(avgScore) : '<span class="badge bg-secondary">N/A</span>'}</td>
+                    <td>
+                        <button class="btn btn-sm btn-info text-white" onclick="event.preventDefault(); ${action}" ${lastAssessmentIndex === -1 ? 'disabled' : ''}>
+                            <i class="fas fa-file-alt"></i> Detail
+                        </button>
+                    </td>
+                `;
+            });
+        }
+        function exportReportToExcel() { 
+            const data = [
+                ['DATA PEGAWAI DAN RATA-RATA PENILAIAN'],
+                ['RSUD DIGITAL - Sistem Penilaian Kinerja'],
+                ['Dicetak pada', new Date().toLocaleDateString('id-ID')],
+                [''],
+                ['Nama Pegawai', 'Posisi', 'Departemen', 'Rata-rata Nilai', 'Kategori', 'Jumlah Penilaian']
+            ];
+            
+            employees.forEach(emp => {
+                let avgScore = 0;
+                if (emp.assessments.length > 0) {
+                    const total = emp.assessments.reduce((sum, ass) => sum + ass.total, 0);
+                    avgScore = (total / emp.assessments.length).toFixed(1);
+                }
+                
+                data.push([
+                    emp.name,
+                    emp.position,
+                    emp.department,
+                    avgScore > 0 ? avgScore : 'N/A',
+                    avgScore > 0 ? getCategory(avgScore) : 'N/A',
+                    emp.assessments.length
+                ]);
+            });
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Ringkasan Kinerja");
+            
+            if (!ws['!cols']) ws['!cols'] = [];
+            ws['!cols'][0] = { width: 25 };
+            ws['!cols'][1] = { width: 20 };
+            ws['!cols'][2] = { width: 20 };
+            ws['!cols'][3] = { width: 15 };
+            ws['!cols'][4] = { width: 15 };
+            
+            XLSX.writeFile(wb, `Ringkasan_Kinerja_Pegawai_${new Date().toISOString().split('T')[0]}.xlsx`);
+            alert('Laporan Ringkasan Kinerja Pegawai berhasil diunduh dalam format Excel.');
+        }
+        function generateComprehensiveReport() { 
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(20);
+            doc.setTextColor(40, 40, 40);
+            doc.text('LAPORAN KOMPREHENSIF PENILAIAN PEGAWAI', 105, 20, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setTextColor(100, 100, 100);
+            doc.text('RSUD DIGITAL - Sistem Penilaian Kinerja', 105, 28, { align: 'center' });
+            doc.text(`Periode: ${getCurrentPeriod()}`, 105, 35, { align: 'center' });
+            
+            doc.setFontSize(14);
+            doc.setTextColor(40, 40, 40);
+            doc.text('STATISTIK RINGKASAN', 20, 50);
+            
+            const stats = calculateStatistics();
+            doc.setFontSize(10);
+            doc.setTextColor(80, 80, 80);
+            doc.text(`Total Pegawai: ${stats.totalEmployees}`, 25, 60);
+            doc.text(`Total Penilaian: ${stats.totalAssessments}`, 25, 67);
+            doc.text(`Rata-rata Keseluruhan: ${stats.overallAverage}`, 25, 74);
+            doc.text(`Nilai Tertinggi (Rata-rata): ${stats.highestScore}`, 25, 81);
+            doc.text(`Nilai Terendah (Rata-rata): ${stats.lowestScore}`, 25, 88);
+            
+            doc.setFontSize(14);
+            doc.setTextColor(40, 40, 40);
+            doc.text('RINGKASAN PER DEPARTEMEN', 20, 105);
+            
+            const deptData = [['Departemen', 'Jumlah Pegawai', 'Rata-rata', 'Kategori']];
+            Object.keys(stats.departmentStats).forEach(dept => {
+                const deptStat = stats.departmentStats[dept];
+                deptData.push([
+                    dept,
+                    deptStat.count.toString(),
+                    deptStat.average.toFixed(1),
+                    getCategory(deptStat.average)
+                ]);
+            });
+            
+            doc.autoTable({
+                startY: 110,
+                head: deptData.slice(0, 1),
+                body: deptData.slice(1),
+                theme: 'grid',
+                styles: { fontSize: 8 },
+                headStyles: { fillColor: [52, 152, 219] }
+            });
+            
+            const bestEmployees = getBestEmployees(5);
+            if (bestEmployees.length > 0) {
+                let yPosition = doc.lastAutoTable.finalY + 15;
+                
+                doc.setFontSize(14);
+                doc.setTextColor(40, 40, 40);
+                doc.text('5 PEGAWAI DENGAN NILAI TERTINGGI', 20, yPosition);
+                
+                const bestData = [['Peringkat', 'Nama', 'Departemen', 'Nilai Rata-rata']];
+                bestEmployees.forEach((emp, index) => {
+                    bestData.push([
+                        (index + 1).toString(),
+                        emp.name,
+                        emp.department,
+                        emp.average.toFixed(1)
+                    ]);
+                });
+                
+                doc.autoTable({
+                    startY: yPosition + 5,
+                    head: bestData.slice(0, 1),
+                    body: bestData.slice(1),
+                    theme: 'grid',
+                    styles: { fontSize: 8 },
+                    headStyles: { fillColor: [39, 174, 96] }
+                });
+            }
+            
+            let finalY = doc.lastAutoTable ? doc.lastAutoTable.finalY + 15 : 120;
+            if (finalY > 260) {
+                doc.addPage();
+                finalY = 20;
+            }
+
+            doc.setFontSize(14);
+            doc.setTextColor(40, 40, 40);
+            doc.text('REKOMENDASI UMUM', 20, finalY);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(80, 80, 80);
+            doc.text(stats.recommendations, 20, finalY + 10, { maxWidth: 170 });
+            
+            const footerY = 280;
+            if (doc.internal.getNumberOfPages() > 1 || finalY < 260) {
+                doc.setPage(doc.internal.getNumberOfPages());
+                doc.setFontSize(8);
+                doc.setTextColor(150, 150, 150);
+                doc.text('Laporan Komprehensif - Sistem Penilaian Pegawai RSUD Digital', 105, footerY, { align: 'center' });
+                doc.text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID')}`, 105, footerY + 5, { align: 'center' });
+            }
+            
+            doc.save(`Laporan_Komprehensif_Penilaian_${new Date().toISOString().split('T')[0]}.pdf`);
+        }
+        function renderSettingsContent() { 
+             return `
+                <h2 class="mb-4 text-primary"><i class="fas fa-cogs"></i> Pengaturan Sistem</h2>
+                <div class="card">
+                    <div class="card-header bg-primary text-white" style="border-radius: 12px 12px 0 0;">
+                        Manajemen Kriteria Penilaian
+                    </div>
+                    <div class="card-body">
+                        <form id="settingsForm">
+                            <div id="criteria-settings-list" class="mb-4">
+                                ${criteria.map(c => `
+                                    <div class="input-group mb-2 criteria-item-setting">
+                                        <span class="input-group-text">${c.id}</span>
+                                        <input type="text" class="form-control" value="${c.name}" disabled>
+                                        <input type="text" class="form-control" value="${c.description}" disabled>
+                                    </div>
+                                `).join('')}
+                            </div>
+                            <div class="alert alert-warning">
+                                <i class="fas fa-exclamation-triangle"></i> Untuk saat ini, penambahan/pengubahan kriteria dinonaktifkan untuk menjaga konsistensi data penilaian yang sudah ada. Silakan kontak administrator.
+                            </div>
+                        </form>
+                    </div>
+                </div>
+            `;
+        }
+        function viewAssessmentDetail(employeeId, assessmentIndex) { 
+            if (!checkAuthentication()) {
+                handleAuthAction();
+                return;
+            }
+            const employee = employees.find(emp => emp.id === employeeId);
+            if (!employee || assessmentIndex === -1) return;
+
+            const assessment = employee.assessments[assessmentIndex];
+            if (!assessment) return;
+            
+            currentEmployeeId = employeeId;
+            currentAssessmentIndex = assessmentIndex;
+            
+            let content = `
+                <h5>Detail Penilaian</h5>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Nama Pegawai:</strong> ${employee.name}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Posisi:</strong> ${employee.position}
+                    </div>
+                </div>
+                <div class="row mb-3">
+                    <div class="col-md-6">
+                        <strong>Departemen:</strong> ${employee.department}
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Tanggal Penilaian:</strong> ${formatDate(assessment.date)}
+                    </div>
+                </div>
+                
+                <h6 class="mt-4">Detail Kriteria:</h6>
+                <div class="assessment-detail">
+            `;
+            
+            criteria.forEach((criterion, index) => {
+                const score = assessment.scores[index];
+                const rating = getRatingDescription(score);
+                content += `
+                    <div class="criteria-score d-flex justify-content-between align-items-center mb-1 border-bottom pb-1">
+                        <span>${criterion.name}</span>
+                        <span class="badge bg-primary">${score} (${rating})</span>
+                    </div>
+                `;
+            });
+            
+            content += `
+                </div>
+                <div class="row mt-3">
+                    <div class="col-md-6">
+                        <strong>Total Nilai:</strong> <span class="badge bg-success fs-6">${assessment.total.toFixed(1)}</span>
+                    </div>
+                    <div class="col-md-6">
+                        <strong>Kategori:</strong> ${getCategoryBadge(assessment.total)}
+                    </div>
+                </div>
+                <div class="row mt-3">
+                    <div class="col-12">
+                        <strong>Rekomendasi:</strong> ${getRecommendation(assessment.total)}
+                    </div>
+                </div>
+            `;
+            
+            document.getElementById('assessmentDetailContent').innerHTML = content;
+            const modal = new bootstrap.Modal(document.getElementById('assessmentDetailModal'));
+            modal.show();
+        }
+        function downloadAssessmentReport() { 
+            if (currentEmployeeId && currentAssessmentIndex !== null && currentAssessmentIndex !== -1) {
+                if (confirm('Pilih format laporan:\n\nOK - Untuk PDF\nCancel - Untuk Excel')) {
+                    downloadAssessment(currentEmployeeId, currentAssessmentIndex);
+                } else {
+                    downloadAssessmentExcel(currentEmployeeId, currentAssessmentIndex);
+                }
+                const modal = bootstrap.Modal.getInstance(document.getElementById('assessmentDetailModal'));
+                if (modal) modal.hide();
+            } else {
+                alert('Data penilaian tidak valid untuk diunduh.');
+            }
+        }
+        function downloadAssessment(employeeId, assessmentIndex) { 
+            const employee = employees.find(emp => emp.id === employeeId);
+            if (!employee) return;
+            
+            const assessment = employee.assessments[assessmentIndex];
+            
+            const { jsPDF } = window.jspdf;
+            const doc = new jsPDF();
+            
+            doc.setFontSize(20);
+            doc.setTextColor(40, 40, 40);
+            doc.text('LAPORAN PENILAIAN PEGAWAI', 105, 20, { align: 'center' });
+            
+            doc.setFontSize(12);
+            doc.setTextColor(100, 100, 100);
+            doc.text('RSUD DIGITAL - Sistem Penilaian Kinerja', 105, 28, { align: 'center' });
+            
+            doc.setDrawColor(200, 200, 200);
+            doc.line(20, 35, 190, 35);
+            
+            doc.setFontSize(14);
+            doc.setTextColor(40, 40, 40);
+            doc.text('INFORMASI PEGAWAI', 20, 45);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(80, 80, 80);
+            doc.text(`Nama Pegawai: ${employee.name}`, 20, 55);
+            doc.text(`Posisi/Jabatan: ${employee.position}`, 20, 62);
+            doc.text(`Departemen: ${employee.department}`, 20, 69);
+            doc.text(`Tanggal Penilaian: ${formatDate(assessment.date)}`, 20, 76);
+            doc.text(`Total Nilai: ${assessment.total.toFixed(1)}`, 20, 83);
+            
+            doc.setFontSize(14);
+            doc.setTextColor(40, 40, 40);
+            doc.text('DETAIL PENILAIAN PER KRITERIA', 20, 95);
+            
+            let yPosition = 105;
+            criteria.forEach((criterion, index) => {
+                const score = assessment.scores[index];
+                const rating = getRatingDescription(score);
+                
+                doc.setFontSize(10);
+                doc.setTextColor(60, 60, 60);
+                doc.text(`${criterion.name}:`, 25, yPosition);
+                doc.text(`Nilai: ${score} (${rating})`, 150, yPosition);
+                
+                yPosition += 8;
+            });
+            
+            yPosition += 10;
+            doc.setFontSize(14);
+            doc.setTextColor(40, 40, 40);
+            doc.text('RINGKASAN', 20, yPosition);
+            
+            doc.setFontSize(10);
+            doc.setTextColor(80, 80, 80);
+            doc.text(`Rata-rata Nilai: ${assessment.total.toFixed(1)}`, 25, yPosition + 10);
+            doc.text(`Kategori: ${getCategory(assessment.total)}`, 25, yPosition + 18);
+            doc.text(`Rekomendasi: ${getRecommendation(assessment.total)}`, 25, yPosition + 26, { maxWidth: 170 });
+            
+            const footerY = 280;
+            doc.setFontSize(8);
+            doc.setTextColor(150, 150, 150);
+            doc.text('Dokumen ini dibuat secara otomatis oleh Sistem Penilaian Pegawai RSUD Digital', 105, footerY, { align: 'center' });
+            doc.text(`Dicetak pada: ${new Date().toLocaleDateString('id-ID')}`, 105, footerY + 5, { align: 'center' });
+            
+            doc.save(`Laporan_Penilaian_${employee.name.replace(/\s/g, '_')}_${assessment.date.replace(/-/g, '')}.pdf`);
+        }
+        function downloadAssessmentExcel(employeeId, assessmentIndex) { 
+            const employee = employees.find(emp => emp.id === employeeId);
+            if (!employee) return;
+            
+            const assessment = employee.assessments[assessmentIndex];
+            
+            const data = [
+                ['LAPORAN PENILAIAN PEGAWAI INDIVIDUAL'],
+                ['RSUD DIGITAL - Sistem Penilaian Kinerja'],
+                [''],
+                ['INFORMASI PEGAWAI'],
+                ['Nama Pegawai', employee.name],
+                ['Posisi/Jabatan', employee.position],
+                ['Departemen', employee.department],
+                ['Tanggal Penilaian', formatDate(assessment.date)],
+                ['Total Nilai', assessment.total.toFixed(1)],
+                ['Kategori', getCategory(assessment.total)],
+                [''],
+                ['DETAIL PENILAIAN PER KRITERIA'],
+                ['Kriteria', 'Nilai', 'Keterangan']
+            ];
+            
+            criteria.forEach((criterion, index) => {
+                const score = assessment.scores[index];
+                data.push([
+                    criterion.name,
+                    score,
+                    getRatingDescription(score)
+                ]);
+            });
+            
+            data.push(['']);
+            data.push(['RINGKASAN DAN REKOMENDASI']);
+            data.push(['Rata-rata Nilai', assessment.total.toFixed(1)]);
+            data.push(['Rekomendasi', getRecommendation(assessment.total)]);
+            data.push(['']);
+            data.push(['Dicetak pada', new Date().toLocaleDateString('id-ID')]);
+            
+            const ws = XLSX.utils.aoa_to_sheet(data);
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Laporan Individual");
+            
+            if (!ws['!cols']) ws['!cols'] = [];
+            ws['!cols'][0] = { width: 30 };
+            ws['!cols'][1] = { width: 20 };
+            ws['!cols'][2] = { width: 25 };
+            
+            XLSX.writeFile(wb, `Laporan_Individual_${employee.name.replace(/\s/g, '_')}_${assessment.date.replace(/-/g, '')}.xlsx`);
+        }
+
+        // --- INISIALISASI ---
+
+        document.addEventListener('DOMContentLoaded', function() {
+            initNavigation();
+        });
+    </script>
+</body>
+</html>

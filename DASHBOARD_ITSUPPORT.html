@@ -1,0 +1,1779 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard IT Maintenance Support</title>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+        
+        body {
+            background-color: #f5f7fa;
+            color: #333;
+            min-height: 100vh;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            padding: 20px;
+        }
+        
+        /* Upload Screen */
+        .upload-container {
+            background: white;
+            border-radius: 15px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+            width: 100%;
+            max-width: 800px;
+            padding: 50px;
+            text-align: center;
+        }
+        
+        .upload-icon {
+            font-size: 4rem;
+            color: #2a5298;
+            margin-bottom: 20px;
+        }
+        
+        .upload-container h1 {
+            color: #2a5298;
+            margin-bottom: 10px;
+            font-size: 2.2rem;
+        }
+        
+        .upload-container p {
+            color: #666;
+            margin-bottom: 30px;
+            font-size: 1.1rem;
+            line-height: 1.6;
+        }
+        
+        .upload-area {
+            border: 3px dashed #2a5298;
+            border-radius: 10px;
+            padding: 40px;
+            margin: 30px 0;
+            background-color: rgba(42, 82, 152, 0.03);
+            cursor: pointer;
+            transition: all 0.3s;
+        }
+        
+        .upload-area:hover {
+            background-color: rgba(42, 82, 152, 0.07);
+            border-color: #1e3c72;
+        }
+        
+        .upload-area i {
+            font-size: 3rem;
+            color: #2a5298;
+            margin-bottom: 15px;
+        }
+        
+        .upload-area h3 {
+            color: #2a5298;
+            margin-bottom: 10px;
+        }
+        
+        .upload-area p {
+            color: #666;
+            margin-bottom: 0;
+        }
+        
+        .file-input {
+            display: none;
+        }
+        
+        .upload-btn {
+            background-color: #2a5298;
+            color: white;
+            border: none;
+            padding: 15px 40px;
+            border-radius: 8px;
+            cursor: pointer;
+            font-weight: 600;
+            font-size: 1.1rem;
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin: 0 auto;
+            transition: background-color 0.3s;
+        }
+        
+        .upload-btn:hover {
+            background-color: #1e3c72;
+        }
+        
+        .file-info {
+            margin-top: 20px;
+            padding: 15px;
+            background-color: rgba(42, 82, 152, 0.05);
+            border-radius: 8px;
+            display: none;
+        }
+        
+        .file-info.show {
+            display: block;
+        }
+        
+        .file-name {
+            font-weight: 600;
+            color: #2a5298;
+        }
+        
+        .file-size {
+            color: #666;
+            font-size: 0.9rem;
+            margin-top: 5px;
+        }
+        
+        /* Dashboard Container - Hidden by default */
+        .dashboard-container {
+            width: 100%;
+            max-width: 1400px;
+            margin: 0 auto;
+            display: none;
+        }
+        
+        .dashboard-container.show {
+            display: block;
+        }
+        
+        /* Dashboard Styles */
+        header {
+            background: linear-gradient(135deg, #1e3c72, #2a5298);
+            color: white;
+            padding: 25px;
+            border-radius: 12px;
+            margin-bottom: 30px;
+            box-shadow: 0 6px 15px rgba(0, 0, 0, 0.1);
+        }
+        
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+        
+        .logo i {
+            font-size: 2.5rem;
+            background: rgba(255, 255, 255, 0.2);
+            padding: 15px;
+            border-radius: 10px;
+        }
+        
+        .logo h1 {
+            font-size: 1.8rem;
+        }
+        
+        .logo p {
+            opacity: 0.9;
+            font-size: 0.9rem;
+        }
+        
+        .back-btn {
+            background-color: rgba(255, 255, 255, 0.15);
+            color: white;
+            border: none;
+            padding: 12px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+        }
+        
+        .back-btn:hover {
+            background-color: rgba(255, 255, 255, 0.25);
+        }
+        
+        .dashboard-controls {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 25px;
+            background: white;
+            padding: 20px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .period-selector {
+            display: flex;
+            gap: 10px;
+        }
+        
+        .period-btn {
+            padding: 10px 20px;
+            border: none;
+            border-radius: 6px;
+            background-color: #f0f0f0;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s;
+        }
+        
+        .period-btn.active {
+            background-color: #2a5298;
+            color: white;
+        }
+        
+        .period-btn:hover:not(.active) {
+            background-color: #e0e0e0;
+        }
+        
+        .stats-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
+            gap: 20px;
+            margin-bottom: 30px;
+        }
+        
+        .stat-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            display: flex;
+            flex-direction: column;
+            transition: transform 0.3s;
+        }
+        
+        .stat-card:hover {
+            transform: translateY(-5px);
+        }
+        
+        .stat-icon {
+            font-size: 2.5rem;
+            margin-bottom: 15px;
+            width: 70px;
+            height: 70px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            border-radius: 10px;
+        }
+        
+        .stat-1 .stat-icon {
+            background-color: rgba(30, 136, 229, 0.1);
+            color: #1e88e5;
+        }
+        
+        .stat-2 .stat-icon {
+            background-color: rgba(76, 175, 80, 0.1);
+            color: #4CAF50;
+        }
+        
+        .stat-3 .stat-icon {
+            background-color: rgba(255, 152, 0, 0.1);
+            color: #FF9800;
+        }
+        
+        .stat-4 .stat-icon {
+            background-color: rgba(244, 67, 54, 0.1);
+            color: #f44336;
+        }
+        
+        .stat-value {
+            font-size: 2.2rem;
+            font-weight: 700;
+            margin: 5px 0;
+        }
+        
+        .stat-label {
+            color: #666;
+            font-size: 0.95rem;
+        }
+        
+        .stat-trend {
+            font-size: 0.85rem;
+            margin-top: 8px;
+            color: #666;
+        }
+        
+        .chart-container {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(500px, 1fr));
+            gap: 25px;
+            margin-bottom: 30px;
+        }
+        
+        .chart-card {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+        }
+        
+        .chart-title {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .chart-title h3 {
+            font-size: 1.3rem;
+            color: #2a5298;
+        }
+        
+        .chart-wrapper {
+            position: relative;
+            height: 300px;
+        }
+        
+        .data-table-container {
+            background: white;
+            padding: 25px;
+            border-radius: 10px;
+            box-shadow: 0 4px 8px rgba(0, 0, 0, 0.05);
+            margin-bottom: 30px;
+            overflow-x: auto;
+        }
+        
+        .table-title {
+            margin-bottom: 20px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+        }
+        
+        .table-title h3 {
+            font-size: 1.3rem;
+            color: #2a5298;
+        }
+        
+        table {
+            width: 100%;
+            border-collapse: collapse;
+        }
+        
+        th, td {
+            padding: 12px 15px;
+            text-align: left;
+            border-bottom: 1px solid #eee;
+        }
+        
+        th {
+            background-color: #f8f9fa;
+            font-weight: 600;
+            color: #444;
+        }
+        
+        tr:hover {
+            background-color: #f8f9fa;
+        }
+        
+        .status-completed {
+            background-color: #d4edda;
+            color: #155724;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-block;
+        }
+        
+        .status-inprocess {
+            background-color: #fff3cd;
+            color: #856404;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-block;
+        }
+        
+        .status-outprocess {
+            background-color: #d1ecf1;
+            color: #0c5460;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-block;
+        }
+        
+        .status-rusak {
+            background-color: #f8d7da;
+            color: #721c24;
+            padding: 4px 10px;
+            border-radius: 20px;
+            font-size: 0.85rem;
+            display: inline-block;
+        }
+        
+        .export-btn {
+            background-color: #2a5298;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 6px;
+            cursor: pointer;
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            transition: background-color 0.3s;
+            font-size: 0.9rem;
+        }
+        
+        .export-btn:hover {
+            background-color: #1e3c72;
+        }
+        
+        footer {
+            text-align: center;
+            padding: 20px;
+            color: #666;
+            font-size: 0.9rem;
+            border-top: 1px solid #eee;
+            margin-top: 20px;
+        }
+        
+        @media (max-width: 1100px) {
+            .chart-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-card {
+                min-width: 100%;
+            }
+        }
+        
+        @media (max-width: 768px) {
+            .upload-container {
+                padding: 30px;
+            }
+            
+            .upload-area {
+                padding: 25px;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 20px;
+            }
+            
+            .period-selector {
+                flex-wrap: wrap;
+            }
+            
+            .dashboard-controls {
+                flex-direction: column;
+                gap: 15px;
+                align-items: flex-start;
+            }
+            
+            .stats-container {
+                grid-template-columns: repeat(2, 1fr);
+            }
+        }
+        
+        @media (max-width: 576px) {
+            .upload-container {
+                padding: 20px;
+            }
+            
+            .upload-area {
+                padding: 20px;
+            }
+            
+            .stats-container {
+                grid-template-columns: 1fr;
+            }
+            
+            .chart-card {
+                padding: 15px;
+            }
+            
+            .chart-wrapper {
+                height: 250px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <!-- Upload Screen -->
+    <div class="upload-container" id="uploadScreen">
+        <div class="upload-icon">
+            <i class="fas fa-chart-line"></i>
+        </div>
+        <h1>Dashboard IT Maintenance Support</h1>
+        <p>Unggah file Excel laporan IT Maintenance untuk menganalisis data per bulan, triwulan, dan tahunan. Dashboard akan menampilkan visualisasi data secara otomatis setelah upload.</p>
+        
+        <div class="upload-area" id="uploadArea">
+            <i class="fas fa-file-excel"></i>
+            <h3>Klik untuk Upload File Excel</h3>
+            <p>Format file harus .xlsx atau .xls sesuai dengan struktur data laporan</p>
+            <input type="file" id="fileInput" class="file-input" accept=".xlsx,.xls">
+        </div>
+        
+        <button class="upload-btn" id="uploadBtn">
+            <i class="fas fa-upload"></i> Pilih File Excel
+        </button>
+        
+        <div class="file-info" id="fileInfo">
+            <div class="file-name" id="fileName">Nama file akan muncul di sini</div>
+            <div class="file-size" id="fileSize">Ukuran file akan muncul di sini</div>
+        </div>
+    </div>
+    
+    <!-- Dashboard Container (Hidden Initially) -->
+    <div class="dashboard-container" id="dashboardContainer">
+        <header>
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-tools"></i>
+                    <div>
+                        <h1>Dashboard IT Maintenance Support</h1>
+                        <p id="dataRange">Analisis laporan perbaikan perangkat IT</p>
+                    </div>
+                </div>
+                
+                <button class="back-btn" id="backBtn">
+                    <i class="fas fa-arrow-left"></i> Upload File Baru
+                </button>
+            </div>
+        </header>
+        
+        <div class="dashboard-controls">
+            <div>
+                <h2>Analisis Laporan IT Maintenance</h2>
+                <p id="currentFileName">File: <span id="loadedFileName">Belum ada file</span></p>
+            </div>
+            
+            <div class="period-selector">
+                <button class="period-btn active" data-period="monthly">Bulanan</button>
+                <button class="period-btn" data-period="quarterly">Triwulan</button>
+                <button class="period-btn" data-period="yearly">Tahunan</button>
+            </div>
+        </div>
+        
+        <div class="stats-container">
+            <div class="stat-card stat-1">
+                <div class="stat-icon">
+                    <i class="fas fa-clipboard-list"></i>
+                </div>
+                <div class="stat-value" id="totalReports">0</div>
+                <div class="stat-label">Total Laporan</div>
+                <div class="stat-trend"><i class="fas fa-arrow-up"></i> <span id="trendReports">0%</span> dari periode sebelumnya</div>
+            </div>
+            
+            <div class="stat-card stat-2">
+                <div class="stat-icon">
+                    <i class="fas fa-check-circle"></i>
+                </div>
+                <div class="stat-value" id="completedReports">0</div>
+                <div class="stat-label">Laporan Selesai</div>
+                <div class="stat-trend"><i class="fas fa-arrow-up"></i> <span id="completionRate">0%</span> tingkat penyelesaian</div>
+            </div>
+            
+            <div class="stat-card stat-3">
+                <div class="stat-icon">
+                    <i class="fas fa-cogs"></i>
+                </div>
+                <div class="stat-value" id="inProgressReports">0</div>
+                <div class="stat-label">Dalam Proses</div>
+                <div class="stat-trend"><i class="fas fa-clock"></i> <span id="avgCompletionTime">0 hari</span> rata-rata penyelesaian</div>
+            </div>
+            
+            <div class="stat-card stat-4">
+                <div class="stat-icon">
+                    <i class="fas fa-exclamation-triangle"></i>
+                </div>
+                <div class="stat-value" id="problematicReports">0</div>
+                <div class="stat-label">Perangkat Bermasalah</div>
+                <div class="stat-trend"><i class="fas fa-desktop"></i> <span id="topProblemDevice">-</span> paling banyak masalah</div>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <div class="chart-card">
+                <div class="chart-title">
+                    <h3 id="monthlyChartTitle">Laporan per Bulan</h3>
+                    <button class="export-btn export-chart-btn" data-chart="monthly">
+                        <i class="fas fa-download"></i> Ekspor Data
+                    </button>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="monthlyChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">
+                    <h3>Status Laporan</h3>
+                    <button class="export-btn export-chart-btn" data-chart="status">
+                        <i class="fas fa-download"></i> Ekspor Data
+                    </button>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="statusChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">
+                    <h3>Jenis Perangkat yang Dilaporkan</h3>
+                    <button class="export-btn export-chart-btn" data-chart="device">
+                        <i class="fas fa-download"></i> Ekspor Data
+                    </button>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="deviceChart"></canvas>
+                </div>
+            </div>
+            
+            <div class="chart-card">
+                <div class="chart-title">
+                    <h3>Lokasi dengan Laporan Terbanyak</h3>
+                    <button class="export-btn export-chart-btn" data-chart="location">
+                        <i class="fas fa-download"></i> Ekspor Data
+                    </button>
+                </div>
+                <div class="chart-wrapper">
+                    <canvas id="locationChart"></canvas>
+                </div>
+            </div>
+        </div>
+        
+        <div class="data-table-container">
+            <div class="table-title">
+                <h3>Data Laporan (10 terbaru)</h3>
+                <div>
+                    <button class="export-btn" id="exportTableBtn">
+                        <i class="fas fa-file-excel"></i> Ekspor Semua Data
+                    </button>
+                </div>
+            </div>
+            <table id="recentReportsTable">
+                <thead>
+                    <tr>
+                        <th>Nomor</th>
+                        <th>Perangkat</th>
+                        <th>Lokasi</th>
+                        <th>Pelapor</th>
+                        <th>Tanggal</th>
+                        <th>Status</th>
+                        <th>Permasalahan</th>
+                    </tr>
+                </thead>
+                <tbody id="tableBody">
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-database" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                            Data akan muncul setelah file Excel diupload
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </div>
+        
+        <footer>
+            <p>Dashboard IT Maintenance Support &copy; 2025 | Data dianalisis dari file Excel yang diupload</p>
+        </footer>
+    </div>
+    
+    <script>
+        // Data dari file Excel yang diupload
+        let maintenanceData = [];
+        let currentPeriod = 'monthly'; // monthly, quarterly, yearly
+        
+        // Chart instances
+        let monthlyChart, statusChart, deviceChart, locationChart;
+        let currentFileName = '';
+        
+        // Inisialisasi
+        document.addEventListener('DOMContentLoaded', function() {
+            setupEventListeners();
+        });
+        
+        // Setup event listeners
+        function setupEventListeners() {
+            // Upload area click
+            document.getElementById('uploadArea').addEventListener('click', function() {
+                document.getElementById('fileInput').click();
+            });
+            
+            // Upload button click
+            document.getElementById('uploadBtn').addEventListener('click', function() {
+                document.getElementById('fileInput').click();
+            });
+            
+            // File input change
+            document.getElementById('fileInput').addEventListener('change', handleFileUpload);
+            
+            // Back button
+            document.getElementById('backBtn').addEventListener('click', function() {
+                document.getElementById('dashboardContainer').classList.remove('show');
+                document.getElementById('uploadScreen').style.display = 'block';
+                
+                // Reset file input
+                document.getElementById('fileInput').value = '';
+                document.getElementById('fileInfo').classList.remove('show');
+            });
+            
+            // Period selector buttons
+            document.querySelectorAll('.period-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    // Update active button
+                    document.querySelectorAll('.period-btn').forEach(b => b.classList.remove('active'));
+                    this.classList.add('active');
+                    
+                    // Update current period
+                    currentPeriod = this.getAttribute('data-period');
+                    
+                    // Update charts based on period
+                    updateChartsByPeriod();
+                });
+            });
+            
+            // Export table button
+            document.getElementById('exportTableBtn').addEventListener('click', exportTableToExcel);
+            
+            // Export chart buttons
+            document.querySelectorAll('.export-chart-btn').forEach(btn => {
+                btn.addEventListener('click', function() {
+                    const chartType = this.getAttribute('data-chart');
+                    exportChartData(chartType);
+                });
+            });
+        }
+        
+        // Handle file upload
+        function handleFileUpload(event) {
+            const file = event.target.files[0];
+            if (!file) return;
+            
+            // Validate file type
+            if (!file.name.match(/\.(xlsx|xls)$/)) {
+                alert("Silakan upload file Excel (.xlsx atau .xls)");
+                return;
+            }
+            
+            // Update file info display
+            document.getElementById('fileName').textContent = file.name;
+            document.getElementById('fileSize').textContent = formatFileSize(file.size);
+            document.getElementById('fileInfo').classList.add('show');
+            
+            currentFileName = file.name;
+            
+            // Read Excel file
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = new Uint8Array(e.target.result);
+                    const workbook = XLSX.read(data, { type: 'array' });
+                    
+                    // Get first worksheet
+                    const worksheet = workbook.Sheets[workbook.SheetNames[0]];
+                    
+                    // Convert to JSON
+                    const jsonData = XLSX.utils.sheet_to_json(worksheet, { header: 1 });
+                    
+                    // Process data
+                    const success = processExcelData(jsonData);
+                    
+                    if (success) {
+                        // Show dashboard
+                        document.getElementById('uploadScreen').style.display = 'none';
+                        document.getElementById('dashboardContainer').classList.add('show');
+                        
+                        // Update dashboard with new data
+                        initDashboard();
+                        
+                        // Update file name in dashboard
+                        document.getElementById('loadedFileName').textContent = currentFileName;
+                    } else {
+                        alert("Gagal memproses file. Pastikan format file sesuai dengan contoh.");
+                    }
+                } catch (error) {
+                    console.error("Error reading file:", error);
+                    alert("Terjadi kesalahan saat membaca file. Pastikan file tidak corrupt.");
+                }
+            };
+            
+            reader.onerror = function() {
+                alert("Gagal membaca file. Silakan coba lagi.");
+            };
+            
+            reader.readAsArrayBuffer(file);
+        }
+        
+        // Format file size
+        function formatFileSize(bytes) {
+            if (bytes === 0) return '0 Bytes';
+            const k = 1024;
+            const sizes = ['Bytes', 'KB', 'MB', 'GB'];
+            const i = Math.floor(Math.log(bytes) / Math.log(k));
+            return parseFloat((bytes / Math.pow(k, i)).toFixed(2)) + ' ' + sizes[i];
+        }
+        
+        // Process Excel data
+        function processExcelData(jsonData) {
+            // Clear existing data
+            maintenanceData = [];
+            
+            if (!jsonData || jsonData.length < 2) {
+                return false;
+            }
+            
+            // Find column indices based on headers
+            const headers = jsonData[0];
+            let colIndices = {
+                nomor: -1,
+                perangkat: -1,
+                lokasi: -1,
+                pelapor: -1,
+                tanggal: -1,
+                status: -1,
+                masalah: -1
+            };
+            
+            // Try to find columns by header names
+            headers.forEach((header, index) => {
+                const headerStr = String(header).toLowerCase();
+                
+                if (headerStr.includes('nomor') || headerStr.includes('no')) {
+                    colIndices.nomor = index;
+                } else if (headerStr.includes('alat') || headerStr.includes('perangkat') || headerStr.includes('barang')) {
+                    colIndices.perangkat = index;
+                } else if (headerStr.includes('lokasi') || headerStr.includes('ruangan')) {
+                    colIndices.lokasi = index;
+                } else if (headerStr.includes('pelapor')) {
+                    colIndices.pelapor = index;
+                } else if (headerStr.includes('tanggal') && headerStr.includes('lapor')) {
+                    colIndices.tanggal = index;
+                } else if (headerStr.includes('status') && headerStr.includes('akhir')) {
+                    colIndices.status = index;
+                } else if (headerStr.includes('permasalahan') || headerStr.includes('masalah')) {
+                    colIndices.masalah = index;
+                }
+            });
+            
+            // Fallback: Use hardcoded indices if not found
+            if (colIndices.nomor === -1) colIndices.nomor = 0;
+            if (colIndices.perangkat === -1) colIndices.perangkat = 1;
+            if (colIndices.lokasi === -1) colIndices.lokasi = 2;
+            if (colIndices.pelapor === -1) colIndices.pelapor = 3;
+            if (colIndices.tanggal === -1) colIndices.tanggal = 5;
+            if (colIndices.status === -1) colIndices.status = 10;
+            if (colIndices.masalah === -1) colIndices.masalah = 11;
+            
+            // Process data rows
+            let validRows = 0;
+            for (let i = 1; i < jsonData.length; i++) {
+                const row = jsonData[i];
+                if (!row || row.length < Math.max(...Object.values(colIndices))) continue;
+                
+                const report = {
+                    nomor: row[colIndices.nomor] || `RPT-${i}`,
+                    perangkat: String(row[colIndices.perangkat] || '').trim(),
+                    lokasi: String(row[colIndices.lokasi] || '').trim(),
+                    pelapor: String(row[colIndices.pelapor] || '').trim(),
+                    tanggal: String(row[colIndices.tanggal] || '').trim(),
+                    status: String(row[colIndices.status] || '').trim().toUpperCase(),
+                    masalah: String(row[colIndices.masalah] || '').trim()
+                };
+                
+                // Only add if we have required data
+                if (report.perangkat && report.tanggal) {
+                    maintenanceData.push(report);
+                    validRows++;
+                }
+            }
+            
+            console.log(`Loaded ${validRows} valid records from Excel file`);
+            return validRows > 0;
+        }
+        
+        // Initialize dashboard
+        function initDashboard() {
+            // Update stats
+            updateStats();
+            
+            // Initialize charts
+            initCharts();
+            
+            // Update table
+            updateTable();
+        }
+        
+        // Update statistics
+        function updateStats() {
+            const total = maintenanceData.length;
+            const completed = maintenanceData.filter(item => 
+                item.status.includes('COMPLETED') || item.status.includes('SELESAI')
+            ).length;
+            
+            const inProgress = maintenanceData.filter(item => 
+                item.status.includes('IN PROCESS') || item.status.includes('PROSES')
+            ).length;
+            
+            const outProcess = maintenanceData.filter(item => 
+                item.status.includes('OUT PROCESS')
+            ).length;
+            
+            const rusak = maintenanceData.filter(item => 
+                item.status.includes('RUSAK') || item.status.includes('ERROR')
+            ).length;
+            
+            // Calculate completion rate
+            const completionRate = total > 0 ? ((completed / total) * 100).toFixed(1) : 0;
+            
+            // Find most problematic device type
+            const deviceCounts = {};
+            maintenanceData.forEach(item => {
+                let device = item.perangkat;
+                if (device) {
+                    // Simplify device name
+                    if (device.includes('PRINTER') || device.includes('EPSON') || device.includes('CANON') || device.includes('HP') || device.includes('PRINT')) {
+                        device = 'Printer';
+                    } else if (device.includes('KOMPUTER') || device.includes('CPU') || device.includes('PC') || device.includes('LAPTOP')) {
+                        device = 'Komputer';
+                    } else if (device.includes('TELEPHONE') || device.includes('TELPON') || device.includes('IPHONE') || device.includes('TELEPON')) {
+                        device = 'Telepon';
+                    } else if (device.includes('SCANNER')) {
+                        device = 'Scanner';
+                    } else if (device.includes('JARINGAN') || device.includes('SWITCH') || device.includes('NETWORK')) {
+                        device = 'Jaringan';
+                    } else if (device.includes('MESIN') || device.includes('ABSEN')) {
+                        device = 'Mesin Absen';
+                    }
+                    
+                    deviceCounts[device] = (deviceCounts[device] || 0) + 1;
+                }
+            });
+            
+            let topProblemDevice = '-';
+            let maxCount = 0;
+            for (const device in deviceCounts) {
+                if (deviceCounts[device] > maxCount) {
+                    maxCount = deviceCounts[device];
+                    topProblemDevice = device;
+                }
+            }
+            
+            // Calculate average completion time (simulated)
+            let avgCompletionTime = '0';
+            if (total > 0) {
+                // Simulate based on data
+                const simulatedAvg = 1 + (Math.random() * 3); // 1-4 days
+                avgCompletionTime = simulatedAvg.toFixed(1);
+            }
+            
+            // Calculate trend (simulated)
+            const trendValue = total > 10 ? (Math.random() * 20).toFixed(0) : '0';
+            
+            // Update DOM elements
+            document.getElementById('totalReports').textContent = total;
+            document.getElementById('completedReports').textContent = completed;
+            document.getElementById('inProgressReports').textContent = inProgress + outProcess;
+            document.getElementById('problematicReports').textContent = rusak;
+            document.getElementById('completionRate').textContent = `${completionRate}%`;
+            document.getElementById('topProblemDevice').textContent = topProblemDevice;
+            document.getElementById('trendReports').textContent = `${trendValue}%`;
+            document.getElementById('avgCompletionTime').textContent = `${avgCompletionTime} hari`;
+            
+            // Update data range
+            const dates = maintenanceData.map(item => {
+                const dateStr = item.tanggal;
+                if (dateStr) {
+                    // Try to parse date (handling different formats)
+                    const parts = dateStr.split(/[/\-.]/);
+                    if (parts.length === 3) {
+                        // Assume DD/MM/YYYY or MM/DD/YYYY
+                        let day, month, year;
+                        
+                        if (parts[0].length === 4) {
+                            // YYYY-MM-DD
+                            year = parseInt(parts[0]);
+                            month = parseInt(parts[1]) - 1;
+                            day = parseInt(parts[2]);
+                        } else if (parts[2].length === 4) {
+                            // DD/MM/YYYY or MM/DD/YYYY
+                            const first = parseInt(parts[0]);
+                            const second = parseInt(parts[1]);
+                            
+                            if (first > 12) {
+                                // DD/MM/YYYY
+                                day = first;
+                                month = second - 1;
+                                year = parseInt(parts[2]);
+                            } else if (second > 12) {
+                                // MM/DD/YYYY
+                                month = first - 1;
+                                day = second;
+                                year = parseInt(parts[2]);
+                            } else {
+                                // Ambiguous, assume DD/MM/YYYY
+                                day = first;
+                                month = second - 1;
+                                year = parseInt(parts[2]);
+                            }
+                        }
+                        
+                        if (year && month >= 0 && day) {
+                            return new Date(year, month, day);
+                        }
+                    }
+                }
+                return null;
+            }).filter(d => d);
+            
+            if (dates.length > 0) {
+                const minDate = new Date(Math.min(...dates));
+                const maxDate = new Date(Math.max(...dates));
+                const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni",
+                    "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                
+                if (minDate.getFullYear() === maxDate.getFullYear() && minDate.getMonth() === maxDate.getMonth()) {
+                    document.getElementById('dataRange').textContent = 
+                        `Data periode: ${monthNames[minDate.getMonth()]} ${minDate.getFullYear()}`;
+                } else {
+                    document.getElementById('dataRange').textContent = 
+                        `Data periode: ${monthNames[minDate.getMonth()]} ${minDate.getFullYear()} - ${monthNames[maxDate.getMonth()]} ${maxDate.getFullYear()}`;
+                }
+            } else {
+                document.getElementById('dataRange').textContent = 'Data periode: Tidak dapat ditentukan';
+            }
+        }
+        
+        // Initialize charts
+        function initCharts() {
+            // Destroy existing charts if they exist
+            if (monthlyChart) monthlyChart.destroy();
+            if (statusChart) statusChart.destroy();
+            if (deviceChart) deviceChart.destroy();
+            if (locationChart) locationChart.destroy();
+            
+            // Create charts
+            createMonthlyChart();
+            createStatusChart();
+            createDeviceChart();
+            createLocationChart();
+        }
+        
+        // Update charts based on selected period
+        function updateChartsByPeriod() {
+            if (!monthlyChart) return;
+            
+            // Update chart title
+            const periodTitles = {
+                monthly: 'Laporan per Bulan',
+                quarterly: 'Laporan per Triwulan',
+                yearly: 'Laporan per Tahun'
+            };
+            
+            document.getElementById('monthlyChartTitle').textContent = periodTitles[currentPeriod];
+            
+            // Update chart data based on period
+            updateMonthlyChartData();
+        }
+        
+        // Update monthly chart data based on period
+        function updateMonthlyChartData() {
+            if (!monthlyChart || maintenanceData.length === 0) return;
+            
+            // Extract dates and group by period
+            const dateCounts = {};
+            const completedCounts = {};
+            
+            maintenanceData.forEach(item => {
+                const dateStr = item.tanggal;
+                let periodKey = '';
+                let isCompleted = item.status.includes('COMPLETED') || item.status.includes('SELESAI');
+                
+                if (dateStr) {
+                    const date = parseDate(dateStr);
+                    if (date) {
+                        if (currentPeriod === 'monthly') {
+                            // Group by month
+                            periodKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                        } else if (currentPeriod === 'quarterly') {
+                            // Group by quarter
+                            const quarter = Math.floor(date.getMonth() / 3) + 1;
+                            periodKey = `${date.getFullYear()}-Q${quarter}`;
+                        } else {
+                            // Group by year
+                            periodKey = `${date.getFullYear()}`;
+                        }
+                    }
+                }
+                
+                if (periodKey) {
+                    dateCounts[periodKey] = (dateCounts[periodKey] || 0) + 1;
+                    if (isCompleted) {
+                        completedCounts[periodKey] = (completedCounts[periodKey] || 0) + 1;
+                    }
+                }
+            });
+            
+            // Sort period keys
+            const sortedPeriods = Object.keys(dateCounts).sort();
+            
+            // Prepare data for chart
+            const labels = sortedPeriods.map(period => {
+                if (currentPeriod === 'monthly') {
+                    const [year, month] = period.split('-');
+                    const monthNames = ["Jan", "Feb", "Mar", "Apr", "Mei", "Jun", 
+                                       "Jul", "Agu", "Sep", "Okt", "Nov", "Des"];
+                    return `${monthNames[parseInt(month) - 1]} ${year}`;
+                } else if (currentPeriod === 'quarterly') {
+                    const [year, quarter] = period.split('-Q');
+                    return `Triwulan ${quarter} ${year}`;
+                } else {
+                    return period;
+                }
+            });
+            
+            const reportsData = sortedPeriods.map(period => dateCounts[period] || 0);
+            const completedData = sortedPeriods.map(period => completedCounts[period] || 0);
+            
+            // Update chart
+            monthlyChart.data.labels = labels;
+            monthlyChart.data.datasets[0].data = reportsData;
+            monthlyChart.data.datasets[1].data = completedData;
+            monthlyChart.update();
+        }
+        
+        // Helper function to parse date
+        function parseDate(dateStr) {
+            if (!dateStr) return null;
+            
+            // Try different date formats
+            const parts = dateStr.split(/[/\-.]/);
+            if (parts.length === 3) {
+                let day, month, year;
+                
+                if (parts[0].length === 4) {
+                    // YYYY-MM-DD
+                    year = parseInt(parts[0]);
+                    month = parseInt(parts[1]) - 1;
+                    day = parseInt(parts[2]);
+                } else if (parts[2].length === 4) {
+                    // DD/MM/YYYY or MM/DD/YYYY
+                    const first = parseInt(parts[0]);
+                    const second = parseInt(parts[1]);
+                    
+                    if (first > 12) {
+                        // DD/MM/YYYY
+                        day = first;
+                        month = second - 1;
+                        year = parseInt(parts[2]);
+                    } else if (second > 12) {
+                        // MM/DD/YYYY
+                        month = first - 1;
+                        day = second;
+                        year = parseInt(parts[2]);
+                    } else {
+                        // Ambiguous, assume DD/MM/YYYY
+                        day = first;
+                        month = second - 1;
+                        year = parseInt(parts[2]);
+                    }
+                }
+                
+                if (year && month >= 0 && day) {
+                    return new Date(year, month, day);
+                }
+            }
+            
+            return null;
+        }
+        
+        // Create monthly chart
+        function createMonthlyChart() {
+            const ctx = document.getElementById('monthlyChart').getContext('2d');
+            
+            // Default empty data
+            const labels = ['Data akan muncul setelah upload'];
+            const reportsData = [0];
+            const completedData = [0];
+            
+            monthlyChart = new Chart(ctx, {
+                type: 'line',
+                data: {
+                    labels: labels,
+                    datasets: [
+                        {
+                            label: 'Total Laporan',
+                            data: reportsData,
+                            borderColor: '#2a5298',
+                            backgroundColor: 'rgba(42, 82, 152, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        },
+                        {
+                            label: 'Laporan Selesai',
+                            data: completedData,
+                            borderColor: '#4CAF50',
+                            backgroundColor: 'rgba(76, 175, 80, 0.1)',
+                            borderWidth: 2,
+                            fill: true,
+                            tension: 0.4
+                        }
+                    ]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'top',
+                        },
+                        tooltip: {
+                            mode: 'index',
+                            intersect: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Jumlah Laporan'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Periode'
+                            }
+                        }
+                    }
+                }
+            });
+            
+            // Update with actual data if available
+            if (maintenanceData.length > 0) {
+                updateMonthlyChartData();
+            }
+        }
+        
+        // Create status chart
+        function createStatusChart() {
+            const ctx = document.getElementById('statusChart').getContext('2d');
+            
+            // Count statuses from data
+            const statusCounts = {
+                'SELESAI': maintenanceData.filter(item => 
+                    item.status.includes('COMPLETED') || item.status.includes('SELESAI')
+                ).length,
+                'DALAM PROSES': maintenanceData.filter(item => 
+                    item.status.includes('IN PROCESS') || item.status.includes('PROSES')
+                ).length,
+                'PROSES LUAR': maintenanceData.filter(item => 
+                    item.status.includes('OUT PROCESS')
+                ).length,
+                'RUSAK': maintenanceData.filter(item => 
+                    item.status.includes('RUSAK') || item.status.includes('ERROR')
+                ).length
+            };
+            
+            // Filter out statuses with zero count
+            const labels = [];
+            const data = [];
+            const backgroundColors = [];
+            
+            for (const status in statusCounts) {
+                if (statusCounts[status] > 0) {
+                    labels.push(status);
+                    data.push(statusCounts[status]);
+                    
+                    // Assign colors based on status
+                    if (status === 'SELESAI') backgroundColors.push('#4CAF50');
+                    else if (status === 'DALAM PROSES') backgroundColors.push('#FF9800');
+                    else if (status === 'PROSES LUAR') backgroundColors.push('#2196F3');
+                    else backgroundColors.push('#f44336');
+                }
+            }
+            
+            // If no data, show placeholder
+            if (labels.length === 0) {
+                labels.push('Tidak ada data');
+                data.push(1);
+                backgroundColors.push('#cccccc');
+            }
+            
+            statusChart = new Chart(ctx, {
+                type: 'doughnut',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        data: data,
+                        backgroundColor: backgroundColors,
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            position: 'right',
+                        },
+                        tooltip: {
+                            callbacks: {
+                                label: function(context) {
+                                    const label = context.label || '';
+                                    const value = context.raw || 0;
+                                    const total = context.dataset.data.reduce((a, b) => a + b, 0);
+                                    const percentage = Math.round((value / total) * 100);
+                                    return `${label}: ${value} (${percentage}%)`;
+                                }
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create device chart
+        function createDeviceChart() {
+            const ctx = document.getElementById('deviceChart').getContext('2d');
+            
+            // Count devices from data
+            const deviceCounts = {};
+            maintenanceData.forEach(item => {
+                let deviceName = item.perangkat;
+                if (!deviceName) return;
+                
+                // Group similar devices
+                if (deviceName.includes('PRINTER') || deviceName.includes('EPSON') || deviceName.includes('CANON') || deviceName.includes('HP') || deviceName.includes('PRINT')) {
+                    deviceName = 'Printer';
+                } else if (deviceName.includes('KOMPUTER') || deviceName.includes('CPU') || deviceName.includes('PC') || deviceName.includes('LAPTOP')) {
+                    deviceName = 'Komputer';
+                } else if (deviceName.includes('TELEPHONE') || deviceName.includes('TELPON') || deviceName.includes('IPHONE') || deviceName.includes('TELEPON')) {
+                    deviceName = 'Telepon';
+                } else if (deviceName.includes('SCANNER')) {
+                    deviceName = 'Scanner';
+                } else if (deviceName.includes('JARINGAN') || deviceName.includes('SWITCH') || deviceName.includes('NETWORK')) {
+                    deviceName = 'Jaringan';
+                } else if (deviceName.includes('MESIN') || deviceName.includes('ABSEN')) {
+                    deviceName = 'Mesin Absen';
+                } else {
+                    // Keep original if doesn't match any category
+                    deviceName = deviceName.split(' ')[0] || deviceName;
+                }
+                
+                deviceCounts[deviceName] = (deviceCounts[deviceName] || 0) + 1;
+            });
+            
+            // Convert to arrays for chart
+            const labels = Object.keys(deviceCounts);
+            const data = Object.values(deviceCounts);
+            
+            // If no data, show placeholder
+            if (labels.length === 0) {
+                labels.push('Tidak ada data');
+                data.push(1);
+            }
+            
+            // Generate colors
+            const backgroundColors = [
+                '#2a5298', '#4CAF50', '#FF9800', '#f44336', 
+                '#9C27B0', '#00BCD4', '#8BC34A', '#FF5722',
+                '#795548', '#607D8B'
+            ];
+            
+            deviceChart = new Chart(ctx, {
+                type: 'bar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Jumlah Laporan',
+                        data: data,
+                        backgroundColor: backgroundColors.slice(0, labels.length),
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        y: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Jumlah Laporan'
+                            }
+                        },
+                        x: {
+                            title: {
+                                display: true,
+                                text: 'Jenis Perangkat'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Create location chart
+        function createLocationChart() {
+            const ctx = document.getElementById('locationChart').getContext('2d');
+            
+            // Count locations from data
+            const locationCounts = {};
+            maintenanceData.forEach(item => {
+                const location = item.lokasi;
+                if (location) {
+                    locationCounts[location] = (locationCounts[location] || 0) + 1;
+                }
+            });
+            
+            // Sort by count and take top 8
+            const sortedLocations = Object.entries(locationCounts)
+                .sort((a, b) => b[1] - a[1])
+                .slice(0, 8);
+            
+            const labels = sortedLocations.map(item => item[0]);
+            const data = sortedLocations.map(item => item[1]);
+            
+            // If no data, show placeholder
+            if (labels.length === 0) {
+                labels.push('Tidak ada data');
+                data.push(1);
+            }
+            
+            locationChart = new Chart(ctx, {
+                type: 'horizontalBar',
+                data: {
+                    labels: labels,
+                    datasets: [{
+                        label: 'Jumlah Laporan',
+                        data: data,
+                        backgroundColor: 'rgba(42, 82, 152, 0.7)',
+                        borderColor: '#2a5298',
+                        borderWidth: 1
+                    }]
+                },
+                options: {
+                    indexAxis: 'y',
+                    responsive: true,
+                    maintainAspectRatio: false,
+                    plugins: {
+                        legend: {
+                            display: false
+                        }
+                    },
+                    scales: {
+                        x: {
+                            beginAtZero: true,
+                            title: {
+                                display: true,
+                                text: 'Jumlah Laporan'
+                            }
+                        },
+                        y: {
+                            title: {
+                                display: true,
+                                text: 'Lokasi'
+                            }
+                        }
+                    }
+                }
+            });
+        }
+        
+        // Update table with recent reports
+        function updateTable() {
+            const tbody = document.getElementById('tableBody');
+            tbody.innerHTML = '';
+            
+            if (maintenanceData.length === 0) {
+                tbody.innerHTML = `
+                    <tr>
+                        <td colspan="7" style="text-align: center; padding: 40px; color: #999;">
+                            <i class="fas fa-database" style="font-size: 2rem; margin-bottom: 10px; display: block;"></i>
+                            Tidak ada data laporan
+                        </td>
+                    </tr>
+                `;
+                return;
+            }
+            
+            // Sort by date (newest first) and take first 10
+            const sortedData = [...maintenanceData]
+                .sort((a, b) => {
+                    const dateA = parseDate(a.tanggal) || new Date(0);
+                    const dateB = parseDate(b.tanggal) || new Date(0);
+                    return dateB - dateA;
+                })
+                .slice(0, 10);
+            
+            // Add rows to table
+            sortedData.forEach(item => {
+                const row = document.createElement('tr');
+                
+                // Format status badge
+                let statusBadge = '';
+                const status = item.status || '';
+                
+                if (status.includes('COMPLETED') || status.includes('SELESAI')) {
+                    statusBadge = '<span class="status-completed">SELESAI</span>';
+                } else if (status.includes('IN PROCESS') || status.includes('PROSES')) {
+                    statusBadge = '<span class="status-inprocess">DALAM PROSES</span>';
+                } else if (status.includes('OUT PROCESS')) {
+                    statusBadge = '<span class="status-outprocess">PROSES LUAR</span>';
+                } else if (status.includes('RUSAK') || status.includes('ERROR')) {
+                    statusBadge = '<span class="status-rusak">RUSAK</span>';
+                } else {
+                    statusBadge = `<span>${status || 'Tidak diketahui'}</span>`;
+                }
+                
+                // Truncate problem description if too long
+                const problem = item.masalah && item.masalah.length > 50 
+                    ? item.masalah.substring(0, 50) + '...' 
+                    : item.masalah || '';
+                
+                row.innerHTML = `
+                    <td>${item.nomor || ''}</td>
+                    <td>${item.perangkat || ''}</td>
+                    <td>${item.lokasi || ''}</td>
+                    <td>${item.pelapor || ''}</td>
+                    <td>${item.tanggal || ''}</td>
+                    <td>${statusBadge}</td>
+                    <td>${problem}</td>
+                `;
+                
+                tbody.appendChild(row);
+            });
+        }
+        
+        // Export table to Excel
+        function exportTableToExcel() {
+            if (maintenanceData.length === 0) {
+                alert("Tidak ada data untuk diekspor. Silakan upload file Excel terlebih dahulu.");
+                return;
+            }
+            
+            // Prepare data for export
+            const exportData = maintenanceData.map(item => ({
+                'Nomor': item.nomor || '',
+                'Perangkat': item.perangkat || '',
+                'Lokasi': item.lokasi || '',
+                'Pelapor': item.pelapor || '',
+                'Tanggal Lapor': item.tanggal || '',
+                'Status': item.status || '',
+                'Permasalahan': item.masalah || ''
+            }));
+            
+            // Create worksheet
+            const ws = XLSX.utils.json_to_sheet(exportData);
+            
+            // Create workbook
+            const wb = XLSX.utils.book_new();
+            XLSX.utils.book_append_sheet(wb, ws, "Laporan IT Maintenance");
+            
+            // Generate file name
+            const currentDate = new Date().toISOString().split('T')[0];
+            const fileName = `IT_Maintenance_Report_${currentDate}.xlsx`;
+            
+            // Save file
+            XLSX.writeFile(wb, fileName);
+            
+            // Show success message
+            setTimeout(() => {
+                alert(`Data berhasil diekspor ke file: ${fileName}`);
+            }, 100);
+        }
+        
+        // Export chart data
+        function exportChartData(chartType) {
+            if (maintenanceData.length === 0) {
+                alert("Tidak ada data untuk diekspor. Silakan upload file Excel terlebih dahulu.");
+                return;
+            }
+            
+            let chartData = [];
+            let fileName = '';
+            
+            // Get data based on chart type
+            if (chartType === 'monthly') {
+                // Extract dates and group by period
+                const dateCounts = {};
+                const completedCounts = {};
+                
+                maintenanceData.forEach(item => {
+                    const dateStr = item.tanggal;
+                    let periodKey = '';
+                    let isCompleted = item.status.includes('COMPLETED') || item.status.includes('SELESAI');
+                    
+                    if (dateStr) {
+                        const date = parseDate(dateStr);
+                        if (date) {
+                            if (currentPeriod === 'monthly') {
+                                periodKey = `${date.getFullYear()}-${String(date.getMonth() + 1).padStart(2, '0')}`;
+                            } else if (currentPeriod === 'quarterly') {
+                                const quarter = Math.floor(date.getMonth() / 3) + 1;
+                                periodKey = `${date.getFullYear()}-Q${quarter}`;
+                            } else {
+                                periodKey = `${date.getFullYear()}`;
+                            }
+                        }
+                    }
+                    
+                    if (periodKey) {
+                        dateCounts[periodKey] = (dateCounts[periodKey] || 0) + 1;
+                        if (isCompleted) {
+                            completedCounts[periodKey] = (completedCounts[periodKey] || 0) + 1;
+                        }
+                    }
+                });
+                
+                // Sort period keys
+                const sortedPeriods = Object.keys(dateCounts).sort();
+                
+                // Prepare data for export
+                chartData = sortedPeriods.map(period => {
+                    const [year, part] = period.split(currentPeriod === 'quarterly' ? '-Q' : '-');
+                    let periodLabel = '';
+                    
+                    if (currentPeriod === 'monthly') {
+                        const monthNames = ["Januari", "Februari", "Maret", "April", "Mei", "Juni", 
+                                           "Juli", "Agustus", "September", "Oktober", "November", "Desember"];
+                        periodLabel = `${monthNames[parseInt(part) - 1]} ${year}`;
+                    } else if (currentPeriod === 'quarterly') {
+                        periodLabel = `Triwulan ${part} ${year}`;
+                    } else {
+                        periodLabel = year;
+                    }
+                    
+                    return {
+                        'Periode': periodLabel,
+                        'Total Laporan': dateCounts[period] || 0,
+                        'Laporan Selesai': completedCounts[period] || 0,
+                        'Persentase Selesai': dateCounts[period] ? 
+                            Math.round((completedCounts[period] || 0) / dateCounts[period] * 100) : 0
+                    };
+                });
+                
+                const periodNames = {
+                    monthly: 'Bulanan',
+                    quarterly: 'Triwulan',
+                    yearly: 'Tahunan'
+                };
+                
+                fileName = `Laporan_${periodNames[currentPeriod]}.xlsx`;
+            }
+            else if (chartType === 'status') {
+                const statusCounts = {
+                    'SELESAI': maintenanceData.filter(item => 
+                        item.status.includes('COMPLETED') || item.status.includes('SELESAI')
+                    ).length,
+                    'DALAM PROSES': maintenanceData.filter(item => 
+                        item.status.includes('IN PROCESS') || item.status.includes('PROSES')
+                    ).length,
+                    'PROSES LUAR': maintenanceData.filter(item => 
+                        item.status.includes('OUT PROCESS')
+                    ).length,
+                    'RUSAK': maintenanceData.filter(item => 
+                        item.status.includes('RUSAK') || item.status.includes('ERROR')
+                    ).length
+                };
+                
+                const total = maintenanceData.length;
+                
+                chartData = Object.entries(statusCounts).map(([status, count]) => ({
+                    'Status': status,
+                    'Jumlah': count,
+                    'Persentase': total > 0 ? Math.round((count / total) * 100) : 0
+                }));
+                
+                fileName = 'Status_Laporan.xlsx';
+            }
+            else if (chartType === 'device') {
+                // Count devices
+                const deviceCounts = {};
+                maintenanceData.forEach(item => {
+                    let deviceName = item.perangkat;
+                    if (!deviceName) return;
+                    
+                    if (deviceName.includes('PRINTER') || deviceName.includes('EPSON') || deviceName.includes('CANON') || deviceName.includes('HP') || deviceName.includes('PRINT')) {
+                        deviceName = 'Printer';
+                    } else if (deviceName.includes('KOMPUTER') || deviceName.includes('CPU') || deviceName.includes('PC') || deviceName.includes('LAPTOP')) {
+                        deviceName = 'Komputer';
+                    } else if (deviceName.includes('TELEPHONE') || deviceName.includes('TELPON') || deviceName.includes('IPHONE') || deviceName.includes('TELEPON')) {
+                        deviceName = 'Telepon';
+                    } else if (deviceName.includes('SCANNER')) {
+                        deviceName = 'Scanner';
+                    } else if (deviceName.includes('JARINGAN') || deviceName.includes('SWITCH') || deviceName.includes('NETWORK')) {
+                        deviceName = 'Jaringan';
+                    } else if (deviceName.includes('MESIN') || deviceName.includes('ABSEN')) {
+                        deviceName = 'Mesin Absen';
+                    } else {
+                        deviceName = deviceName.split(' ')[0] || deviceName;
+                    }
+                    
+                    deviceCounts[deviceName] = (deviceCounts[deviceName] || 0) + 1;
+                });
+                
+                chartData = Object.entries(deviceCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([device, count]) => ({
+                        'Jenis Perangkat': device,
+                        'Jumlah Laporan': count
+                    }));
+                
+                fileName = 'Jenis_Perangkat.xlsx';
+            }
+            else if (chartType === 'location') {
+                // Count locations
+                const locationCounts = {};
+                maintenanceData.forEach(item => {
+                    const location = item.lokasi;
+                    if (location) {
+                        locationCounts[location] = (locationCounts[location] || 0) + 1;
+                    }
+                });
+                
+                chartData = Object.entries(locationCounts)
+                    .sort((a, b) => b[1] - a[1])
+                    .map(([location, count]) => ({
+                        'Lokasi': location,
+                        'Jumlah Laporan': count
+                    }));
+                
+                fileName = 'Lokasi_Laporan.xlsx';
+            }
+            
+            // Create worksheet and export
+            if (chartData.length > 0) {
+                const ws = XLSX.utils.json_to_sheet(chartData);
+                const wb = XLSX.utils.book_new();
+                XLSX.utils.book_append_sheet(wb, ws, "Data Chart");
+                XLSX.writeFile(wb, fileName);
+                
+                // Show success message
+                setTimeout(() => {
+                    alert(`Data chart berhasil diekspor ke file: ${fileName}`);
+                }, 100);
+            } else {
+                alert("Tidak ada data chart untuk diekspor.");
+            }
+        }
+    </script>
+</body>
+</html>

@@ -1,0 +1,522 @@
+<!DOCTYPE html>
+<html lang="id">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SIM-PEGAWAI | Sistem Informasi Manajemen Pegawai</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css">
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;700;800&display=swap');
+        body { font-family: 'Inter', sans-serif; }
+        .sidebar-link:hover { background: #1e293b; }
+        .active-link { background: #2563eb; border-right: 4px solid #fff; }
+        .tab-content { display: none; }
+        .tab-content.active { display: block; animation: fadeIn 0.4s ease-out; }
+        @keyframes fadeIn { from { opacity: 0; transform: translateY(10px); } to { opacity: 1; transform: translateY(0); } }
+        .form-card { background: white; border-radius: 1rem; box-shadow: 0 4px 6px -1px rgb(0 0 0 / 0.1); border: 1px solid #e2e8f0; padding: 2rem; margin-bottom: 2rem; }
+        input[type="file"]::file-selector-button {
+            background-color: #f1f5f9; border: 1px solid #cbd5e1; padding: 4px 12px; border-radius: 6px; cursor: pointer; font-size: 11px; font-weight: 600;
+        }
+    </style>
+</head>
+<body class="bg-slate-50 h-screen overflow-hidden">
+
+<div class="flex h-full">
+    <aside class="w-72 bg-slate-900 text-white flex-shrink-0 flex flex-col shadow-2xl">
+        <div class="p-8 text-2xl font-extrabold tracking-tighter border-b border-slate-800 flex items-center">
+            <i class="fas fa-id-card-alt mr-3 text-blue-500"></i>SIM-PEGAWAI
+        </div>
+        <nav class="mt-6 flex-1 px-4 space-y-2">
+            <a href="#" onclick="showSection('dashboard')" id="link-dashboard" class="sidebar-link active-link flex items-center py-3 px-4 rounded-lg transition-all duration-200">
+                <i class="fas fa-th-large mr-3 w-5"></i> Dashboard
+            </a>
+            <a href="#" onclick="showSection('input')" id="link-input" class="sidebar-link flex items-center py-3 px-4 rounded-lg transition-all duration-200 text-slate-400 hover:text-white">
+                <i class="fas fa-user-plus mr-3 w-5"></i> Registrasi Baru
+            </a>
+            <a href="#" onclick="showSection('tabel')" id="link-tabel" class="sidebar-link flex items-center py-3 px-4 rounded-lg transition-all duration-200 text-slate-400 hover:text-white">
+                <i class="fas fa-database mr-3 w-5"></i> Database Pegawai
+            </a>
+            <a href="#" onclick="showSection('pensiun')" id="link-pensiun" class="sidebar-link flex items-center py-3 px-4 rounded-lg transition-all duration-200 text-slate-400 hover:text-white">
+                <i class="fas fa-user-slash mr-3 w-5"></i> Data Pensiun
+            </a>
+        </nav>
+        <div class="p-6 border-t border-slate-800">
+            <div class="bg-slate-800 rounded-lg p-4">
+                <p class="text-[10px] text-slate-500 font-bold uppercase mb-1">Status Server</p>
+                <div class="flex items-center text-green-400 text-xs">
+                    <span class="h-2 w-2 bg-green-400 rounded-full mr-2 animate-pulse"></span> Terhubung (Online)
+                </div>
+            </div>
+        </div>
+    </aside>
+
+    <div class="flex-1 flex flex-col overflow-hidden">
+        <header class="bg-white border-b py-4 px-10 flex justify-between items-center">
+            <div>
+                <h2 id="section-title" class="text-2xl font-black text-slate-800 tracking-tight uppercase">DASHBOARD UTAMA</h2>
+                <p class="text-xs text-slate-500 font-medium">Manajemen Data Kepegawaian & Dokumentasi Digital</p>
+            </div>
+            <div class="flex items-center space-x-6">
+                <div class="text-right border-r pr-6">
+                    <p id="current-date" class="text-sm font-bold text-slate-700"></p>
+                    <p class="text-[10px] text-slate-400 uppercase font-bold tracking-widest">Waktu Sistem</p>
+                </div>
+                <div class="flex items-center bg-slate-100 p-2 rounded-full pr-4">
+                    <div class="h-8 w-8 bg-blue-600 rounded-full flex items-center justify-center text-white font-bold text-xs shadow-lg">AD</div>
+                    <span class="ml-3 text-xs font-bold text-slate-700">Administrator</span>
+                </div>
+            </div>
+        </header>
+
+        <main class="flex-1 overflow-y-auto p-10">
+            
+            <div id="dashboard" class="tab-content active">
+                <div class="grid grid-cols-1 md:grid-cols-4 gap-8 mb-10">
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-blue-500">
+                        <div class="flex justify-between items-start">
+                            <div><p class="text-slate-400 text-[10px] font-black uppercase">Total Pegawai</p><h4 id="stat-total" class="text-4xl font-black text-slate-800 mt-2">1</h4></div>
+                            <div class="bg-blue-50 p-4 rounded-xl text-blue-600"><i class="fas fa-users text-xl"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-green-500">
+                        <div class="flex justify-between items-start">
+                            <div><p class="text-slate-400 text-[10px] font-black uppercase">STR Aktif</p><h4 class="text-4xl font-black text-slate-800 mt-2">1</h4></div>
+                            <div class="bg-green-50 p-4 rounded-xl text-green-600"><i class="fas fa-check-circle text-xl"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-orange-500">
+                        <div class="flex justify-between items-start">
+                            <div><p class="text-slate-400 text-[10px] font-black uppercase">Naik Pangkat</p><h4 class="text-4xl font-black text-slate-800 mt-2">0</h4></div>
+                            <div class="bg-orange-50 p-4 rounded-xl text-orange-600"><i class="fas fa-trending-up text-xl"></i></div>
+                        </div>
+                    </div>
+                    <div class="bg-white p-6 rounded-2xl shadow-sm border-b-4 border-red-500">
+                        <div class="flex justify-between items-start">
+                            <div><p class="text-slate-400 text-[10px] font-black uppercase">Pensiun 2026</p><h4 class="text-4xl font-black text-slate-800 mt-2">0</h4></div>
+                            <div class="bg-red-50 p-4 rounded-xl text-red-600"><i class="fas fa-hourglass-end text-xl"></i></div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div id="input" class="tab-content">
+                <form id="employeeForm" class="max-w-5xl mx-auto" onsubmit="saveData(event)">
+                    <input type="file" id="hiddenSKInput" class="hidden" accept=".pdf" onchange="handleSKFileSelect(this)">
+                    
+                    <div class="form-card">
+                        <div class="flex items-center mb-8 pb-4 border-b border-slate-100">
+                            <span class="w-10 h-10 bg-blue-600 text-white rounded-xl flex items-center justify-center font-black mr-4 shadow-blue-200 shadow-lg">1</span>
+                            <div>
+                                <h3 class="text-lg font-black text-slate-800 tracking-tight uppercase">Identitas & Status Kepegawaian</h3>
+                                <p class="text-[10px] text-slate-400 font-bold uppercase">Informasi Pokok Personel</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                            <div class="col-span-1">
+                                <label class="block text-[11px] font-black text-slate-500 uppercase mb-2">Nama Lengkap (Sesuai Ijazah)</label>
+                                <input type="text" id="f_nama" required class="w-full border-2 border-slate-100 bg-slate-50 p-3 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all" placeholder="Masukkan Nama Lengkap...">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-black text-slate-500 uppercase mb-2">NIP / Nomor Registrasi</label>
+                                <input type="text" id="f_nip" required class="w-full border-2 border-slate-100 bg-slate-50 p-3 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all" placeholder="19XXXXXXXXXXXXX">
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-black text-slate-500 uppercase mb-2">Agama</label>
+                                <select id="f_agama" class="w-full border-2 border-slate-100 bg-slate-50 p-3 rounded-xl focus:bg-white focus:border-blue-500 outline-none transition-all">
+                                    <option>ISLAM</option><option>KRISTEN</option><option>KATOLIK</option><option>ADVENT</option><option>HINDU</option><option>BUDHA</option><option>KONGHUCU</option>
+                                </select>
+                            </div>
+                            <div>
+                                <label class="block text-[11px] font-black text-slate-500 uppercase mb-2">Jenis Kelamin</label>
+                                <div class="flex gap-4 p-1">
+                                    <label class="flex-1 flex items-center justify-center bg-slate-50 border-2 border-slate-100 px-4 py-2 rounded-xl cursor-pointer hover:bg-white">
+                                        <input type="radio" name="jk" value="LAKI-LAKI" checked class="mr-2"> <span class="text-xs font-bold">LAKI-LAKI</span>
+                                    </label>
+                                    <label class="flex-1 flex items-center justify-center bg-slate-50 border-2 border-slate-100 px-4 py-2 rounded-xl cursor-pointer hover:bg-white">
+                                        <input type="radio" name="jk" value="PEREMPUAN" class="mr-2"> <span class="text-xs font-bold">PEREMPUAN</span>
+                                    </label>
+                                </div>
+                            </div>
+                            <div class="col-span-2">
+                                <label class="block text-[11px] font-black text-slate-500 uppercase mb-2">Status Kepegawaian</label>
+                                <div class="grid grid-cols-3 md:grid-cols-6 gap-2">
+                                    <label class="flex items-center bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 text-[10px] font-bold cursor-pointer">
+                                        <input type="radio" name="sk" value="CPNS" class="mr-2"> CPNS
+                                    </label>
+                                    <label class="flex items-center bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 text-[10px] font-bold cursor-pointer">
+                                        <input type="radio" name="sk" value="PNS" checked class="mr-2"> PNS
+                                    </label>
+                                    <label class="flex items-center bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 text-[10px] font-bold cursor-pointer">
+                                        <input type="radio" name="sk" value="CPPPK" class="mr-2"> CPPPK
+                                    </label>
+                                    <label class="flex items-center bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 text-[10px] font-bold cursor-pointer">
+                                        <input type="radio" name="sk" value="PPPK" class="mr-2"> PPPK
+                                    </label>
+                                    <label class="flex items-center bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 text-[10px] font-bold cursor-pointer">
+                                        <input type="radio" name="sk" value="KONTRAK" class="mr-2"> KONTRAK
+                                    </label>
+                                    <label class="flex items-center bg-blue-50 px-3 py-2 rounded-lg border border-blue-100 text-[10px] font-bold cursor-pointer">
+                                        <input type="radio" name="sk" value="KERJASAMA" class="mr-2"> KERJASAMA
+                                    </label>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-card bg-slate-900 text-white">
+                        <div class="flex items-center mb-8 pb-4 border-b border-slate-800">
+                            <span class="w-10 h-10 bg-orange-500 text-white rounded-xl flex items-center justify-center font-black mr-4 shadow-orange-900 shadow-lg">2</span>
+                            <div>
+                                <h3 class="text-lg font-black tracking-tight uppercase">Keluarga, Rumah & Pendidikan</h3>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">Data Pendukung & Dokumen PDF</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-3 gap-8">
+                            <div class="space-y-4">
+                                <h4 class="text-xs font-black text-orange-400 uppercase tracking-widest border-l-2 border-orange-500 pl-3">A. Keluarga</h4>
+                                <div><label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Status Nikah</label>
+                                    <select class="w-full bg-slate-800 border border-slate-700 p-2 rounded text-xs outline-none focus:border-orange-500">
+                                        <option>BELUM MENIKAH</option><option>MENIKAH</option>
+                                    </select>
+                                </div>
+                                <div><label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Nama Suami/Istri</label><input type="text" class="w-full bg-slate-800 border border-slate-700 p-2 rounded text-xs outline-none"></div>
+                                <div><label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Jumlah Anak</label><input type="number" class="w-full bg-slate-800 border border-slate-700 p-2 rounded text-xs outline-none"></div>
+                                <div><label class="text-[10px] font-bold text-red-400 uppercase block mb-1">Upload Akta Nikah (PDF)</label><input type="file" accept=".pdf" class="w-full text-[10px]"></div>
+                                <div><label class="text-[10px] font-bold text-red-400 uppercase block mb-1">Akta Lahir Keluarga (PDF)</label><input type="file" accept=".pdf" class="w-full text-[10px]"></div>
+                            </div>
+                            <div class="space-y-4">
+                                <h4 class="text-xs font-black text-orange-400 uppercase tracking-widest border-l-2 border-orange-500 pl-3">B. Rumah & ID</h4>
+                                <div><label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Status Rumah</label>
+                                    <select class="w-full bg-slate-800 border border-slate-700 p-2 rounded text-xs">
+                                        <option>DINAS</option><option>PRIBADI</option><option>KONTRAK</option>
+                                    </select>
+                                </div>
+                                <div><label class="text-[10px] font-bold text-slate-400 uppercase block mb-1">Nomor KARPEG</label><input type="text" class="w-full bg-slate-800 border border-slate-700 p-2 rounded text-xs outline-none"></div>
+                                <div><label class="text-[10px] font-bold text-red-400 uppercase block mb-1">Upload KTP (PDF)</label><input type="file" accept=".pdf" class="w-full text-[10px]"></div>
+                            </div>
+                            <div class="space-y-4">
+                                <h4 class="text-xs font-black text-orange-400 uppercase tracking-widest border-l-2 border-orange-500 pl-3">C. Upload Ijazah (PDF)</h4>
+                                <div class="grid grid-cols-1 gap-3">
+                                    <div class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700">
+                                        <span class="text-[10px] font-bold w-12 text-slate-400">SD</span><input type="file" accept=".pdf" class="w-32">
+                                    </div>
+                                    <div class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700">
+                                        <span class="text-[10px] font-bold w-12 text-slate-400">SLTP</span><input type="file" accept=".pdf" class="w-32">
+                                    </div>
+                                    <div class="flex items-center justify-between bg-slate-800 p-2 rounded border border-slate-700">
+                                        <span class="text-[10px] font-bold w-12 text-slate-400">SMU</span><input type="file" accept=".pdf" class="w-32">
+                                    </div>
+                                    <div class="flex items-center justify-between bg-orange-900/30 p-2 rounded border border-orange-800">
+                                        <span class="text-[10px] font-black w-12 text-orange-400 uppercase">S1/S2/S3</span><input type="file" accept=".pdf" class="w-32">
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-card border-l-8 border-l-green-500">
+                        <div class="flex items-center mb-8 pb-4 border-b border-slate-100">
+                            <span class="w-10 h-10 bg-green-600 text-white rounded-xl flex items-center justify-center font-black mr-4">3</span>
+                            <div>
+                                <h3 class="text-lg font-black text-slate-800 tracking-tight uppercase">Legalitas Profesi (STR/SIP)</h3>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">Hanya untuk tenaga medis/kesehatan</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-10">
+                            <div class="p-6 bg-green-50 rounded-2xl border border-green-100">
+                                <label class="text-xs font-black text-green-800 uppercase block mb-3">Surat Tanda Registrasi (STR)</label>
+                                <div class="space-y-3">
+                                    <input type="text" id="f_str" placeholder="Nomor STR" class="w-full border-2 p-2.5 rounded-lg text-sm outline-none focus:border-green-500">
+                                    <div class="flex gap-2 items-center">
+                                        <span class="text-[10px] font-bold text-slate-500 uppercase">Berlaku s/d:</span>
+                                        <input type="date" id="f_str_date" class="flex-1 border-2 p-2 rounded-lg text-sm">
+                                    </div>
+                                    <input type="file" accept=".pdf" class="w-full">
+                                </div>
+                            </div>
+                            <div class="p-6 bg-green-50 rounded-2xl border border-green-100">
+                                <label class="text-xs font-black text-green-800 uppercase block mb-3">Surat Izin Praktik (SIP)</label>
+                                <div class="space-y-3">
+                                    <input type="text" placeholder="Nomor SIP" class="w-full border-2 p-2.5 rounded-lg text-sm outline-none focus:border-green-500">
+                                    <div class="flex gap-2 items-center">
+                                        <span class="text-[10px] font-bold text-slate-500 uppercase">Berlaku s/d:</span>
+                                        <input type="date" class="flex-1 border-2 p-2 rounded-lg text-sm">
+                                    </div>
+                                    <input type="file" accept=".pdf" class="w-full">
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="form-card">
+                        <div class="flex items-center mb-8 pb-4 border-b border-slate-100">
+                            <span class="w-10 h-10 bg-purple-600 text-white rounded-xl flex items-center justify-center font-black mr-4">4 & 5</span>
+                            <div>
+                                <h3 class="text-lg font-black text-slate-800 tracking-tight uppercase">Riwayat SK & Dokumentasi</h3>
+                                <p class="text-[10px] text-slate-500 font-bold uppercase">Arsip Digital Kepegawaian</p>
+                            </div>
+                        </div>
+                        <div class="grid grid-cols-1 md:grid-cols-2 gap-8">
+                            <div class="space-y-6">
+                                <div class="p-4 bg-purple-50 rounded-xl border border-purple-100">
+                                    <p class="text-xs font-black text-purple-700 uppercase mb-4 tracking-tighter">SK Kenaikan Pangkat (I/d s.d IV/e)</p>
+                                    <div class="grid grid-cols-4 gap-2" id="skButtonsContainer">
+                                        <button type="button" onclick="triggerSKUpload('I/d')" class="text-[9px] font-black border-2 border-dashed border-purple-200 p-2 rounded hover:bg-white hover:border-purple-500 transition-all uppercase">I/d</button>
+                                        <button type="button" onclick="triggerSKUpload('II/a')" class="text-[9px] font-black border-2 border-dashed border-purple-200 p-2 rounded hover:bg-white hover:border-purple-500 transition-all uppercase">II/a</button>
+                                        <button type="button" onclick="triggerSKUpload('II/b')" class="text-[9px] font-black border-2 border-dashed border-purple-200 p-2 rounded hover:bg-white hover:border-purple-500 transition-all uppercase">II/b</button>
+                                        <button type="button" onclick="triggerSKUpload('II/c')" class="text-[9px] font-black border-2 border-dashed border-purple-200 p-2 rounded hover:bg-white hover:border-purple-500 transition-all uppercase">II/c</button>
+                                        <button type="button" onclick="triggerSKUpload('III/a')" class="text-[9px] font-black border-2 border-dashed border-purple-200 p-2 rounded hover:bg-white hover:border-purple-500 transition-all uppercase">III/a</button>
+                                        <button type="button" onclick="triggerSKUpload('III/b')" class="text-[9px] font-black border-2 border-dashed border-purple-200 p-2 rounded hover:bg-white hover:border-purple-500 transition-all uppercase">III/b</button>
+                                        <button type="button" onclick="triggerSKUpload('III/c')" class="text-[9px] font-black border-2 border-dashed border-purple-200 p-2 rounded hover:bg-white hover:border-purple-500 transition-all uppercase">III/c</button>
+                                        <button type="button" onclick="triggerSKUpload('IV/...')" class="text-[9px] font-black border-2 border-dashed border-red-200 p-2 rounded hover:bg-white hover:border-red-500 transition-all uppercase text-red-500">IV/...</button>
+                                    </div>
+                                    <p class="text-[8px] text-slate-400 mt-2 italic font-medium">*Klik kode golongan untuk mengunggah PDF</p>
+                                </div>
+                                <div class="p-4 bg-yellow-50 rounded-xl border border-yellow-100">
+                                    <p class="text-xs font-black text-yellow-700 uppercase mb-4 tracking-tighter">SKP Tahunan</p>
+                                    <div class="space-y-2">
+                                        <div class="flex items-center justify-between bg-white p-2 rounded-lg border text-[10px] font-bold"><span>Tahun 2024</span><input type="file" accept=".pdf" class="w-32"></div>
+                                        <div class="flex items-center justify-between bg-white p-2 rounded-lg border text-[10px] font-bold"><span>Tahun 2025</span><input type="file" accept=".pdf" class="w-32"></div>
+                                    </div>
+                                </div>
+                            </div>
+                            <div class="space-y-4">
+                                <h4 class="text-xs font-black text-slate-500 uppercase tracking-widest border-l-2 border-slate-400 pl-3">Dokumentasi Lainnya</h4>
+                                <div class="space-y-3">
+                                    <div><label class="text-[10px] font-bold uppercase mb-1 block">SK Jabatan (PDF)</label><input type="file" accept=".pdf" class="w-full"></div>
+                                    <div><label class="text-[10px] font-bold uppercase mb-1 block">SK Mutasi/Pindah (PDF)</label><input type="file" accept=".pdf" class="w-full"></div>
+                                    <div><label class="text-[10px] font-bold uppercase mb-1 block">SK Lain-lain (PDF)</label><input type="file" accept=".pdf" class="w-full"></div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="flex justify-end gap-4 mb-20">
+                        <button type="reset" class="px-8 py-3 rounded-xl border-2 border-slate-200 text-slate-500 font-bold text-sm hover:bg-white hover:text-red-500 hover:border-red-100 transition-all">BATALKAN</button>
+                        <button type="submit" class="px-12 py-3 rounded-xl bg-blue-600 text-white font-black text-sm hover:bg-blue-700 shadow-xl shadow-blue-200 transition-all uppercase tracking-widest">Simpan Data Lengkap</button>
+                    </div>
+
+                </form>
+            </div>
+
+            <div id="tabel" class="tab-content">
+                <div class="bg-white rounded-2xl shadow-sm border border-slate-100 p-6">
+                    <div class="flex justify-between items-center mb-8">
+                        <div class="relative w-96">
+                            <i class="fas fa-search absolute left-4 top-3.5 text-slate-400"></i>
+                            <input type="text" id="searchInput" onkeyup="searchTable()" placeholder="Cari NIP atau Nama Pegawai..." class="pl-12 pr-4 py-3 bg-slate-50 border border-slate-100 rounded-2xl w-full outline-none focus:ring-4 focus:ring-blue-50 focus:bg-white transition-all text-sm">
+                        </div>
+                        <div class="flex gap-2 text-xs font-bold text-slate-400">
+                            TOTAL: <span id="count-row" class="text-slate-800">1</span> ORANG
+                        </div>
+                        <div class="flex gap-2">
+                            <button class="bg-slate-900 text-white px-6 py-2.5 rounded-xl font-bold text-xs hover:bg-blue-600 transition-all flex items-center"><i class="fas fa-file-excel mr-2"></i> EXPORT EXCEL</button>
+                        </div>
+                    </div>
+                    <div class="overflow-x-auto rounded-xl border border-slate-100">
+                        <table class="w-full text-left" id="mainTable">
+                            <thead class="bg-slate-50 text-slate-400 text-[10px] uppercase font-black tracking-widest border-b border-slate-100">
+                                <tr>
+                                    <th class="px-8 py-5">Informasi Pegawai</th>
+                                    <th class="px-8 py-5">Jabatan & Gol</th>
+                                    <th class="px-8 py-5">Status</th>
+                                    <th class="px-8 py-5">STR/SIP</th>
+                                    <th class="px-8 py-5 text-center">Tindakan</th>
+                                </tr>
+                            </thead>
+                            <tbody id="employeeTableBody" class="text-sm divide-y divide-slate-50">
+                                <tr class="hover:bg-slate-50 transition-all">
+                                    <td class="px-8 py-6">
+                                        <div class="flex items-center">
+                                            <div class="h-12 w-12 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-2xl flex items-center justify-center font-black mr-4 shadow-lg">BS</div>
+                                            <div><p class="font-black text-slate-800 text-base leading-none mb-1">Budi Santoso, S.Kep</p><p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">NIP. 198501012010011002</p></div>
+                                        </div>
+                                    </td>
+                                    <td class="px-8 py-6"><span class="block font-black text-slate-700">III/b - PERAWAT MAHIR</span><span class="text-[10px] text-blue-500 font-bold uppercase tracking-tighter">Jabatan Fungsional</span></td>
+                                    <td class="px-8 py-6"><span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-[9px] font-black uppercase">PNS</span></td>
+                                    <td class="px-8 py-6"><span class="text-red-600 font-black text-xs block">12 Mei 2026</span><span class="text-[9px] text-slate-400 font-medium">STR Wajib Perpanjang</span></td>
+                                    <td class="px-8 py-6">
+                                        <div class="flex justify-center space-x-3">
+                                            <button class="h-8 w-8 rounded-lg bg-slate-100 text-slate-400 hover:bg-blue-500 hover:text-white transition-all"><i class="fas fa-file-alt"></i></button>
+                                            <button class="h-8 w-8 rounded-lg bg-slate-100 text-slate-400 hover:bg-green-500 hover:text-white transition-all"><i class="fas fa-pen"></i></button>
+                                            <button onclick="deleteRow(this)" class="h-8 w-8 rounded-lg bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash"></i></button>
+                                        </div>
+                                    </td>
+                                </tr>
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+
+            <div id="pensiun" class="tab-content">
+                <div class="bg-red-50 border-2 border-red-100 p-10 rounded-3xl text-center max-w-4xl mx-auto">
+                    <div class="w-20 h-20 bg-red-100 text-red-600 rounded-full flex items-center justify-center mx-auto mb-6">
+                        <i class="fas fa-user-clock text-3xl"></i>
+                    </div>
+                    <h3 class="text-2xl font-black text-red-800 mb-2 uppercase">Modul Monitoring Pensiun</h3>
+                    <p class="text-slate-600 font-medium mb-8">Fitur ini digunakan untuk memantau otomatis pegawai yang akan memasuki Batas Usia Pensiun (BUP).</p>
+                    <div class="grid grid-cols-2 gap-4 text-left">
+                        <div class="bg-white p-4 rounded-2xl border border-red-100">
+                            <p class="text-[10px] font-black text-slate-400 uppercase">Pensiun Tahun Ini</p>
+                            <h4 class="text-3xl font-black text-red-600">0 Jiwa</h4>
+                        </div>
+                        <div class="bg-white p-4 rounded-2xl border border-red-100">
+                            <p class="text-[10px] font-black text-slate-400 uppercase">Proses Berkas</p>
+                            <h4 class="text-3xl font-black text-orange-500">0 Berkas</h4>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+        </main>
+    </div>
+</div>
+
+<script>
+    // --- GLOBAL VARIABLES ---
+    let currentUploadGol = "";
+
+    // --- NAVIGASI ---
+    function showSection(sectionId) {
+        document.querySelectorAll('.tab-content').forEach(section => section.classList.remove('active'));
+        document.querySelectorAll('.sidebar-link').forEach(link => {
+            link.classList.remove('active-link', 'text-white');
+            link.classList.add('text-slate-400');
+        });
+
+        document.getElementById(sectionId).classList.add('active');
+        const activeLink = document.getElementById('link-' + sectionId);
+        activeLink.classList.add('active-link', 'text-white');
+        activeLink.classList.remove('text-slate-400');
+
+        const titles = { 
+            'dashboard': 'DASHBOARD UTAMA', 
+            'input': 'REGISTRASI DATA PERSONEL', 
+            'tabel': 'DATABASE PEGAWAI KESELURUHAN',
+            'pensiun': 'MONITORING PENSIUN PEGAWAI'
+        };
+        document.getElementById('section-title').innerText = titles[sectionId];
+    }
+
+    // --- FITUR UPLOAD SK KENAIKAN PANGKAT ---
+    function triggerSKUpload(gol) {
+        currentUploadGol = gol;
+        document.getElementById('hiddenSKInput').click();
+    }
+
+    function handleSKFileSelect(input) {
+        if (input.files && input.files[0]) {
+            const fileName = input.files[0].name;
+            // Cari tombol yang sesuai berdasarkan teks golongannya
+            const buttons = document.querySelectorAll('#skButtonsContainer button');
+            buttons.forEach(btn => {
+                if (btn.innerText.includes(currentUploadGol)) {
+                    btn.classList.remove('border-purple-200', 'text-slate-500', 'text-red-500', 'border-red-200');
+                    btn.classList.add('bg-green-600', 'text-white', 'border-green-600');
+                    btn.innerHTML = `<i class="fas fa-check mr-1"></i> ${currentUploadGol}`;
+                }
+            });
+            console.log(`File SK ${currentUploadGol} berhasil dipilih: ${fileName}`);
+        }
+    }
+
+    // --- SIMPAN DATA KE TABEL ---
+    function saveData(event) {
+        event.preventDefault();
+        
+        const nama = document.getElementById('f_nama').value;
+        const nip = document.getElementById('f_nip').value;
+        const status = document.querySelector('input[name="sk"]:checked').value;
+        const strDate = document.getElementById('f_str_date').value || 'N/A';
+        const inisial = nama.substring(0, 2).toUpperCase();
+
+        const tableBody = document.getElementById('employeeTableBody');
+        const newRow = tableBody.insertRow();
+        newRow.className = "hover:bg-slate-50 transition-all";
+        
+        newRow.innerHTML = `
+            <td class="px-8 py-6">
+                <div class="flex items-center">
+                    <div class="h-12 w-12 bg-gradient-to-br from-blue-500 to-blue-700 text-white rounded-2xl flex items-center justify-center font-black mr-4 shadow-lg">${inisial}</div>
+                    <div><p class="font-black text-slate-800 text-base leading-none mb-1">${nama}</p><p class="text-[10px] text-slate-400 font-bold uppercase tracking-tight">NIP. ${nip}</p></div>
+                </div>
+            </td>
+            <td class="px-8 py-6"><span class="block font-black text-slate-700">-</span><span class="text-[10px] text-blue-500 font-bold uppercase tracking-tighter">Data Baru</span></td>
+            <td class="px-8 py-6"><span class="bg-blue-100 text-blue-700 px-3 py-1 rounded-lg text-[9px] font-black uppercase">${status}</span></td>
+            <td class="px-8 py-6"><span class="text-slate-600 font-black text-xs block">${strDate}</span></td>
+            <td class="px-8 py-6">
+                <div class="flex justify-center space-x-3">
+                    <button class="h-8 w-8 rounded-lg bg-slate-100 text-slate-400 hover:bg-blue-500 hover:text-white transition-all"><i class="fas fa-file-alt"></i></button>
+                    <button class="h-8 w-8 rounded-lg bg-slate-100 text-slate-400 hover:bg-green-500 hover:text-white transition-all"><i class="fas fa-pen"></i></button>
+                    <button onclick="deleteRow(this)" class="h-8 w-8 rounded-lg bg-slate-100 text-slate-400 hover:bg-red-500 hover:text-white transition-all"><i class="fas fa-trash"></i></button>
+                </div>
+            </td>
+        `;
+
+        updateStats();
+        alert('Data Pegawai berhasil disimpan ke database lokal!');
+        document.getElementById('employeeForm').reset();
+        
+        // Kembalikan tampilan tombol SK ke awal setelah reset
+        const buttons = document.querySelectorAll('#skButtonsContainer button');
+        buttons.forEach(btn => {
+            btn.classList.remove('bg-green-600', 'text-white', 'border-green-600');
+            btn.classList.add('border-purple-200', 'text-slate-500');
+            if(btn.innerText.includes('IV/')) btn.classList.add('text-red-500');
+        });
+
+        showSection('tabel');
+    }
+
+    // --- HAPUS DATA ---
+    function deleteRow(btn) {
+        if(confirm('Apakah Anda yakin ingin menghapus data pegawai ini?')) {
+            const row = btn.closest('tr');
+            row.remove();
+            updateStats();
+        }
+    }
+
+    // --- PENCARIAN TABEL ---
+    function searchTable() {
+        const input = document.getElementById("searchInput");
+        const filter = input.value.toUpperCase();
+        const table = document.getElementById("mainTable");
+        const tr = table.getElementsByTagName("tr");
+
+        for (let i = 1; i < tr.length; i++) {
+            const td = tr[i].getElementsByTagName("td")[0];
+            if (td) {
+                const txtValue = td.textContent || td.innerText;
+                if (txtValue.toUpperCase().indexOf(filter) > -1) {
+                    tr[i].style.display = "";
+                } else {
+                    tr[i].style.display = "none";
+                }
+            }
+        }
+    }
+
+    // --- UPDATE STATISTIK ---
+    function updateStats() {
+        const rowCount = document.getElementById('employeeTableBody').rows.length;
+        document.getElementById('stat-total').innerText = rowCount;
+        document.getElementById('count-row').innerText = rowCount;
+    }
+
+    // --- JAM & TANGGAL ---
+    function updateClock() {
+        const options = { weekday: 'long', year: 'numeric', month: 'long', day: 'numeric' };
+        const now = new Date();
+        document.getElementById('current-date').innerText = now.toLocaleDateString('id-ID', options);
+    }
+    
+    // Inisialisasi
+    updateClock();
+    updateStats();
+</script>
+
+</body>
+</html>
